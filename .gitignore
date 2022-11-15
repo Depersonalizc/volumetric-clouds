@@ -1,4 +1,4 @@
-resources/test_volumes/*
+resources/test_volumes/*.raw
 
 # ------------------------------------
 # CS 1230 gitignore

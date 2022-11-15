@@ -1,0 +1,4 @@
+/* download the .raw volumes to the current folder with url below */
+
+foot: https://www.dl.dropboxusercontent.com/s/ic0mik3qv4vqacm/foot_256x256x256_uint8.raw?dl=1
+skull: https://www.dl.dropboxusercontent.com/s/5rfjobn0lvb7tmo/skull_256x256x256_uint8.raw?dl=1
