@@ -309,10 +309,9 @@ void MainWindow::initialize() {
     vLayout->addWidget(invertDensity);
     vLayout->addWidget(filter2);
 
-    // Extra Credit:
-    vLayout->addWidget(ec_label);
-    vLayout->addWidget(ec3);
-    vLayout->addWidget(ec4);
+//    vLayout->addWidget(ec_label);
+//    vLayout->addWidget(ec3);
+//    vLayout->addWidget(ec4);
 
     connectUIElements();
 }

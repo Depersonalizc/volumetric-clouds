@@ -81,7 +81,7 @@ vec2 intersectBox(vec3 orig, vec3 dir) {
 // sample wrapped worley density at position
 float sampleWorleyDensityFine(vec3 position) {
 
-    position = position * noiseScaling + noiseTranslate;
+    position = position * noiseScaling * 0.01f + noiseTranslate * 0.01f;
 
     // [0, 1] in world-space maps to [0..cellsPerAxis) in volume space
     const vec3 positionWrapped = fract(position);  // wrapped to [0, 1]^3
@@ -110,7 +110,7 @@ float sampleWorleyDensityFine(vec3 position) {
 // sample wrapped worley density at position
 float sampleWorleyDensityCoarse(vec3 position) {
 
-    position = position * noiseScaling + noiseTranslate;
+    position = position * noiseScaling * 0.01f + noiseTranslate * 0.01f;
 
     // [0, 1] in world-space maps to [0..cellsPerAxis) in volume space
     const vec3 positionWrapped = fract(position);  // wrapped to [0, 1]^3
