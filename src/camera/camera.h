@@ -21,8 +21,7 @@ class Camera {
 
 public:
     Camera() = default;
-    Camera(SceneCameraData const &c_data, int c_width, int c_height,
-           double c_near = 0.1, double c_far = 10000.0);
+    Camera(SceneCameraData const &c_data, int c_width, int c_height, double c_near, double c_far);
 
     glm::vec4 const & getPos() const;
     glm::vec4 const & getLook() const;

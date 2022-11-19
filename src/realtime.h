@@ -15,7 +15,20 @@
 #include <QTimer>
 
 #include "camera/camera.h"
-#include "utils/shaderloader.h"
+
+
+constexpr float cube[] = {
+    .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, .5f, .5f, -.5f, .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, -.5f, -.5f, -.5f, -.5f,
+    .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, -.5f, -.5f, -.5f, -.5f, -.5f
+};
+
+constexpr auto szVec3() { return sizeof(GLfloat) * 3; }
+constexpr auto szVec4() { return sizeof(GLfloat) * 4; }
+
+constexpr auto WORLEY_FINE_MAX_CELLS_PER_AXIS = 256;
+constexpr auto WORLEY_COARSE_MAX_CELLS_PER_AXIS = 128;
+constexpr auto WORLEY_FINE_MAX_POINTS = 256*256*256;
+constexpr auto WORLEY_COARSE_MAX_POINTS = 128*128*128;
 
 
 class MainWindow;
@@ -46,35 +59,36 @@ private:
 
 
     // added
-    static constexpr float cube[] = {
-        1.f, 1.f, 0.f,
-        0.f, 1.f, 0.f,
-        1.f, 1.f, 1.f,
-        0.f, 1.f, 1.f,
-        0.f, 0.f, 1.f,
-        0.f, 1.f, 0.f,
-        0.f, 0.f, 0.f,
-        1.f, 1.f, 0.f,
-        1.f, 0.f, 0.f,
-        1.f, 1.f, 1.f,
-        1.f, 0.f, 1.f,
-        0.f, 0.f, 1.f,
-        1.f, 0.f, 0.f,
-        0.f, 0.f, 0.f
-    };
-    GLuint vbo, vao;
-    GLuint volTexture;
-    glm::vec3 volumeDims = glm::vec3(1.f);
-    float volumeScale = 1.f;
+//    static constexpr float cube[] = {
+//        1.f, 1.f, 0.f,
+//        0.f, 1.f, 0.f,
+//        1.f, 1.f, 1.f,
+//        0.f, 1.f, 1.f,
+//        0.f, 0.f, 1.f,
+//        0.f, 1.f, 0.f,
+//        0.f, 0.f, 0.f,
+//        1.f, 1.f, 0.f,
+//        1.f, 0.f, 0.f,
+//        1.f, 1.f, 1.f,
+//        1.f, 0.f, 1.f,
+//        0.f, 0.f, 1.f,
+//        1.f, 0.f, 0.f,
+//        0.f, 0.f, 0.f
+//    };
 
-    void glClearScreen() const { glClearColor(0.f, 0.f, 0.f, 1.f); }
+    GLuint vbo, vao;
+    GLuint ssboWorleyCoarse, ssboWorleyFine;  // shader storage buffer for worley points
+//    GLuint volTexture;
+
+    void glClearScreen() const { glClearColor(.5f, .5f, .5f, 1.f); }
     static void glUnbindVBO() { glBindBuffer(GL_ARRAY_BUFFER, 0); }
     static void glUnbindVAO() { glBindVertexArray(0); }
-    static void glUnbind() { glUnbindVBO(); glUnbindVAO(); }
+    static void glUnbindSSBO() { glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); }
+    static void glUnbind() { glUnbindVBO(); glUnbindVAO(); glUnbindSSBO(); }
+
     void setUpShader(const char *vertshaderPath, const char *fragShaderPath);
     void setUpVolume();
     void drawVolume();
-
 
     GLuint m_shader;                             // Stores id for shader program
     Camera m_camera;
@@ -94,7 +108,7 @@ private:
 
     friend class MainWindow;
 
-
+    // DEBUG
     void printShaderActiveElements() const {
         GLint i;
         GLint count;

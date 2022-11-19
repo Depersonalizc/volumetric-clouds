@@ -31,12 +31,14 @@ add_executable(${PROJECT_NAME}
     src/settings.cpp
 
     src/camera/camera.cpp
+    src/noise/worley.cpp
 
     src/mainwindow.h
     src/realtime.h
     src/settings.h
     src/utils/shaderloader.h
     src/camera/camera.h
+    src/noise/worley.h
 
     src/utils/debug.h
 )

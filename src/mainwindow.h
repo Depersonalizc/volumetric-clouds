@@ -19,23 +19,45 @@ public:
 private:
     void connectUIElements();
     void connectParam1();
-    void connectNear();
-    void connectFar();
-    void connectPerPixelFilter();
+    void connectTrans();
+    void connectScaling();
+    void connectNoiseTrans();
+    void connectNoiseScaling();
+    void connectStep();
+    void connectNumCells();
+    void connectInvertDensity();
     void connectKernelBasedFilter();
     void connectUploadFile();
     void connectExtraCredit();
 
     Realtime *realtime;
-    QCheckBox *filter1;
+    QCheckBox *invertDensity;
     QCheckBox *filter2;
     QPushButton *uploadFile;
+
+    // Density multiplier
     QSlider *p1Slider;
     QDoubleSpinBox *p1Box;
-    QSlider *nearSlider;
-    QSlider *farSlider;
-    QDoubleSpinBox *nearBox;
-    QDoubleSpinBox *farBox;
+
+    // Step size
+    QSlider *stepSlider;
+    QDoubleSpinBox *stepBox;
+
+    // #cells per axis
+    QSlider *cellsFineSlider, *cellsCoarseSlider;
+    QSpinBox *cellsFineBox, *cellsCoarseBox;
+
+    // Volume transforms
+    QSlider *transxSlider, *transySlider, *transzSlider;
+    QDoubleSpinBox *transxBox, *transyBox, *transzBox;
+    QSlider *scalexSlider, *scaleySlider, *scalezSlider;
+    QDoubleSpinBox *scalexBox, *scaleyBox, *scalezBox;
+
+    // Noise transforms
+    QSlider *noiseTransxSlider, *noiseTransySlider, *noiseTranszSlider;
+    QDoubleSpinBox *noiseTransxBox, *noiseTransyBox, *noiseTranszBox;
+    QSlider *noiseScaleSlider;
+    QDoubleSpinBox *noiseScaleBox;
 
     // Extra Credit:
     QCheckBox *ec1;
@@ -44,17 +66,39 @@ private:
     QCheckBox *ec4;
 
 private slots:
-    void onPerPixelFilter();
+    void onInvertDensity();
     void onKernelBasedFilter();
     void onUploadFile();
 
+    void onValChangeCellsFine(int newValue);
+    void onValChangeCellsCoarse(int newValue);
+
     void onValChangeP1Slider(int newValue);
-    void onValChangeNearSlider(int newValue);
-    void onValChangeFarSlider(int newValue);
+    void onValChangeStepSlider(int newValue);
+    void onValChangeTransxSlider(int newValue);
+    void onValChangeTransySlider(int newValue);
+    void onValChangeTranszSlider(int newValue);
+    void onValChangeNoiseTransxSlider(int newValue);
+    void onValChangeNoiseTransySlider(int newValue);
+    void onValChangeNoiseTranszSlider(int newValue);
+    void onValChangeNoiseScaleSlider(int newValue);
+    void onValChangeScalexSlider(int newValue);
+    void onValChangeScaleySlider(int newValue);
+    void onValChangeScalezSlider(int newValue);
+
 
     void onValChangeP1Box(double newValue);
-    void onValChangeNearBox(double newValue);
-    void onValChangeFarBox(double newValue);
+    void onValChangeStepBox(double newValue);
+    void onValChangeTransxBox(double newValue);
+    void onValChangeTransyBox(double newValue);
+    void onValChangeTranszBox(double newValue);
+    void onValChangeNoiseTransxBox(double newValue);
+    void onValChangeNoiseTransyBox(double newValue);
+    void onValChangeNoiseTranszBox(double newValue);
+    void onValChangeNoiseScaleBox(double newValue);
+    void onValChangeScalexBox(double newValue);
+    void onValChangeScaleyBox(double newValue);
+    void onValChangeScalezBox(double newValue);
 
     // Extra Credit:
     void onExtraCredit1();
