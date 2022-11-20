@@ -37,6 +37,7 @@ uniform int cellsPerAxisFine, cellsPerAxisCoarse;
 // rendering params, updated when user changes settings
 uniform bool invertDensity;
 uniform float densityMult;
+uniform float densityThreshold = 0.5f;
 uniform float stepSize;
 
 // Worley noise transforms
@@ -103,8 +104,11 @@ float sampleWorleyDensityFine(vec3 position) {
         minDist2 = min(minDist2, dot(deltaPosition, deltaPosition));
     }
 
-    const float density = sqrt(minDist2) * cellsPerAxisFine;
-    return density;
+    float density = sqrt(minDist2) * cellsPerAxisFine;
+    if (invertDensity)
+        density = 1.f - density;
+
+    return max(0.f, density - densityThreshold);
 }
 
 // sample wrapped worley density at position
@@ -132,8 +136,11 @@ float sampleWorleyDensityCoarse(vec3 position) {
         minDist2 = min(minDist2, dot(deltaPosition, deltaPosition));
     }
 
-    const float density = sqrt(minDist2) * cellsPerAxisCoarse;
-    return density;
+    float density = sqrt(minDist2) * cellsPerAxisFine;
+    if (invertDensity)
+        density = 1.f - density;
+
+    return max(0.f, density - densityThreshold);
 }
 
 
@@ -146,24 +153,26 @@ void main() {
     tHit.x = max(0.f, tHit.x);
 
     // starting from the near intersection, march the ray forward and sample
-    const vec3 ds = rayDirWorld * stepSize;
+    const float dt = stepSize * 0.01f;
+    const vec3 ds = rayDirWorld * dt;
     vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
     glFragColor = vec4(0.f);
-//    for (float t = tHit.x; t < tHit.y; t += stepSize) {
-//        // TODO: Generate Worley
-//        float sigma = sampleWorleyDensityFine(pointWorld) * densityMult;
-//        sigma *= stepSize;
+    for (float t = tHit.x; t < tHit.y; t += dt) {
+        // TODO: Generate Worley
+        float sigma = sampleWorleyDensityFine(pointWorld) * densityMult;
 
-//        const vec3 rgb = vec3(1.f);
+        sigma *= dt;
 
-//        glFragColor.rgb += (1.f - glFragColor.a) * sigma * rgb;
-//        glFragColor.a   += (1.f - glFragColor.a) * sigma;
+        const vec3 rgb = vec3(0.f);
 
-//        if (glFragColor.a > 0.95)  // early stopping
-//            break;
+        glFragColor.rgb += (1.f - glFragColor.a) * sigma * rgb;
+        glFragColor.a   += (1.f - glFragColor.a) * sigma;
 
-//        pointWorld += ds;
-//    }
+        if (glFragColor.a > 0.98)  // early stopping
+            break;
+
+        pointWorld += ds;
+    }
 
 //    glFragColor.r = linear2srgb(glFragColor.r);
 //    glFragColor.g = linear2srgb(glFragColor.g);
@@ -173,14 +182,13 @@ void main() {
 //    float sigma = sampleWorleyDensityCoarse(positionWorld);
 //    float sigma = (sampleWorleyDensityFine(positionWorld) +
 //                   sampleWorleyDensityCoarse(positionWorld) ) * .5f;
-    float sigma = (sampleWorleyDensityFine(positionWorld) *
-                   sampleWorleyDensityCoarse(positionWorld) );
+//    float sigma = (sampleWorleyDensityFine(positionWorld) *
+//                   sampleWorleyDensityCoarse(positionWorld) );
 
-
-    if (invertDensity)
-        sigma = 1.f - sigma;
-    glFragColor.rgb = vec3(sigma * densityMult);
-    glFragColor.a = 1.f;
+//    if (invertDensity)
+//        sigma = 1.f - sigma;
+//    glFragColor.rgb = vec3(sigma * densityMult);
+//    glFragColor.a = 1.f;
 
 
 // DEBUG

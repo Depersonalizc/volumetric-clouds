@@ -73,11 +73,11 @@ void MainWindow::initialize() {
     // Create slider controls to control parameters
     p1Slider = new QSlider(Qt::Orientation::Horizontal); // Parameter 1 slider
     p1Slider->setMinimum(0);
-    p1Slider->setMaximum(40);
+    p1Slider->setMaximum(100);
     p1Slider->setValue(10);
     p1Box = new QDoubleSpinBox();
     p1Box->setMinimum(0.f);
-    p1Box->setMaximum(4.f);
+    p1Box->setMaximum(10.f);
     p1Box->setValue(1.f);
     p1Box->setSingleStep(.01f);
     // Adds the slider and number box to the parameter layouts
@@ -90,14 +90,14 @@ void MainWindow::initialize() {
     QGroupBox *stepLayout = new QGroupBox(); // horizonal slider alignment
     QHBoxLayout *lstep = new QHBoxLayout();
     stepSlider = new QSlider(Qt::Orientation::Horizontal); // Far plane slider
-    stepSlider->setMinimum(100);  // 10.0
-    stepSlider->setMaximum(100000); // 10000.0
-    stepSlider->setValue(100000);
+    stepSlider->setMinimum(1);  // 0.001
+    stepSlider->setMaximum(1000); // 1.0
+    stepSlider->setValue(100);
     stepBox = new QDoubleSpinBox();
-    stepBox->setMinimum(10.f);
-    stepBox->setMaximum(10000.f);
-    stepBox->setSingleStep(1.f);
-    stepBox->setValue(10000.f);
+    stepBox->setMinimum(.1f);
+    stepBox->setMaximum(100.f);
+    stepBox->setSingleStep(.01f);
+    stepBox->setValue(10.f);
     lstep->addWidget(stepSlider);
     lstep->addWidget(stepBox);
     stepLayout->setLayout(lstep);
