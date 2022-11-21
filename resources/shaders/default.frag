@@ -39,6 +39,7 @@ uniform bool invertDensity;
 uniform float densityMult;
 uniform float densityThreshold = 0.5f;
 uniform float stepSize;
+uniform int numSteps = 25;
 
 // Worley noise transforms
 uniform float noiseScaling;
@@ -153,12 +154,13 @@ void main() {
     tHit.x = max(0.f, tHit.x);
 
     // starting from the near intersection, march the ray forward and sample
-    const float dt = stepSize * 0.01f;
+//    const float dt = stepSize * 0.01f;
+    const float dt = (tHit.y - tHit.x) / numSteps;
     const vec3 ds = rayDirWorld * dt;
     vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
     glFragColor = vec4(0.f);
-    for (float t = tHit.x; t < tHit.y; t += dt) {
-        // TODO: Generate Worley
+//    for (float t = tHit.x; t < tHit.y; t += dt) {
+    for (int step = 0; step < numSteps; step++) {
         float sigma = sampleWorleyDensityFine(pointWorld) * densityMult;
 
         sigma *= dt;

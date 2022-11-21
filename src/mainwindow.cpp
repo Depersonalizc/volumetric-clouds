@@ -176,29 +176,29 @@ void MainWindow::initialize() {
     QHBoxLayout *lscale = new QHBoxLayout();
     scalexSlider = new QSlider(Qt::Orientation::Horizontal); // x scaling slider
     scalexSlider->setMinimum(1);
-    scalexSlider->setMaximum(10000);
+    scalexSlider->setMaximum(100);
     scalexSlider->setValue(10);
     scalexBox = new QDoubleSpinBox();
     scalexBox->setMinimum(.1f);
-    scalexBox->setMaximum(1000.f);
+    scalexBox->setMaximum(10.f);
     scalexBox->setSingleStep(0.1f);
     scalexBox->setValue(1.f);
     scaleySlider = new QSlider(Qt::Orientation::Horizontal); // y scaling slider
     scaleySlider->setMinimum(1);    // 0.1
-    scaleySlider->setMaximum(10000);  // 1000.0
+    scaleySlider->setMaximum(100);  // 1000.0
     scaleySlider->setValue(10);
     scaleyBox = new QDoubleSpinBox();
     scaleyBox->setMinimum(.1f);
-    scaleyBox->setMaximum(1000.f);
+    scaleyBox->setMaximum(10.f);
     scaleyBox->setSingleStep(0.1f);
     scaleyBox->setValue(1.f);
     scalezSlider = new QSlider(Qt::Orientation::Horizontal); // z scaling slider
     scalezSlider->setMinimum(1);    // 0.1
-    scalezSlider->setMaximum(10000);  // 1000.0
+    scalezSlider->setMaximum(100);  // 1000.0
     scalezSlider->setValue(10);
     scalezBox = new QDoubleSpinBox();
     scalezBox->setMinimum(.1f);
-    scalezBox->setMaximum(1000.f);
+    scalezBox->setMaximum(10.f);
     scalezBox->setSingleStep(0.1f);
     scalezBox->setValue(1.f);
     lscale->addWidget(scalexSlider);
