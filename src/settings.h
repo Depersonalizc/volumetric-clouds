@@ -10,8 +10,8 @@ struct Settings {
     glm::vec3 volumeScaling = glm::vec3(1.f);
     glm::vec3 volumeTranslate = glm::vec3(0.f);
 
-    int volumeResolutionHighRes = 256;
-    int volumeResolutionLowRes = 128;
+    int volumeResolutionHighRes = 128;
+    int volumeResolutionLowRes = 64;
 
     float noiseScaling = 1.f; // Worley noise scaling
     glm::vec3 noiseTranslate = glm::vec3(0.f);

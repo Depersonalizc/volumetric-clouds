@@ -73,17 +73,22 @@ struct LightData {
 // rendering params, updated when user changes settings
 uniform bool invertDensity;
 uniform float densityMult;
-uniform float densityThreshold = 0.5f;
-uniform float stepSize;
+//uniform float stepSize;
 uniform int numSteps = 25;
 
-// Worley noise transforms
-uniform float noiseScaling;
-uniform vec3 noiseTranslate;
 
-// volume transforms for computing ray intersection
-uniform vec3 volumeScaling;
-uniform vec3 volumeTranslate;
+// Params for high resolution noise
+uniform vec3 hiResNoiseScaling = vec3(1.f), hiResNoiseTranslate = vec3(0.f);  // noise transforms
+uniform vec4 hiResChannelWeights = vec4(1.f);  // how to aggregate RGBA channels
+uniform float hiResDensityOffset = -0.1f;              // controls overall cloud coverage
+
+// Params for low resolution noise
+uniform vec3 loResNoiseScaling = vec3(1.f), loResNoiseTranslate = vec3(0.f);  // noise transforms
+uniform vec4 loResChannelWeights = vec4(1.f);  // how to aggregate RGBA channels
+uniform float loResNoiseWeight = 0.5f;                // relative weight of lo-res noise about hi-res
+
+// volume transforms for computing ray-box intersection
+uniform vec3 volumeScaling, volumeTranslate;
 
 // ray origin, updated when user moves camera
 uniform vec3 rayOrigWorld;
@@ -91,6 +96,12 @@ uniform vec3 rayOrigWorld;
 // light uniforms, not used rn
 uniform int numLights;
 uniform LightData lights[10];
+
+
+// normalized v so that dot(v, 1) = 1
+vec4 normalizeL1(vec4 v) {
+    return v / dot(v, vec4(1.f));
+}
 
 // gamma correction
 float linear2srgb(float x) {
@@ -113,6 +124,37 @@ vec2 intersectBox(vec3 orig, vec3 dir) {
     return vec2(tn, tf);
 }
 
+float getErosionWeightCubic(float density) {
+    return (1.f - density) * (1.f - density) * (1.f - density);
+}
+
+float sampleDensity(vec3 position) {
+    // sample high-res details
+    vec3 hiResPosition = position * hiResNoiseScaling * .1f + hiResNoiseTranslate * .1f;
+    vec4 hiResNoise = texture(volumeHighRes, hiResPosition);
+    float hiResDensity = dot( hiResNoise, normalizeL1(hiResChannelWeights) );
+    if (invertDensity)
+        hiResDensity = 1.f - hiResDensity;
+    // TODO: add height gradient
+    float hiResDensityWithOffset = hiResDensity + hiResDensityOffset;
+
+    // return early if there is no cloud
+    if (hiResDensityWithOffset <= 0.f)
+        return 0.f;
+
+    // add in low-res details
+    vec3 loResPosition = position * loResNoiseScaling * .1f + loResNoiseTranslate * .1f;
+    vec4 loResNoise = texture(volumeLowRes, loResPosition);
+    float loResDensity = dot( loResNoise, normalizeL1(loResChannelWeights) );
+    loResDensity = 1.f - loResDensity;  // invert the low-density by default
+
+    // Erosion: subtract low-res detail from hi-res noise, weighted such that
+    // the erosion is more pronounced near the boudary of the cloud (low hiResDensity)
+    float erosionWeight = getErosionWeightCubic(hiResDensity);
+    float density = hiResDensityWithOffset - erosionWeight*loResNoiseWeight * loResDensity;
+    return max(density * densityMult, 0.f);
+}
+
 
 void main() {
     const vec3 rayDirWorld = normalize(positionWorld - rayOrigWorld);
@@ -127,7 +169,7 @@ void main() {
     vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
     glFragColor = vec4(0.f);
     for (int step = 0; step < numSteps; step++) {
-        vec3 position = positionWorld * noiseScaling * .1f + noiseTranslate * .1f;
+//        vec3 position = positionWorld * noiseScaling * .1f + noiseTranslate * .1f;
 //        float sigma = sampleWorleyDensityFine(pointWorld) * densityMult;
 //        sigma *= dt;
 //        const vec3 rgb = vec3(0.f);
@@ -142,10 +184,11 @@ void main() {
 //    glFragColor.g = linear2srgb(glFragColor.g);
 //    glFragColor.b = linear2srgb(glFragColor.b);
 
+    float sigma = sampleDensity(positionWorld);
+
 
     // DEBUG
-    vec3 position = positionWorld * noiseScaling * .1f + noiseTranslate * .1f;
-
+//    vec3 position = positionWorld * hiResNoiseScaling * .1f + hiResNoiseTranslate * .1f;
     // show noise channels as BW images
 //    float sigma = texture(volumeHighRes, position).r;
 //    float sigma = texture(volumeHighRes, position).g;
@@ -155,18 +198,19 @@ void main() {
 //    float sigma = texture(volumeLowRes, position).g;
 //    float sigma = texture(volumeLowRes, position).b;
 //    float sigma = texture(volumeLowRes, position).a;
-//    glFragColor = vec4(sigma);
+    glFragColor = vec4(sigma);
 
     // show noise channels as is
-    glFragColor.r = texture(volumeHighRes, position).r;
-    glFragColor.g = texture(volumeHighRes, position).g;
-    glFragColor.b = texture(volumeHighRes, position).b;
-    glFragColor.a = texture(volumeHighRes, position).a;
+//    glFragColor = vec4(1.f);
+//    glFragColor.r = texture(volumeHighRes, position).r;
+//    glFragColor.g = texture(volumeHighRes, position).g;
+//    glFragColor.b = texture(volumeHighRes, position).b;
+//    glFragColor.r = texture(volumeHighRes, position).a;
 
     // final processing
-    if (invertDensity)
-        glFragColor = 1.f - glFragColor;
-    glFragColor *= densityMult;
+//    if (invertDensity)
+//        glFragColor = 1.f - glFragColor;
+//    glFragColor *= densityMult;
     glFragColor.a = 1.f;
 
 }
