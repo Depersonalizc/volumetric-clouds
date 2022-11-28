@@ -106,28 +106,30 @@ void MainWindow::initialize() {
     QGroupBox *cellsFineLayout = new QGroupBox(); // horizonal slider alignment
     QHBoxLayout *lcellsFine = new QHBoxLayout();
     cellsFineSlider = new QSlider(Qt::Orientation::Horizontal); // Far plane slider
-    cellsFineSlider->setMinimum(1);
-    cellsFineSlider->setMaximum(256);
-    cellsFineSlider->setValue(256);
+    cellsFineSlider->setMinimum(17);
+    cellsFineSlider->setMaximum(32);
+    cellsFineSlider->setValue(32);
     cellsFineBox = new QSpinBox();
-    cellsFineBox->setMinimum(1);
-    cellsFineBox->setMaximum(256);
-    cellsFineBox->setValue(256);
+    cellsFineBox->setMinimum(17);
+    cellsFineBox->setMaximum(32);
+    cellsFineBox->setValue(32);
     lcellsFine->addWidget(cellsFineSlider);
     lcellsFine->addWidget(cellsFineBox);
     cellsFineLayout->setLayout(lcellsFine);
+
+    // TODO: medium
 
     // #cells slider (coarse)
     QGroupBox *cellsCoarseLayout = new QGroupBox(); // horizonal slider alignment
     QHBoxLayout *lcellsCoarse = new QHBoxLayout();
     cellsCoarseSlider = new QSlider(Qt::Orientation::Horizontal); // Far plane slider
     cellsCoarseSlider->setMinimum(1);
-    cellsCoarseSlider->setMaximum(128);
-    cellsCoarseSlider->setValue(128);
+    cellsCoarseSlider->setMaximum(8);
+    cellsCoarseSlider->setValue(8);
     cellsCoarseBox = new QSpinBox();
     cellsCoarseBox->setMinimum(1);
-    cellsCoarseBox->setMaximum(128);
-    cellsCoarseBox->setValue(128);
+    cellsCoarseBox->setMaximum(8);
+    cellsCoarseBox->setValue(8);
     lcellsCoarse->addWidget(cellsCoarseSlider);
     lcellsCoarse->addWidget(cellsCoarseBox);
     cellsCoarseLayout->setLayout(lcellsCoarse);
@@ -480,6 +482,13 @@ void MainWindow::onValChangeCellsFine(int newValue) {
     settings.newFineArray = true;  // tell settingsChanged to update fine array
     realtime->settingsChanged();
 }
+//void MainWindow::onValChangeCellsMedium(int newValue) {
+//    cellsMediumSlider->setValue(newValue);
+//    cellsMediumBox->setValue(newValue);
+//    settings.cellsPerAxisFine = cellsMediumBox->value();
+//    settings.newMediumArray = true;  // tell settingsChanged to update medium array
+//    realtime->settingsChanged();
+//}
 void MainWindow::onValChangeCellsCoarse(int newValue) {
     cellsCoarseSlider->setValue(newValue);
     cellsCoarseBox->setValue(newValue);

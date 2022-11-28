@@ -1,16 +1,67 @@
 #version 430 core
 
-const ivec3 CELL_OFFSETS[27] = {
-    ivec3(-1, -1, -1), ivec3(-1, -1, 0), ivec3(-1, -1, 1),
-    ivec3(-1,  0, -1), ivec3(-1,  0, 0), ivec3(-1,  0, 1),
-    ivec3(-1,  1, -1), ivec3(-1,  1, 0), ivec3(-1,  1, 1),
-    ivec3( 0, -1, -1), ivec3( 0, -1, 0), ivec3( 0, -1, 1),
-    ivec3( 0,  0, -1), ivec3( 0,  0, 0), ivec3( 0,  0, 1),
-    ivec3( 0,  1, -1), ivec3( 0,  1, 0), ivec3( 0,  1, 1),
-    ivec3( 1, -1, -1), ivec3( 1, -1, 0), ivec3( 1, -1, 1),
-    ivec3( 1,  0, -1), ivec3( 1,  0, 0), ivec3( 1,  0, 1),
-    ivec3( 1,  1, -1), ivec3( 1,  1, 0), ivec3( 1,  1, 1),
-};
+//#define WORLEY_MAX_CELLS_PER_AXIS 32
+//#define WORLEY_MAX_NUM_POINTS WORLEY_MAX_CELLS_PER_AXIS*WORLEY_MAX_CELLS_PER_AXIS*WORLEY_MAX_CELLS_PER_AXIS
+//#define WORLEY_FINE_OFFSET 0
+//#define WORLEY_MEDIUM_OFFSET WORLEY_MAX_NUM_POINTS
+//#define WORLEY_COARSE_OFFSET 2*WORLEY_MAX_NUM_POINTS
+
+//const ivec3 CELL_OFFSETS[27] = {
+//    ivec3(-1, -1, -1), ivec3(-1, -1, 0), ivec3(-1, -1, 1),
+//    ivec3(-1,  0, -1), ivec3(-1,  0, 0), ivec3(-1,  0, 1),
+//    ivec3(-1,  1, -1), ivec3(-1,  1, 0), ivec3(-1,  1, 1),
+//    ivec3( 0, -1, -1), ivec3( 0, -1, 0), ivec3( 0, -1, 1),
+//    ivec3( 0,  0, -1), ivec3( 0,  0, 0), ivec3( 0,  0, 1),
+//    ivec3( 0,  1, -1), ivec3( 0,  1, 0), ivec3( 0,  1, 1),
+//    ivec3( 1, -1, -1), ivec3( 1, -1, 0), ivec3( 1, -1, 1),
+//    ivec3( 1,  0, -1), ivec3( 1,  0, 0), ivec3( 1,  0, 1),
+//    ivec3( 1,  1, -1), ivec3( 1,  1, 0), ivec3( 1,  1, 1),
+//};
+
+//// Worley sample points and cell params,
+//// updated when user changes cellsPerAxis
+//layout(std430, binding = 0) buffer worleyBuffer {
+//    // |       FINE      |       MEDIUM        |               COARSE               |
+//    // 0......WORLEY_MAX_NUM_POINTS..2*WORLEY_MAX_NUM_POINTS..3*WORLEY_MAX_NUM_POINTS
+//    vec4 worleyPoints[3*WORLEY_MAX_NUM_POINTS];
+//};
+//uniform int cellsPerAxisFine, cellsPerAxisMedium, cellsPerAxisCoarse;
+
+//// sample wrapped worley density at position
+//float sampleWorleyDensity(vec3 position, int offset, int cellsPerAxis) {
+//    // [0, 1] in world-space maps to [0..cellsPerAxis) in volume space
+//    const vec3 positionWrapped = fract(position);  // wrapped to [0, 1]^3
+//    const ivec3 cellID = ivec3(positionWrapped * cellsPerAxis);  // [0..cellsPerAxis)^3
+//    float minDist2 = 1.f;
+
+//    // loop over all 27 adjacent cells and find out min distance
+//    for (int offsetIndex = 0; offsetIndex < 27; offsetIndex++) {
+//        const ivec3 adjID = cellID + CELL_OFFSETS[offsetIndex];  // [-1..cellsPerAxis]^3
+//        const ivec3 adjIDWrapped = (adjID + cellsPerAxis) % cellsPerAxis;  // [0..cellsPerAxis)^3
+//        const int adjCellIndex = adjIDWrapped.x + cellsPerAxis * (adjIDWrapped.y + cellsPerAxis * adjIDWrapped.z);
+//        vec3 adjPosition = worleyPoints[offset + adjCellIndex].xyz;
+//        // wrap point position in boundary cells
+//        for (int comp = 0; comp < 3; comp++) {
+//            if (adjID[comp] == -1) adjPosition[comp] -= 1.f;
+//            else if (adjID[comp] == cellsPerAxis) adjPosition[comp] += 1.f;
+//        }
+//        const vec3 deltaPosition = positionWrapped - adjPosition;
+//        minDist2 = min(minDist2, dot(deltaPosition, deltaPosition));
+//    }
+
+//    float density = sqrt(minDist2) * cellsPerAxis;
+
+//    return density;
+////    return max(0.f, density - densityThreshold);
+//}
+
+
+// density volumes computed by the compute shader
+layout(binding = 0) uniform sampler3D volumeHighRes;
+layout(binding = 1) uniform sampler3D volumeLowRes;
+
+in vec3 positionWorld;
+out vec4 glFragColor;
 
 struct LightData {
     int type;
@@ -18,21 +69,6 @@ struct LightData {
     vec3 dir;
     vec3 color;
 };
-
-in vec3 positionWorld;  // frag position in world space
-out vec4 glFragColor;
-
-
-// Worley sample points and cell params,
-// updated when user changes cellsPerAxis
-layout(std430, binding = 0) buffer worleyBufferFine {
-    vec4 worleyPointsFine[];  // stratified sample points for generat Worley noise
-};
-layout(std430, binding = 1) buffer worleyBufferCoarse {
-    vec4 worleyPointsCoarse[];  // stratified sample points for generat Worley noise
-};
-uniform int cellsPerAxisFine, cellsPerAxisCoarse;
-//uniform int numPointsFine, numPointsCoarse;
 
 // rendering params, updated when user changes settings
 uniform bool invertDensity;
@@ -55,9 +91,6 @@ uniform vec3 rayOrigWorld;
 // light uniforms, not used rn
 uniform int numLights;
 uniform LightData lights[10];
-// for test, not used rn
-uniform sampler3D volume;
-
 
 // gamma correction
 float linear2srgb(float x) {
@@ -80,71 +113,6 @@ vec2 intersectBox(vec3 orig, vec3 dir) {
     return vec2(tn, tf);
 }
 
-// sample wrapped worley density at position
-float sampleWorleyDensityFine(vec3 position) {
-
-    position = position * noiseScaling * 0.01f + noiseTranslate * 0.01f;
-
-    // [0, 1] in world-space maps to [0..cellsPerAxis) in volume space
-    const vec3 positionWrapped = fract(position);  // wrapped to [0, 1]^3
-    const ivec3 cellID = ivec3(positionWrapped * cellsPerAxisFine);  // [0..cellsPerAxis)^3
-    float minDist2 = 1.f;
-
-    // loop over all 27 adjacent cells and find out min distance
-    for (int offsetIndex = 0; offsetIndex < 27; offsetIndex++) {
-        const ivec3 adjID = cellID + CELL_OFFSETS[offsetIndex];  // [-1..cellsPerAxis]^3
-        const ivec3 adjIDWrapped = (adjID + cellsPerAxisFine) % cellsPerAxisFine;  // [0..cellsPerAxis)^3
-        const int adjCellIndex = adjIDWrapped.x + cellsPerAxisFine * (adjIDWrapped.y + cellsPerAxisFine * adjIDWrapped.z);
-        vec3 adjPosition = worleyPointsFine[adjCellIndex].xyz;
-        // wrap point position in boundary cells
-        for (int comp = 0; comp < 3; comp++) {
-            if (adjID[comp] == -1) adjPosition[comp] -= 1.f;
-            else if (adjID[comp] == cellsPerAxisFine) adjPosition[comp] += 1.f;
-        }
-        const vec3 deltaPosition = positionWrapped - adjPosition;
-        minDist2 = min(minDist2, dot(deltaPosition, deltaPosition));
-    }
-
-    float density = sqrt(minDist2) * cellsPerAxisFine;
-    if (invertDensity)
-        density = 1.f - density;
-
-    return max(0.f, density - densityThreshold);
-}
-
-// sample wrapped worley density at position
-float sampleWorleyDensityCoarse(vec3 position) {
-
-    position = position * noiseScaling * 0.01f + noiseTranslate * 0.01f;
-
-    // [0, 1] in world-space maps to [0..cellsPerAxis) in volume space
-    const vec3 positionWrapped = fract(position);  // wrapped to [0, 1]^3
-    const ivec3 cellID = ivec3(positionWrapped * cellsPerAxisCoarse);  // [0..cellsPerAxis)^3
-    float minDist2 = 1.f;
-
-    // loop over all 27 adjacent cells and find out min distance
-    for (int offsetIndex = 0; offsetIndex < 27; offsetIndex++) {
-        const ivec3 adjID = cellID + CELL_OFFSETS[offsetIndex];  // [-1..cellsPerAxis]^3
-        const ivec3 adjIDWrapped = (adjID + cellsPerAxisCoarse) % cellsPerAxisCoarse;  // [0..cellsPerAxis)^3
-        const int adjCellIndex = adjIDWrapped.x + cellsPerAxisCoarse * (adjIDWrapped.y + cellsPerAxisCoarse * adjIDWrapped.z);
-        vec3 adjPosition = worleyPointsCoarse[adjCellIndex].xyz;
-        // wrap point position in boundary cells
-        for (int comp = 0; comp < 3; comp++) {
-            if (adjID[comp] == -1) adjPosition[comp] -= 1.f;
-            else if (adjID[comp] == cellsPerAxisCoarse) adjPosition[comp] += 1.f;
-        }
-        const vec3 deltaPosition = positionWrapped - adjPosition;
-        minDist2 = min(minDist2, dot(deltaPosition, deltaPosition));
-    }
-
-    float density = sqrt(minDist2) * cellsPerAxisFine;
-    if (invertDensity)
-        density = 1.f - density;
-
-    return max(0.f, density - densityThreshold);
-}
-
-
 
 void main() {
     const vec3 rayDirWorld = normalize(positionWorld - rayOrigWorld);
@@ -154,53 +122,52 @@ void main() {
     tHit.x = max(0.f, tHit.x);
 
     // starting from the near intersection, march the ray forward and sample
-//    const float dt = stepSize * 0.01f;
     const float dt = (tHit.y - tHit.x) / numSteps;
     const vec3 ds = rayDirWorld * dt;
     vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
     glFragColor = vec4(0.f);
-//    for (float t = tHit.x; t < tHit.y; t += dt) {
     for (int step = 0; step < numSteps; step++) {
-        float sigma = sampleWorleyDensityFine(pointWorld) * densityMult;
-
-        sigma *= dt;
-
-        const vec3 rgb = vec3(0.f);
-
-        glFragColor.rgb += (1.f - glFragColor.a) * sigma * rgb;
-        glFragColor.a   += (1.f - glFragColor.a) * sigma;
-
-        if (glFragColor.a > 0.98)  // early stopping
-            break;
-
-        pointWorld += ds;
+        vec3 position = positionWorld * noiseScaling * .1f + noiseTranslate * .1f;
+//        float sigma = sampleWorleyDensityFine(pointWorld) * densityMult;
+//        sigma *= dt;
+//        const vec3 rgb = vec3(0.f);
+//        glFragColor.rgb += (1.f - glFragColor.a) * sigma * rgb;
+//        glFragColor.a   += (1.f - glFragColor.a) * sigma;
+//        if (glFragColor.a > 0.98)  // early stopping
+//            break;
+//        pointWorld += ds;
     }
 
 //    glFragColor.r = linear2srgb(glFragColor.r);
 //    glFragColor.g = linear2srgb(glFragColor.g);
 //    glFragColor.b = linear2srgb(glFragColor.b);
 
-//    float sigma = sampleWorleyDensityFine(positionWorld);
-//    float sigma = sampleWorleyDensityCoarse(positionWorld);
-//    float sigma = (sampleWorleyDensityFine(positionWorld) +
-//                   sampleWorleyDensityCoarse(positionWorld) ) * .5f;
-//    float sigma = (sampleWorleyDensityFine(positionWorld) *
-//                   sampleWorleyDensityCoarse(positionWorld) );
 
-//    if (invertDensity)
-//        sigma = 1.f - sigma;
-//    glFragColor.rgb = vec3(sigma * densityMult);
-//    glFragColor.a = 1.f;
+    // DEBUG
+    vec3 position = positionWorld * noiseScaling * .1f + noiseTranslate * .1f;
 
+    // show noise channels as BW images
+//    float sigma = texture(volumeHighRes, position).r;
+//    float sigma = texture(volumeHighRes, position).g;
+//    float sigma = texture(volumeHighRes, position).b;
+//    float sigma = texture(volumeHighRes, position).a;
+//    float sigma = texture(volumeLowRes, position).r;
+//    float sigma = texture(volumeLowRes, position).g;
+//    float sigma = texture(volumeLowRes, position).b;
+//    float sigma = texture(volumeLowRes, position).a;
+//    glFragColor = vec4(sigma);
 
-// DEBUG
-//    glFragColor = vec4(1.f);
-//    glFragColor = worleyPointsFine[256*12*256-1];
-//    glFragColor.a = 1.f - glFragColor.a;
-//    glFragColor = vec4(  max(normalize(rayDirCube), 0.f), 1.f);
-//    glFragColor = vec4(  max(rayDirWorld, 0.f), 1.f);
-//    glFragColor = vec4(vec3(exp(-tHit.x)), 1.f);
-//    glFragColor = vec4(vec3(dt), 1.f);
-//    glFragColor = vec4(1.f, 1.f, 1.f, 0.5f);
-//    glFragColor = vec4(texture(volume, vec3(.7f)).r);
+    // show noise channels as is
+    glFragColor.r = texture(volumeHighRes, position).r;
+    glFragColor.g = texture(volumeHighRes, position).g;
+    glFragColor.b = texture(volumeHighRes, position).b;
+    glFragColor.a = texture(volumeHighRes, position).a;
+
+    // final processing
+    if (invertDensity)
+        glFragColor = 1.f - glFragColor;
+    glFragColor *= densityMult;
+    glFragColor.a = 1.f;
+
 }
+

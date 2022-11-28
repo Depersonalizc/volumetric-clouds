@@ -10,19 +10,25 @@ struct Settings {
     glm::vec3 volumeScaling = glm::vec3(1.f);
     glm::vec3 volumeTranslate = glm::vec3(0.f);
 
+    int volumeResolutionHighRes = 256;
+    int volumeResolutionLowRes = 128;
+
     float noiseScaling = 1.f; // Worley noise scaling
     glm::vec3 noiseTranslate = glm::vec3(0.f);
 
     float densityMult = 1.f;  // density multiplier
+    float persistence = .7f;  // control blending of Worley noise of diff freq's
     float stepSize = 0.1f;    // world-space step size of rays
 
-    int cellsPerAxisFine = 256;
-    int cellsPerAxisCoarse = 128;
+    int cellsPerAxisFine = 32;
+    int cellsPerAxisMedium = 16;
+    int cellsPerAxisCoarse = 8;
     bool newFineArray = false;    // flag to tell if fine Worley array needs update
+    bool newMediumArray = false;  // flag to tell if medium Worley array needs update
     bool newCoarseArray = false;  // flag to tell if coarse Worley array needs update
 
-    double nearPlane = 0.001;
-    double farPlane = 10000.0;
+    double nearPlane = 0.01;
+    double farPlane = 100.0;
 
     bool invertDensity = true;
     bool kernelBasedFilter = false;

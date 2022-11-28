@@ -1,0 +1,88 @@
+#version 430 core
+
+#define WORLEY_MAX_CELLS_PER_AXIS 32
+#define WORLEY_MAX_NUM_POINTS WORLEY_MAX_CELLS_PER_AXIS*WORLEY_MAX_CELLS_PER_AXIS*WORLEY_MAX_CELLS_PER_AXIS
+#define WORLEY_FINE_OFFSET 0
+#define WORLEY_MEDIUM_OFFSET WORLEY_MAX_NUM_POINTS
+#define WORLEY_COARSE_OFFSET 2*WORLEY_MAX_NUM_POINTS
+
+layout(local_size_x = 1, local_size_y = 1, local_size_z = 1) in;
+
+/* Input: Worley points of three different frequencies,
+ * three layers of noise will be generated and compositied by persistence
+ */
+layout(std430, binding = 0) buffer worleyBuffer {
+    // |       FINE      |       MEDIUM        |               COARSE               |
+    // 0......WORLEY_MAX_NUM_POINTS..2*WORLEY_MAX_NUM_POINTS..3*WORLEY_MAX_NUM_POINTS
+    vec4 worleyPoints[3*WORLEY_MAX_NUM_POINTS];
+};
+uniform int cellsPerAxisFine, cellsPerAxisMedium, cellsPerAxisCoarse;
+
+uniform float persistence;
+uniform vec4 channelMask;
+
+
+/* Output: volume density texture written to */
+layout(rgba32f, binding = 0) uniform image3D volume;
+uniform int volumeResolution;
+
+
+const ivec3 CELL_OFFSETS[27] = {
+    ivec3(-1, -1, -1), ivec3(-1, -1, 0), ivec3(-1, -1, 1),
+    ivec3(-1,  0, -1), ivec3(-1,  0, 0), ivec3(-1,  0, 1),
+    ivec3(-1,  1, -1), ivec3(-1,  1, 0), ivec3(-1,  1, 1),
+    ivec3( 0, -1, -1), ivec3( 0, -1, 0), ivec3( 0, -1, 1),
+    ivec3( 0,  0, -1), ivec3( 0,  0, 0), ivec3( 0,  0, 1),
+    ivec3( 0,  1, -1), ivec3( 0,  1, 0), ivec3( 0,  1, 1),
+    ivec3( 1, -1, -1), ivec3( 1, -1, 0), ivec3( 1, -1, 1),
+    ivec3( 1,  0, -1), ivec3( 1,  0, 0), ivec3( 1,  0, 1),
+    ivec3( 1,  1, -1), ivec3( 1,  1, 0), ivec3( 1,  1, 1),
+};
+
+float length2(vec3 v) { return dot(v, v); }
+
+// sample wrapped worley density at position in [0, 1]^3
+float sampleWorleyDensity(vec3 position, int offset, int cellsPerAxis) {
+    // [0, 1] in world-space <-> [0..cellsPerAxis) in volume space
+    const ivec3 cellID = ivec3(position * cellsPerAxis);  // [0..cellsPerAxis)^3
+
+    float minDist2 = 1.f;
+    // loop over all 27 adjacent cells and find out min distance
+    for (int offsetIndex = 0; offsetIndex < 27; offsetIndex++) {
+        const ivec3 adjID = cellID + CELL_OFFSETS[offsetIndex];  // [-1..cellsPerAxis]^3
+        const ivec3 adjIDWrapped = (adjID + cellsPerAxis) % cellsPerAxis;  // [0..cellsPerAxis)^3
+        const int adjCellIndex = adjIDWrapped.x + cellsPerAxis * (adjIDWrapped.y + cellsPerAxis * adjIDWrapped.z);
+        vec3 adjPosition = worleyPoints[offset + adjCellIndex].xyz;  // ignore w component
+        // wrap positions of boundary points back
+        for (int comp = 0; comp < 3; comp++) {
+            if (adjID[comp] == -1) adjPosition[comp] -= 1.f;
+            else if (adjID[comp] == cellsPerAxis) adjPosition[comp] += 1.f;
+        }
+        const float dist2 = length2(position - adjPosition);
+        minDist2 = min(minDist2, dist2);
+    }
+
+    float density = sqrt(minDist2) * cellsPerAxis;  // roughly 0 ~ 1
+    return density;
+}
+
+
+void main() {
+    const ivec3 voxelID = ivec3(gl_GlobalInvocationID);
+    const vec3 position = voxelID / float(volumeResolution);  // center of the voxel
+
+    // sum and weight three layers of density
+    const float densityFine   = sampleWorleyDensity(position, WORLEY_FINE_OFFSET  , cellsPerAxisFine  );
+    const float densityMedium = sampleWorleyDensity(position, WORLEY_MEDIUM_OFFSET, cellsPerAxisMedium);
+    const float densityCoarse = sampleWorleyDensity(position, WORLEY_COARSE_OFFSET, cellsPerAxisCoarse);
+    float densityWeighted = densityCoarse
+                          + densityMedium * persistence
+                          + densityFine   * persistence * persistence;
+    densityWeighted /= (1.f + persistence + persistence * persistence);
+
+    // write to volume texture in the channel selected by channelMask
+    vec4 oldDensity = imageLoad(volume, voxelID);
+    vec4 newDensity = oldDensity * (1.f - channelMask) + densityWeighted * channelMask;
+    imageStore(volume, voxelID, newDensity);
+}
+

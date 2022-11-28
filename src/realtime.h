@@ -21,14 +21,11 @@ constexpr float cube[] = {
     .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, .5f, .5f, -.5f, .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, -.5f, -.5f, -.5f, -.5f,
     .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, -.5f, -.5f, -.5f, -.5f, -.5f
 };
-
 constexpr auto szVec3() { return sizeof(GLfloat) * 3; }
 constexpr auto szVec4() { return sizeof(GLfloat) * 4; }
 
-constexpr auto WORLEY_FINE_MAX_CELLS_PER_AXIS = 256;
-constexpr auto WORLEY_COARSE_MAX_CELLS_PER_AXIS = 128;
-constexpr auto WORLEY_FINE_MAX_POINTS = 256*256*256;
-constexpr auto WORLEY_COARSE_MAX_POINTS = 128*128*128;
+constexpr auto WORLEY_MAX_CELLS_PER_AXIS = 32;
+constexpr auto WORLEY_MAX_NUM_POINTS = WORLEY_MAX_CELLS_PER_AXIS * WORLEY_MAX_CELLS_PER_AXIS * WORLEY_MAX_CELLS_PER_AXIS;
 
 
 class MainWindow;
@@ -57,40 +54,21 @@ private:
     void mouseMoveEvent(QMouseEvent *event) override;
     void timerEvent(QTimerEvent *event) override;
 
-
-    // added
-//    static constexpr float cube[] = {
-//        1.f, 1.f, 0.f,
-//        0.f, 1.f, 0.f,
-//        1.f, 1.f, 1.f,
-//        0.f, 1.f, 1.f,
-//        0.f, 0.f, 1.f,
-//        0.f, 1.f, 0.f,
-//        0.f, 0.f, 0.f,
-//        1.f, 1.f, 0.f,
-//        1.f, 0.f, 0.f,
-//        1.f, 1.f, 1.f,
-//        1.f, 0.f, 1.f,
-//        0.f, 0.f, 1.f,
-//        1.f, 0.f, 0.f,
-//        0.f, 0.f, 0.f
-//    };
-
     GLuint vbo, vao;
-    GLuint ssboWorleyCoarse, ssboWorleyFine;  // shader storage buffer for worley points
-//    GLuint volTexture;
+    GLuint ssboWorley;
+//    GLuint ssboWorleyCoarse, ssboWorleyMedium, ssboWorleyFine;  // shader storage buffer for worley points
+    GLuint volumeTexHighRes, volumeTexLowRes;
 
-    void glClearScreen() const { glClearColor(.5f, .5f, .5f, 1.f); }
     static void glUnbindVBO() { glBindBuffer(GL_ARRAY_BUFFER, 0); }
     static void glUnbindVAO() { glBindVertexArray(0); }
     static void glUnbindSSBO() { glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); }
     static void glUnbind() { glUnbindVBO(); glUnbindVAO(); glUnbindSSBO(); }
 
-    void setUpShader(const char *vertshaderPath, const char *fragShaderPath);
+    void updateWorleyPoints();
     void setUpVolume();
     void drawVolume();
 
-    GLuint m_shader;                             // Stores id for shader program
+    GLuint m_shader, m_worleyShader;             // Stores id for shader programs
     Camera m_camera;
     bool glInitialized = false;
 
