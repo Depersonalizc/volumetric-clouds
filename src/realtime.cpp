@@ -18,9 +18,9 @@
 void Realtime::updateWorleyPoints() {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboWorley);
     {
-        auto worleyPointsFine = Worley::createWorleyPointArray3D(settings.cellsPerAxisFine);
-        auto worleyPointsMedium = Worley::createWorleyPointArray3D(settings.cellsPerAxisMedium);
-        auto worleyPointsCoarse = Worley::createWorleyPointArray3D(settings.cellsPerAxisCoarse);
+        auto worleyPointsFine = Worley::createWorleyPointArray3D(settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisFine);
+        auto worleyPointsMedium = Worley::createWorleyPointArray3D(settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisMedium);
+        auto worleyPointsCoarse = Worley::createWorleyPointArray3D(settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisCoarse);
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, worleyPointsFine.size()*szVec4(), worleyPointsFine.data());
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, WORLEY_MAX_NUM_POINTS*szVec4(), worleyPointsMedium.size()*szVec4(), worleyPointsMedium.data());
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, 2*WORLEY_MAX_NUM_POINTS*szVec4(), worleyPointsCoarse.size()*szVec4(), worleyPointsCoarse.data());
@@ -146,10 +146,10 @@ void Realtime::initializeGL() {
     /* Pass uniforms to compute shader */
     glUseProgram(m_worleyShader);
     {
-        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), settings.cellsPerAxisFine);
-        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), settings.cellsPerAxisMedium);
-        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), settings.cellsPerAxisCoarse);
-        glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), settings.persistence);
+        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisFine);
+        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisMedium);
+        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisCoarse);
+        glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), settings.persistence_low);
     }
 
     // Compute worley noise 3D textures
@@ -176,13 +176,13 @@ void Realtime::initializeGL() {
     glUseProgram(m_shader);
     {
         glUniform1f(glGetUniformLocation(m_shader, "stepSize"), settings.stepSize);
-        glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult);
+        glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult_low);
         glUniform1i(glGetUniformLocation(m_shader, "invertDensity"), settings.invertDensity);
 
         glUniform3fv(glGetUniformLocation(m_shader, "volumeScaling"), 1, glm::value_ptr(settings.volumeScaling));
         glUniform3fv(glGetUniformLocation(m_shader, "volumeTranslate"), 1, glm::value_ptr(settings.volumeTranslate));
-        glUniform1f(glGetUniformLocation(m_shader , "noiseScaling"), settings.noiseScaling);
-        glUniform3fv(glGetUniformLocation(m_shader, "noiseTranslate"), 1, glm::value_ptr(settings.noiseTranslate));
+        glUniform1f(glGetUniformLocation(m_shader , "noiseScaling"), settings.noiseScaling_low);
+        glUniform3fv(glGetUniformLocation(m_shader, "noiseTranslate"), 1, glm::value_ptr(settings.noiseTranslate_low));
 
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
         glUniform3fv(glGetUniformLocation(m_shader, "rayOrigWorld"), 1, glm::value_ptr(m_camera.getPos()));
@@ -230,28 +230,28 @@ void Realtime::settingsChanged() {
     glUseProgram(m_shader);
     // update volume rendering params
     glUniform1f(glGetUniformLocation(m_shader, "stepSize"), settings.stepSize);
-    glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult);
+    glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult_low);
     glUniform1i(glGetUniformLocation(m_shader, "invertDensity"), settings.invertDensity);
-    glUniform1f(glGetUniformLocation(m_shader, "noiseScaling"), settings.noiseScaling);
-    glUniform3fv(glGetUniformLocation(m_shader, "noiseTranslate"), 1, glm::value_ptr(settings.noiseTranslate));
+    glUniform1f(glGetUniformLocation(m_shader, "noiseScaling"), settings.noiseScaling_low);
+    glUniform3fv(glGetUniformLocation(m_shader, "noiseTranslate"), 1, glm::value_ptr(settings.noiseTranslate_low));
     glUniform3fv(glGetUniformLocation(m_shader, "volumeScaling"), 1, glm::value_ptr(settings.volumeScaling));
     glUniform3fv(glGetUniformLocation(m_shader, "volumeTranslate"), 1, glm::value_ptr(settings.volumeTranslate));
 
     glUseProgram(m_worleyShader);
-    glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), settings.persistence);
+    glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), settings.persistence_low);
 
     auto newArray = settings.newFineArray || settings.newMediumArray || settings.newCoarseArray;
     if (newArray) {
         if (settings.newFineArray) {
-            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), settings.cellsPerAxisFine);
+            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisFine);
             settings.newFineArray = false;
         }
         if (settings.newMediumArray) {
-            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), settings.cellsPerAxisMedium);
+            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisMedium);
             settings.newMediumArray = false;
         }
         if (settings.newCoarseArray) {
-            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), settings.cellsPerAxisCoarse);
+            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisCoarse);
             settings.newCoarseArray = false;
         }
 

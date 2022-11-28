@@ -450,13 +450,13 @@ void MainWindow::onUploadFile() {
 void MainWindow::onValChangeP1Box(double newValue) {
     p1Slider->setValue(int(newValue*10.f));
     p1Box->setValue(newValue);
-    settings.densityMult = p1Box->value();
+    settings.densityMult_low = p1Box->value();
     realtime->settingsChanged();
 }
 void MainWindow::onValChangeP1Slider(int newValue) {
     p1Slider->setValue(newValue);
     p1Box->setValue(newValue/10.f);
-    settings.densityMult = p1Box->value();
+    settings.densityMult_low = p1Box->value();
     realtime->settingsChanged();
 }
 
@@ -478,7 +478,7 @@ void MainWindow::onValChangeStepBox(double newValue) {
 void MainWindow::onValChangeCellsFine(int newValue) {
     cellsFineSlider->setValue(newValue);
     cellsFineBox->setValue(newValue);
-    settings.cellsPerAxisFine = cellsFineBox->value();
+    settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisFine = cellsFineBox->value();
     settings.newFineArray = true;  // tell settingsChanged to update fine array
     realtime->settingsChanged();
 }
@@ -492,7 +492,7 @@ void MainWindow::onValChangeCellsFine(int newValue) {
 void MainWindow::onValChangeCellsCoarse(int newValue) {
     cellsCoarseSlider->setValue(newValue);
     cellsCoarseBox->setValue(newValue);
-    settings.cellsPerAxisCoarse = cellsCoarseBox->value();
+    settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisCoarse = cellsCoarseBox->value();
     settings.newCoarseArray = true;  // tell settingsChanged to update coarse array
     realtime->settingsChanged();
 }
@@ -589,42 +589,42 @@ void MainWindow::onValChangeScalezSlider(int newValue) {
 void MainWindow::onValChangeNoiseTransxBox(double newValue) {
     noiseTransxSlider->setValue(int(newValue*10.f));
     noiseTransxBox->setValue(newValue);
-    settings.noiseTranslate.x = noiseTransxBox->value();
+    settings.noiseTranslate_low.x = noiseTransxBox->value();
     realtime->settingsChanged();
 }
 
 void MainWindow::onValChangeNoiseTransxSlider(int newValue) {
     noiseTransxSlider->setValue(newValue);
     noiseTransxBox->setValue(newValue/10.f);
-    settings.noiseTranslate.x = noiseTransxBox->value();
+    settings.noiseTranslate_low.x = noiseTransxBox->value();
     realtime->settingsChanged();
 }
 
 void MainWindow::onValChangeNoiseTransyBox(double newValue) {
     noiseTransySlider->setValue(int(newValue*10.f));
     noiseTransyBox->setValue(newValue);
-    settings.noiseTranslate.y = noiseTransyBox->value();
+    settings.noiseTranslate_low.y = noiseTransyBox->value();
     realtime->settingsChanged();
 }
 
 void MainWindow::onValChangeNoiseTransySlider(int newValue) {
     noiseTransySlider->setValue(newValue);
     noiseTransyBox->setValue(newValue/10.f);
-    settings.noiseTranslate.y = noiseTransyBox->value();
+    settings.noiseTranslate_low.y = noiseTransyBox->value();
     realtime->settingsChanged();
 }
 
 void MainWindow::onValChangeNoiseTranszBox(double newValue) {
     noiseTranszSlider->setValue(int(newValue*10.f));
     noiseTranszBox->setValue(newValue);
-    settings.noiseTranslate.z = noiseTranszBox->value();
+    settings.noiseTranslate_low.z = noiseTranszBox->value();
     realtime->settingsChanged();
 }
 
 void MainWindow::onValChangeNoiseTranszSlider(int newValue) {
     noiseTranszSlider->setValue(newValue);
     noiseTranszBox->setValue(newValue/10.f);
-    settings.noiseTranslate.z = noiseTranszBox->value();
+    settings.noiseTranslate_low.z = noiseTranszBox->value();
     realtime->settingsChanged();
 }
 
@@ -633,13 +633,13 @@ void MainWindow::onValChangeNoiseTranszSlider(int newValue) {
 void MainWindow::onValChangeNoiseScaleBox(double newValue) {
     noiseScaleSlider->setValue(int(newValue*10.f));
     noiseScaleBox->setValue(newValue);
-    settings.noiseScaling = noiseScaleBox->value();
+    settings.noiseScaling_low = noiseScaleBox->value();
     realtime->settingsChanged();
 }
 void MainWindow::onValChangeNoiseScaleSlider(int newValue) {
     noiseScaleSlider->setValue(newValue);
     noiseScaleBox->setValue(newValue/10.f);
-    settings.noiseScaling = noiseScaleBox->value();
+    settings.noiseScaling_low = noiseScaleBox->value();
     realtime->settingsChanged();
 }
 
