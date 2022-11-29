@@ -15,12 +15,12 @@
 #include "utils/debug.h"
 
 
-void Realtime::updateWorleyPoints() {
+void Realtime::updateWorleyPoints(const WorleyPointsParams &worleyPointsParams) {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, ssboWorley);
     {
-        auto worleyPointsFine = Worley::createWorleyPointArray3D(settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisFine);
-        auto worleyPointsMedium = Worley::createWorleyPointArray3D(settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisMedium);
-        auto worleyPointsCoarse = Worley::createWorleyPointArray3D(settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisCoarse);
+        auto worleyPointsFine = Worley::createWorleyPointArray3D(worleyPointsParams.cellsPerAxisFine);
+        auto worleyPointsMedium = Worley::createWorleyPointArray3D(worleyPointsParams.cellsPerAxisMedium);
+        auto worleyPointsCoarse = Worley::createWorleyPointArray3D(worleyPointsParams.cellsPerAxisCoarse);
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, 0, worleyPointsFine.size()*szVec4(), worleyPointsFine.data());
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, WORLEY_MAX_NUM_POINTS*szVec4(), worleyPointsMedium.size()*szVec4(), worleyPointsMedium.data());
         glBufferSubData(GL_SHADER_STORAGE_BUFFER, 2*WORLEY_MAX_NUM_POINTS*szVec4(), worleyPointsCoarse.size()*szVec4(), worleyPointsCoarse.data());
@@ -49,7 +49,7 @@ void Realtime::setUpVolume() {
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 
     // Volume textures (high and low res)
-    const auto &dimHiRes = settings.volumeResolutionHighRes;
+    const auto &dimHiRes = settings.hiResNoise.resolution;
     glGenTextures(1, &volumeTexHighRes);
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_3D, volumeTexHighRes);
@@ -60,7 +60,7 @@ void Realtime::setUpVolume() {
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, dimHiRes, dimHiRes, dimHiRes, 0, GL_RGBA, GL_FLOAT, nullptr);
 
-    const auto &dimLoRes = settings.volumeResolutionLowRes;
+    const auto &dimLoRes = settings.loResNoise.resolution;
     glGenTextures(1, &volumeTexLowRes);
     glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_3D, volumeTexLowRes);
@@ -143,31 +143,37 @@ void Realtime::initializeGL() {
     /* Set up default camera */
     m_camera = Camera(SceneCameraData(), size().width(), size().height(), settings.nearPlane, settings.farPlane);
 
-    /* Pass uniforms to compute shader */
-    glUseProgram(m_worleyShader);
-    {
-        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisFine);
-        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisMedium);
-        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisCoarse);
-        glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), settings.persistence_low);
-    }
+//    /* Pass uniforms to compute shader */
+//    glUseProgram(m_worleyShader);
+//    {
+//        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisFine);
+//        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisMedium);
+//        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisCoarse);
+//        glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), settings.persistence_low);
+//    }
 
     // Compute worley noise 3D textures
     glUseProgram(m_worleyShader);
     for (GLuint texSlot : {0, 1}) {  // high and low res volumes
-        const auto &volumeRes = texSlot == 0 ? settings.volumeResolutionHighRes : settings.volumeResolutionLowRes;
-        glUniform1i(glGetUniformLocation(m_worleyShader, "volumeResolution"), volumeRes);
+        // pass uniforms
+        const auto &noiseParams = texSlot == 0 ? settings.hiResNoise : settings.loResNoise;
+        glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), noiseParams.persistence);
+        glUniform1i(glGetUniformLocation(m_worleyShader, "volumeResolution"), noiseParams.resolution);
 
         const auto &volumeTex = texSlot == 0 ? volumeTexHighRes : volumeTexLowRes;
         glBindImageTexture(0, volumeTex, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-        for (const auto &channelMask : {glm::vec4(1.f, 0.f, 0.f, 0.f),      // R
-                                        glm::vec4(0.f, 1.f, 0.f, 0.f),      // G
-                                        glm::vec4(0.f, 0.f, 1.f, 0.f),      // B
-                                        glm::vec4(0.f, 0.f, 0.f, 1.f)}) {   // A
-            updateWorleyPoints();  // generate new worley points into SSBO
+        for (int channelIdx = 0; channelIdx < 4; channelIdx++) {
+            glm::vec4 channelMask(0.f);
+            channelMask[channelIdx] = 1.f;
             glUniform4fv(glGetUniformLocation(m_worleyShader, "channelMask"), 1, glm::value_ptr(channelMask));
-            glDispatchCompute(volumeRes, volumeRes, volumeRes);
+
+            const auto &worleyPointsParams = noiseParams.worleyPointsParams[channelIdx];
+            updateWorleyPoints(worleyPointsParams);  // generate new worley points into SSBO -> need to pass in channel cells per axis
+            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), worleyPointsParams.cellsPerAxisFine);
+            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), worleyPointsParams.cellsPerAxisMedium);
+            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), worleyPointsParams.cellsPerAxisCoarse);
+            glDispatchCompute(noiseParams.resolution, noiseParams.resolution, noiseParams.resolution);
             glMemoryBarrier(GL_ALL_BARRIER_BITS);
         }
     }
@@ -175,18 +181,31 @@ void Realtime::initializeGL() {
     /* Pass uniforms to default shader */
     glUseProgram(m_shader);
     {
-        glUniform1f(glGetUniformLocation(m_shader, "stepSize"), settings.stepSize);
-        glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult_low);
-        glUniform1i(glGetUniformLocation(m_shader, "invertDensity"), settings.invertDensity);
-
+        // Volume
         glUniform3fv(glGetUniformLocation(m_shader, "volumeScaling"), 1, glm::value_ptr(settings.volumeScaling));
         glUniform3fv(glGetUniformLocation(m_shader, "volumeTranslate"), 1, glm::value_ptr(settings.volumeTranslate));
-        glUniform1f(glGetUniformLocation(m_shader , "noiseScaling"), settings.noiseScaling_low);
-        glUniform3fv(glGetUniformLocation(m_shader, "noiseTranslate"), 1, glm::value_ptr(settings.noiseTranslate_low));
+        glUniform1i(glGetUniformLocation(m_shader, "numSteps"), settings.numSteps);
+//        glUniform1f(glGetUniformLocation(m_shader, "stepSize"), settings.stepSize);
 
+        // Noise
+        glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult);
+        glUniform1i(glGetUniformLocation(m_shader, "invertDensity"), settings.invertDensity);
+        // hi-res
+        glUniform1f(glGetUniformLocation(m_shader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
+        glUniform3fv(glGetUniformLocation(m_shader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
+        glUniform4fv(glGetUniformLocation(m_shader, "hiResChannelWeights"), 1, glm::value_ptr(settings.hiResNoise.channelWeights));
+        glUniform1f(glGetUniformLocation(m_shader , "hiResDensityOffset"), settings.hiResNoise.densityOffset);
+        // lo-res
+        glUniform1f(glGetUniformLocation(m_shader , "loResNoiseScaling"), settings.loResNoise.scaling);
+        glUniform3fv(glGetUniformLocation(m_shader, "loResNoiseTranslate"), 1, glm::value_ptr(settings.loResNoise.translate));
+        glUniform4fv(glGetUniformLocation(m_shader, "loResChannelWeights"), 1, glm::value_ptr(settings.loResNoise.channelWeights));
+        glUniform1f(glGetUniformLocation(m_shader , "loResDensityWeight"), settings.loResNoise.densityWeight);
+
+        // Camera
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
         glUniform3fv(glGetUniformLocation(m_shader, "rayOrigWorld"), 1, glm::value_ptr(m_camera.getPos()));
 
+        // ?
         glUniform1i(glGetUniformLocation(m_shader, "numLights"), 0);
     }
     glUseProgram(0);
@@ -228,48 +247,64 @@ void Realtime::settingsChanged() {
     makeCurrent();
 
     glUseProgram(m_shader);
-    // update volume rendering params
-    glUniform1f(glGetUniformLocation(m_shader, "stepSize"), settings.stepSize);
-    glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult_low);
-    glUniform1i(glGetUniformLocation(m_shader, "invertDensity"), settings.invertDensity);
-    glUniform1f(glGetUniformLocation(m_shader, "noiseScaling"), settings.noiseScaling_low);
-    glUniform3fv(glGetUniformLocation(m_shader, "noiseTranslate"), 1, glm::value_ptr(settings.noiseTranslate_low));
+    // Volume
     glUniform3fv(glGetUniformLocation(m_shader, "volumeScaling"), 1, glm::value_ptr(settings.volumeScaling));
     glUniform3fv(glGetUniformLocation(m_shader, "volumeTranslate"), 1, glm::value_ptr(settings.volumeTranslate));
+    glUniform1i(glGetUniformLocation(m_shader, "numSteps"), settings.numSteps);
+//        glUniform1f(glGetUniformLocation(m_shader, "stepSize"), settings.stepSize);
+
+    // Noise
+    glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult);
+    glUniform1i(glGetUniformLocation(m_shader, "invertDensity"), settings.invertDensity);
+    // hi-res
+    glUniform1f(glGetUniformLocation(m_shader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
+    glUniform3fv(glGetUniformLocation(m_shader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
+    glUniform4fv(glGetUniformLocation(m_shader, "hiResChannelWeights"), 1, glm::value_ptr(settings.hiResNoise.channelWeights));
+    glUniform1f(glGetUniformLocation(m_shader , "hiResDensityOffset"), settings.hiResNoise.densityOffset);
+    // lo-res
+    glUniform1f(glGetUniformLocation(m_shader , "loResNoiseScaling"), settings.loResNoise.scaling);
+    glUniform3fv(glGetUniformLocation(m_shader, "loResNoiseTranslate"), 1, glm::value_ptr(settings.loResNoise.translate));
+    glUniform4fv(glGetUniformLocation(m_shader, "loResChannelWeights"), 1, glm::value_ptr(settings.loResNoise.channelWeights));
+    glUniform1f(glGetUniformLocation(m_shader , "loResDensityWeight"), settings.loResNoise.densityWeight);
+
 
     glUseProgram(m_worleyShader);
-    glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), settings.persistence_low);
-
+    // TODO: recompute both hi and lo res textures if persistence changes
+    //       recompute either hi or lo if
+    //       - resolution, or
+    //       - cellsPerAxis____ of any channel changes
     auto newArray = settings.newFineArray || settings.newMediumArray || settings.newCoarseArray;
     if (newArray) {
         if (settings.newFineArray) {
-            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisFine);
             settings.newFineArray = false;
         }
         if (settings.newMediumArray) {
-            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisMedium);
             settings.newMediumArray = false;
         }
         if (settings.newCoarseArray) {
-            glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisCoarse);
             settings.newCoarseArray = false;
         }
 
-        // TODO: dispatch compute shader again
         for (GLuint texSlot : {0, 1}) {  // high and low res volumes
-            const auto &volumeRes = texSlot == 0 ? settings.volumeResolutionHighRes : settings.volumeResolutionLowRes;
-            glUniform1i(glGetUniformLocation(m_worleyShader, "volumeResolution"), volumeRes);
+            // pass uniforms
+            const auto &noiseParams = texSlot == 0 ? settings.hiResNoise : settings.loResNoise;
+            glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), noiseParams.persistence);
+            glUniform1i(glGetUniformLocation(m_worleyShader, "volumeResolution"), noiseParams.resolution);
 
             const auto &volumeTex = texSlot == 0 ? volumeTexHighRes : volumeTexLowRes;
             glBindImageTexture(0, volumeTex, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-            for (const auto &channelMask : {glm::vec4(1.f, 0.f, 0.f, 0.f),      // R
-                                            glm::vec4(0.f, 1.f, 0.f, 0.f),      // G
-                                            glm::vec4(0.f, 0.f, 1.f, 0.f),      // B
-                                            glm::vec4(0.f, 0.f, 0.f, 1.f)}) {   // A
-                updateWorleyPoints();  // generate new worley points into SSBO
+            for (int channelIdx = 0; channelIdx < 4; channelIdx++) {
+                glm::vec4 channelMask(0.f);
+                channelMask[channelIdx] = 1.f;
                 glUniform4fv(glGetUniformLocation(m_worleyShader, "channelMask"), 1, glm::value_ptr(channelMask));
-                glDispatchCompute(volumeRes, volumeRes, volumeRes);
+
+                const auto &worleyPointsParams = noiseParams.worleyPointsParams[channelIdx];
+                updateWorleyPoints(worleyPointsParams);  // generate new worley points into SSBO
+                glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), worleyPointsParams.cellsPerAxisFine);
+                glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), worleyPointsParams.cellsPerAxisMedium);
+                glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), worleyPointsParams.cellsPerAxisCoarse);
+                glDispatchCompute(noiseParams.resolution, noiseParams.resolution, noiseParams.resolution);
                 glMemoryBarrier(GL_ALL_BARRIER_BITS);
             }
         }

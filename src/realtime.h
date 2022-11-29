@@ -15,6 +15,7 @@
 #include <QTimer>
 
 #include "camera/camera.h"
+#include "settings.h"
 
 
 constexpr float cube[] = {
@@ -64,7 +65,7 @@ private:
     static void glUnbindSSBO() { glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); }
     static void glUnbind() { glUnbindVBO(); glUnbindVAO(); glUnbindSSBO(); }
 
-    void updateWorleyPoints();
+    void updateWorleyPoints(const WorleyPointsParams &worleyPointsParams);
     void setUpVolume();
     void drawVolume();
 

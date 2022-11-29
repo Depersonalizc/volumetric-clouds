@@ -70,28 +70,31 @@ struct LightData {
     vec3 color;
 };
 
-// rendering params, updated when user changes settings
-uniform bool invertDensity;
-uniform float densityMult;
-//uniform float stepSize;
-uniform int numSteps = 25;
-
-
-// Params for high resolution noise
-uniform vec3 hiResNoiseScaling = vec3(1.f), hiResNoiseTranslate = vec3(0.f);  // noise transforms
-uniform vec4 hiResChannelWeights = vec4(1.f);  // how to aggregate RGBA channels
-uniform float hiResDensityOffset = -0.1f;              // controls overall cloud coverage
-
-// Params for low resolution noise
-uniform vec3 loResNoiseScaling = vec3(1.f), loResNoiseTranslate = vec3(0.f);  // noise transforms
-uniform vec4 loResChannelWeights = vec4(1.f);  // how to aggregate RGBA channels
-uniform float loResNoiseWeight = 0.5f;                // relative weight of lo-res noise about hi-res
-
 // volume transforms for computing ray-box intersection
 uniform vec3 volumeScaling, volumeTranslate;
 
 // ray origin, updated when user moves camera
 uniform vec3 rayOrigWorld;
+
+// rendering params, updated when user changes settings
+uniform bool invertDensity;
+uniform float densityMult;
+//uniform float stepSize;
+uniform int numSteps;
+
+
+// Params for high resolution noise
+uniform float hiResNoiseScaling;
+uniform vec3 hiResNoiseTranslate;  // noise transforms
+uniform vec4 hiResChannelWeights;  // how to aggregate RGBA channels
+uniform float hiResDensityOffset;  // controls overall cloud coverage
+
+// Params for low resolution noise
+uniform float loResNoiseScaling;
+uniform vec3 loResNoiseTranslate;  // noise transforms
+uniform vec4 loResChannelWeights;  // how to aggregate RGBA channels
+uniform float loResDensityWeight;  // relative weight of lo-res noise about hi-res
+
 
 // light uniforms, not used rn
 uniform int numLights;
@@ -151,7 +154,7 @@ float sampleDensity(vec3 position) {
     // Erosion: subtract low-res detail from hi-res noise, weighted such that
     // the erosion is more pronounced near the boudary of the cloud (low hiResDensity)
     float erosionWeight = getErosionWeightCubic(hiResDensity);
-    float density = hiResDensityWithOffset - erosionWeight*loResNoiseWeight * loResDensity;
+    float density = hiResDensityWithOffset - erosionWeight*loResDensityWeight * loResDensity;
     return max(density * densityMult, 0.f);
 }
 

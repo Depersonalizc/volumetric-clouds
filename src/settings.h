@@ -4,78 +4,74 @@
 #include <string>
 #include <glm/glm.hpp>
 
+struct WorleyPointsParams {
+    int cellsPerAxisFine;
+    int cellsPerAxisMedium;
+    int cellsPerAxisCoarse;
+};
+
+struct NoiseParams {
+    int resolution;                            // texture resolution
+    WorleyPointsParams worleyPointsParams[4];  // overlaied frequencies for each of RGBA channel of noise texture
+    float scaling;
+    glm::vec3 translate;
+    glm::vec4 channelWeights;                  // weights to combine RGBA channels
+    float persistence;                         // weight to combine fine/medium/coarse Worley noises
+    float densityOffset;                       // for low-res shape noise
+    float densityWeight;                       // for hi-res detail noise
+};
+
 struct Settings {
     std::string volumeFilePath;
 
+    // Volume
     glm::vec3 volumeScaling = glm::vec3(1.f);
     glm::vec3 volumeTranslate = glm::vec3(0.f);
+    int numSteps = 25;
+    float stepSize = 0.1f;    // world-space step size of rays, not using now
 
-    int volumeResolutionHighRes = 128;
-    int volumeResolutionLowRes = 64;
+    // Noise
+    float densityMult = 1.f;  // density multiplier
+    bool invertDensity = true;
 
-    float stepSize = 0.1f;    // world-space step size of rays
+    NoiseParams hiResNoise = {
+        .resolution = 128,
+        .worleyPointsParams = {
+            WorleyPointsParams{6, 4, 2},    // R
+            WorleyPointsParams{12, 8, 6},   // G
+            WorleyPointsParams{24, 12, 8},  // B
+            WorleyPointsParams{32, 24, 12}, // A
+        },
+        .scaling = 1.f,
+        .translate = glm::vec3(0.f),
+        .channelWeights = glm::vec4(4.f, 1.f, 1.f, 1.f),
+        .persistence = 0.5f,
+        .densityOffset = -0.1f,
+    };
+
+    NoiseParams loResNoise = {
+        .resolution = 32,
+        .worleyPointsParams = {
+            WorleyPointsParams{6, 4, 2},    // R
+            WorleyPointsParams{12, 8, 6},   // G
+            WorleyPointsParams{24, 12, 8},  // B
+            WorleyPointsParams{32, 24, 12}, // A
+        },
+        .scaling = 40.f,
+        .translate = glm::vec3(0.f),
+        .channelWeights = glm::vec4(1.f),
+        .persistence = 0.8f,
+        .densityWeight = 2.f,
+    };
 
     bool newFineArray = false;    // flag to tell if fine Worley array needs update
     bool newMediumArray = false;  // flag to tell if medium Worley array needs update
     bool newCoarseArray = false;  // flag to tell if coarse Worley array needs update
 
+    // Camera
     double nearPlane = 0.01;
     double farPlane = 100.0;
 
-    // Channel weights: used in the combination of RGBA channels
-    glm::vec4 channelWeight_high = glm::vec4(0.25f);
-    glm::vec4 channelWeight_low = glm::vec4(0.25f);
-
-    // Different parameters for the 4 different channels
-//    int cellsPerAxisFine = 32;
-//    int cellsPerAxisMedium = 16;
-//    int cellsPerAxisCoarse = 8;
-
-    struct CellsPerAxis_low {
-        int cellsPerAxisFine = 32;
-        int cellsPerAxisMedium = 16;
-        int cellsPerAxisCoarse = 8;
-    };
-    CellsPerAxis_low cellsPerAxis_low;
-
-    struct CellsPerAxisAll_low {
-        CellsPerAxis_low cellsPerAxisR;
-        CellsPerAxis_low cellsPerAxisG;
-        CellsPerAxis_low cellsPerAxisB;
-        CellsPerAxis_low cellsPerAxisA;
-
-    };
-    CellsPerAxisAll_low cellsPerAxisAll_low;
-
-    struct CellsPerAxis_high {
-        int cellsPerAxisFine = 32;
-        int cellsPerAxisMedium = 16;
-        int CellsPerAxisCoarse = 8;
-    };
-    CellsPerAxis_high cellsPerAxis_high;
-
-    struct CellsPerAxisAll_high {
-        CellsPerAxis_low cellsPerAxisR;
-        CellsPerAxis_low cellsPerAxisG;
-        CellsPerAxis_low cellsPerAxisB;
-        CellsPerAxis_low cellsPerAxisA;
-
-    };
-    CellsPerAxisAll_high cellsPerAxisAll_high;
-
-
-    float noiseScaling_low = 1.f; // Worley noise scaling
-    glm::vec3 noiseTranslate_low = glm::vec3(0.f);
-    float densityMult_low = 1.f;  // density multiplier
-    float persistence_low = .7f;  // control blending of Worley noise of diff freq's
-
-    float noiseScaling_high = 1.f; // Worley noise scaling
-    glm::vec3 noiseTranslate_high = glm::vec3(0.f);
-    float densityMult_high = 1.f;  // density multiplier
-    float persistence_high = .7f;  // control blending of Worley noise of diff freq's
-
-
-    bool invertDensity = true;
     bool kernelBasedFilter = false;
     bool extraCredit1 = false;
     bool extraCredit2 = false;
