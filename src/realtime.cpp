@@ -205,8 +205,9 @@ void Realtime::initializeGL() {
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
         glUniform3fv(glGetUniformLocation(m_shader, "rayOrigWorld"), 1, glm::value_ptr(m_camera.getPos()));
 
-        // ?
-        glUniform1i(glGetUniformLocation(m_shader, "numLights"), 0);
+        // Lighting
+//        glUniform1i(glGetUniformLocation(m_shader, "numLights"), 0);
+        glUniform4fv(glGetUniformLocation(m_shader, "phaseParams"), 1, glm::value_ptr(glm::vec4(0.83f, 0.3f, 0.8f, 0.15f))); // TODO: make it adjustable hyperparameters
     }
     glUseProgram(0);
 

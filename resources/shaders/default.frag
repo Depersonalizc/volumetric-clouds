@@ -1,5 +1,6 @@
 #version 430 core
 
+#define EARLY_STOP_THRESHOLD 0.01f
 //#define WORLEY_MAX_CELLS_PER_AXIS 32
 //#define WORLEY_MAX_NUM_POINTS WORLEY_MAX_CELLS_PER_AXIS*WORLEY_MAX_CELLS_PER_AXIS*WORLEY_MAX_CELLS_PER_AXIS
 //#define WORLEY_FINE_OFFSET 0
@@ -63,13 +64,6 @@ layout(binding = 1) uniform sampler3D volumeLowRes;
 in vec3 positionWorld;
 out vec4 glFragColor;
 
-struct LightData {
-    int type;
-    vec4 pos;
-    vec3 dir;
-    vec3 color;
-};
-
 // volume transforms for computing ray-box intersection
 uniform vec3 volumeScaling, volumeTranslate;
 
@@ -97,8 +91,17 @@ uniform float loResDensityWeight;  // relative weight of lo-res noise about hi-r
 
 
 // light uniforms, not used rn
-uniform int numLights;
-uniform LightData lights[10];
+struct LightData {
+    int type;
+    vec4 pos;
+    vec3 dir;  // towards light source
+    vec3 color;
+};
+//uniform int numLights;
+uniform LightData lightSource;
+//uniform LightData lights[10];
+uniform vec4 phaseParams;  // HG
+const LightData testLight = LightData(0, vec4(0), vec3(0,0,-1), vec3(1,1,1));
 
 
 // normalized v so that dot(v, 1) = 1
@@ -131,6 +134,20 @@ float getErosionWeightCubic(float density) {
     return (1.f - density) * (1.f - density) * (1.f - density);
 }
 
+// Henyey-Greenstein Phase Function
+// inParam: float angle, float phaseParam (forwardScattering, backwardScattering) --> this is passed in hyperparam
+// outParam: float phaseVal
+float henyeyGreenstein(float a, float g) {
+    float g2 = g * g;
+    return (1-g2) / (4*3.14*pow(1+g2-2*g*a, 1.5));
+}
+
+float phase(float a) {
+    float blend = 0.5;
+    float hgBlend = henyeyGreenstein(a, phaseParams[0]) * (1-blend) + henyeyGreenstein(a, phaseParams[1]) * blend;
+    return phaseParams[2] + hgBlend * phaseParams[3];
+}
+
 float sampleDensity(vec3 position) {
     // sample high-res details
     vec3 hiResPosition = position * hiResNoiseScaling * .1f + hiResNoiseTranslate * .1f;
@@ -158,6 +175,10 @@ float sampleDensity(vec3 position) {
     return max(density * densityMult, 0.f);
 }
 
+float rayMarch(vec3 start) {
+    return 1.f;
+}
+
 
 void main() {
     const vec3 rayDirWorld = normalize(positionWorld - rayOrigWorld);
@@ -170,24 +191,36 @@ void main() {
     const float dt = (tHit.y - tHit.x) / numSteps;
     const vec3 ds = rayDirWorld * dt;
     vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
+
+    float lightEnergy = 0.f;
+    float transmittance = 1.f;
+    float cosAngle = dot(rayDirWorld, testLight.dir);
+    float phaseVal = phase(cosAngle);
     glFragColor = vec4(0.f);
+
     for (int step = 0; step < numSteps; step++) {
-//        vec3 position = positionWorld * noiseScaling * .1f + noiseTranslate * .1f;
-//        float sigma = sampleWorleyDensityFine(pointWorld) * densityMult;
-//        sigma *= dt;
-//        const vec3 rgb = vec3(0.f);
-//        glFragColor.rgb += (1.f - glFragColor.a) * sigma * rgb;
-//        glFragColor.a   += (1.f - glFragColor.a) * sigma;
-//        if (glFragColor.a > 0.98)  // early stopping
-//            break;
-//        pointWorld += ds;
+        float density = sampleDensity(pointWorld);
+
+        float lightTransmittance = rayMarch(pointWorld); // TODO: add ray to sun
+
+        lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
+        transmittance *= exp(-density * 0.75 * dt); // TODO: 0.75 is the lightAbsortionThroughCloud
+
+        if (transmittance < EARLY_STOP_THRESHOLD)
+            break;
+
+        pointWorld += ds;
     }
+
+    vec3 cloudColor = lightEnergy * testLight.color;
+    vec3 backgroundColor = vec3(.5f); // TODO: currently no background color contribute
+    glFragColor = vec4(cloudColor + transmittance * backgroundColor, 1.f);
 
 //    glFragColor.r = linear2srgb(glFragColor.r);
 //    glFragColor.g = linear2srgb(glFragColor.g);
 //    glFragColor.b = linear2srgb(glFragColor.b);
 
-    float sigma = sampleDensity(positionWorld);
+//    float sigma = sampleDensity(positionWorld);
 
 
     // DEBUG
@@ -201,7 +234,7 @@ void main() {
 //    float sigma = texture(volumeLowRes, position).g;
 //    float sigma = texture(volumeLowRes, position).b;
 //    float sigma = texture(volumeLowRes, position).a;
-    glFragColor = vec4(sigma);
+//    glFragColor = vec4(sigma);
 
     // show noise channels as is
 //    glFragColor = vec4(1.f);
@@ -214,7 +247,7 @@ void main() {
 //    if (invertDensity)
 //        glFragColor = 1.f - glFragColor;
 //    glFragColor *= densityMult;
-    glFragColor.a = 1.f;
+//    glFragColor.a = 1.f;
 
 }
 

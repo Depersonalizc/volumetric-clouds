@@ -46,7 +46,7 @@ struct Settings {
         .translate = glm::vec3(0.f),
         .channelWeights = glm::vec4(4.f, 1.f, 1.f, 1.f),
         .persistence = 0.5f,
-        .densityOffset = -0.1f,
+        .densityOffset = -0.3f,
     };
 
     NoiseParams loResNoise = {
