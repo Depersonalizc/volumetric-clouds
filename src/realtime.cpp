@@ -143,16 +143,7 @@ void Realtime::initializeGL() {
     /* Set up default camera */
     m_camera = Camera(SceneCameraData(), size().width(), size().height(), settings.nearPlane, settings.farPlane);
 
-//    /* Pass uniforms to compute shader */
-//    glUseProgram(m_worleyShader);
-//    {
-//        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisFine);
-//        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisMedium);
-//        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), settings.cellsPerAxisAll_low.cellsPerAxisR.cellsPerAxisCoarse);
-//        glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), settings.persistence_low);
-//    }
-
-    // Compute worley noise 3D textures
+    /* Compute worley noise 3D textures */
     glUseProgram(m_worleyShader);
     for (GLuint texSlot : {0, 1}) {  // high and low res volumes
         // pass uniforms
@@ -169,7 +160,7 @@ void Realtime::initializeGL() {
             glUniform4fv(glGetUniformLocation(m_worleyShader, "channelMask"), 1, glm::value_ptr(channelMask));
 
             const auto &worleyPointsParams = noiseParams.worleyPointsParams[channelIdx];
-            updateWorleyPoints(worleyPointsParams);  // generate new worley points into SSBO -> need to pass in channel cells per axis
+            updateWorleyPoints(worleyPointsParams);  // generate new worley points into SSBO
             glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), worleyPointsParams.cellsPerAxisFine);
             glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), worleyPointsParams.cellsPerAxisMedium);
             glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), worleyPointsParams.cellsPerAxisCoarse);
