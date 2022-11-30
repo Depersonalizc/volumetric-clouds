@@ -1,6 +1,8 @@
 #version 430 core
 
 #define EARLY_STOP_THRESHOLD 0.01f
+#define EARLY_STOP_LOG_THRESHOLD -4.6f
+
 //#define WORLEY_MAX_CELLS_PER_AXIS 32
 //#define WORLEY_MAX_NUM_POINTS WORLEY_MAX_CELLS_PER_AXIS*WORLEY_MAX_CELLS_PER_AXIS*WORLEY_MAX_CELLS_PER_AXIS
 //#define WORLEY_FINE_OFFSET 0
@@ -75,6 +77,7 @@ uniform bool invertDensity, gammaCorrect;
 uniform float densityMult;
 //uniform float stepSize;
 uniform int numSteps;
+uniform float minLightTransmittance = 0.01f;
 
 
 // Params for high resolution noise
@@ -101,7 +104,7 @@ struct LightData {
 uniform LightData lightSource;
 //uniform LightData lights[10];
 uniform vec4 phaseParams;  // HG
-const LightData testLight = LightData(0, vec4(0), vec3(-1,0,-1), vec3(1,1,1));
+const LightData testLight = LightData(0, vec4(0), vec3(0, -1, -0.3), vec3(1,0.1,0.5));
 
 
 // normalized v so that dot(v, 1) = 1
@@ -155,7 +158,7 @@ float phase(float a) {
 
 float sampleDensity(vec3 position) {
     // sample high-res details
-    vec3 hiResPosition = position * hiResNoiseScaling * .1f + hiResNoiseTranslate * .1f;
+    vec3 hiResPosition = position * hiResNoiseScaling * .1f + hiResNoiseTranslate;
     vec4 hiResNoise = texture(volumeHighRes, hiResPosition);
     float hiResDensity = dot( hiResNoise, normalizeL1(hiResChannelWeights) );
     if (invertDensity)
@@ -168,7 +171,7 @@ float sampleDensity(vec3 position) {
         return 0.f;
 
     // add in low-res details
-    vec3 loResPosition = position * loResNoiseScaling * .1f + loResNoiseTranslate * .1f;
+    vec3 loResPosition = position * loResNoiseScaling * .1f + loResNoiseTranslate;
     vec4 loResNoise = texture(volumeLowRes, loResPosition);
     float loResDensity = dot( loResNoise, normalizeL1(loResChannelWeights) );
     loResDensity = 1.f - loResDensity;  // invert the low-density by default
@@ -180,8 +183,29 @@ float sampleDensity(vec3 position) {
     return max(density * densityMult * 10.f, 0.f);
 }
 
-float rayMarch(vec3 start) {
-    return 1.f;
+// One-bounce ray marching to get light attenuation
+float rayMarch(vec3 rayOrig, vec3 rayDir) {
+    const int numStepsRecursive = numSteps / 4;
+    const vec2 tHit = intersectBox(rayOrig, rayDir);
+    const float tFar = max(0.f, tHit.y);
+    const float dt = tFar / numStepsRecursive;
+    const vec3 ds = rayDir * dt;
+
+    vec3 pointWorld = rayOrig;
+    float tau = 0.f;  // log(transmittance)
+    float t = 0.f;
+    for (float t = 0.f; t < tFar; t += dt) {
+        float density = sampleDensity(pointWorld);
+        tau -= density * dt; // TODO: 0.75 is the lightAbsortionThroughCloud
+        if (tau < EARLY_STOP_LOG_THRESHOLD)
+            break;
+        pointWorld += ds;
+    }
+    float transmittance = exp(tau);
+
+    return minLightTransmittance + transmittance * (1.f - minLightTransmittance);
+
+//    return 1.f;
 }
 
 
@@ -190,7 +214,7 @@ void main() {
     vec2 tHit = intersectBox(rayOrigWorld, rayDirWorld);
 
     // keep the near intersection in front in case camera is inside volume
-    tHit.x = max(0.f, tHit.x);
+    tHit.x = max(0.f, tHit.x) + 0.001f;
 
     // starting from the near intersection, march the ray forward and sample
     const float dt = (tHit.y - tHit.x) / numSteps;
@@ -199,15 +223,15 @@ void main() {
 
     float lightEnergy = 0.f;
     float transmittance = 1.f;
-    vec3 rayDirLight = normalize(testLight.dir);
+    vec3 rayDirLight = normalize(testLight.dir);  // towards the light
     float cosAngle = dot(rayDirWorld, rayDirLight);
-    float phaseVal = phase(cosAngle);
+    float phaseVal = phase(cosAngle);  // direction light only for now
     glFragColor = vec4(0.f);
 
     for (int step = 0; step < numSteps; step++) {
         float density = sampleDensity(pointWorld);
 
-        float lightTransmittance = rayMarch(pointWorld); // TODO: add ray to sun
+        float lightTransmittance = rayMarch(pointWorld, rayDirLight); // TODO: add raymarch to light source
 
         lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
         transmittance *= exp(-density * 0.75 * dt); // TODO: 0.75 is the lightAbsortionThroughCloud
