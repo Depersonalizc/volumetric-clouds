@@ -1,11 +1,12 @@
 #version 430 core
 
-#define EARLY_STOP_THRESHOLD 0.01f
+#define EARLY_STOP_THRESHOLD 1e-2f
 #define EARLY_STOP_LOG_THRESHOLD -4.6f
-#define EPSILON_INTERSECT 0.001f
+#define EPSILON_INTERSECT 1e-3f
 #define FOUR_PI 4*3.1415926535898
 #define XZ_FALLOFF_DIST 1.f
 #define Y_FALLOFF_DIST 1.f
+#define MAX_RANDOM_OFFSET 1e-2f
 
 // density volumes computed by the compute shader
 layout(binding = 0) uniform sampler3D volumeHighRes;
@@ -117,7 +118,6 @@ float phase(float cosTheta) {
 
 float yFalloff(vec3 position) {
     float ymin = -.5f * volumeScaling.y + volumeTranslate.y;
-    float yt = (position.y - ymin) / volumeScaling.y;
     float distY = min(Y_FALLOFF_DIST, position.y - ymin);
     return distY / Y_FALLOFF_DIST;
 }
@@ -140,21 +140,23 @@ float sampleDensity(vec3 position) {
     if (invertDensity)
         hiResDensity = 1.f - hiResDensity;
 
-    // reduce density at the bounday of the volume and at the bottom of the cloud
-    float falloff = yFalloff(position) * xzFalloff(position);
+    // reduce density at the bottom of the cloud to create crisp shape
+//    float falloff = yFalloff(position) * xzFalloff(position);
+//    float falloff = 1.f;
+    float falloff = yFalloff(position);
     hiResDensity *= falloff;
 
-    const float hiResDensityWithOffset = hiResDensity + hiResDensityOffset;
+    float hiResDensityWithOffset = hiResDensity + hiResDensityOffset;
 
     // return early if there is no cloud
     if (hiResDensityWithOffset <= 0.f)
         return 0.f;
 
     // add in low-res details
-    const vec3 loResPosition = position * loResNoiseScaling * .1f + loResNoiseTranslate;
+    const vec3 loResPosition = position * hiResNoiseScaling * .1f + loResNoiseTranslate;
     const vec4 loResNoise = texture(volumeLowRes, loResPosition);
     float loResDensity = dot( loResNoise, normalizeL1(loResChannelWeights) );
-    loResDensity = 1.f - loResDensity;  // invert the low-density by default
+    loResDensity = 1.f - loResDensity;  // invert the low-res density by default
 
     // detail erosion: subtract low-res detail from hi-res noise, weighted such that
     // the erosion is more pronounced near the boudary of the cloud (low hiResDensity)
@@ -163,8 +165,8 @@ float sampleDensity(vec3 position) {
     return max(density * densityMult * 10.f, 0.f);
 }
 
-// One-bounce ray marching to get light attenuation
-float rayMarch(vec3 rayOrig, vec3 rayDir) {
+// One-bounce ray marching to get light transmittance
+float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
     const int numStepsRecursive = numSteps / 8;
     const vec2 tHit = intersectBox(rayOrig, rayDir);
     const float tFar = max(0.f, tHit.y);
@@ -199,10 +201,8 @@ void main() {
     const float dt = (tHit.y - tHit.x) / numSteps;
     const vec3 ds = rayDirWorld * dt;
 
-    float randomOffset = wangHash(int(gl_FragCoord.x + 5000 * gl_FragCoord.y));
-    vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld
-                                   + (randomOffset * 1e-3f) * rayDirWorld;
-
+    float randomOffset = wangHash(int(gl_FragCoord.x + 4096*gl_FragCoord.y));
+    vec3 pointWorld = rayOrigWorld + (tHit.x + randomOffset * dt) * rayDirWorld;
 
     float lightEnergy = 0.f;
     float transmittance = 1.f;
@@ -214,7 +214,7 @@ void main() {
     for (int step = 0; step < numSteps; step++) {
         float density = sampleDensity(pointWorld);
 
-        float lightTransmittance = rayMarch(pointWorld, rayDirLight);
+        float lightTransmittance = computeLightTransmittance(pointWorld, rayDirLight);
 //        float lightTransmittance = 1.f;
 
         lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
@@ -262,7 +262,7 @@ void main() {
 //    if (invertDensity)
 //        glFragColor = 1.f - glFragColor;
 //    glFragColor *= densityMult;
-    glFragColor.a = 1.f;
+//    glFragColor.a = 1.f;
 
 }
 
