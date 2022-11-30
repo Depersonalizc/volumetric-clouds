@@ -26,13 +26,13 @@ private:
     void connectStep();
     void connectNumCells();
     void connectInvertDensity();
-    void connectKernelBasedFilter();
+    void connectGammaCorrect();
     void connectUploadFile();
     void connectExtraCredit();
 
     Realtime *realtime;
     QCheckBox *invertDensity;
-    QCheckBox *filter2;
+    QCheckBox *gammaCorrect;
     QPushButton *uploadFile;
 
     // Density multiplier
@@ -67,7 +67,7 @@ private:
 
 private slots:
     void onInvertDensity();
-    void onKernelBasedFilter();
+    void onGammaCorrect();
     void onUploadFile();
 
     void onValChangeCellsFine(int newValue);

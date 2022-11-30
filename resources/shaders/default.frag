@@ -71,7 +71,7 @@ uniform vec3 volumeScaling, volumeTranslate;
 uniform vec3 rayOrigWorld;
 
 // rendering params, updated when user changes settings
-uniform bool invertDensity;
+uniform bool invertDensity, gammaCorrect;
 uniform float densityMult;
 //uniform float stepSize;
 uniform int numSteps;
@@ -101,7 +101,7 @@ struct LightData {
 uniform LightData lightSource;
 //uniform LightData lights[10];
 uniform vec4 phaseParams;  // HG
-const LightData testLight = LightData(0, vec4(0), vec3(0,0,-1), vec3(1,1,1));
+const LightData testLight = LightData(0, vec4(0), vec3(-1,0,-1), vec3(1,1,1));
 
 
 // normalized v so that dot(v, 1) = 1
@@ -114,6 +114,10 @@ float linear2srgb(float x) {
     if (x <= 0.0031308f)
         return 12.92f * x;
     return 1.055f * pow(x, 1.f / 2.4f) - 0.055f;
+}
+
+vec3 gammaCorrection(vec3 linearRGB) {
+    return vec3(linear2srgb(linearRGB.r), linear2srgb(linearRGB.g), linear2srgb(linearRGB.b));
 }
 
 // fast AABB intersection
@@ -144,7 +148,8 @@ float henyeyGreenstein(float a, float g) {
 
 float phase(float a) {
     float blend = 0.5;
-    float hgBlend = henyeyGreenstein(a, phaseParams[0]) * (1-blend) + henyeyGreenstein(a, phaseParams[1]) * blend;
+    float hgBlend = henyeyGreenstein(a, phaseParams[0]) * (1-blend)
+                  + henyeyGreenstein(a, phaseParams[1]) * (blend);
     return phaseParams[2] + hgBlend * phaseParams[3];
 }
 
@@ -168,11 +173,11 @@ float sampleDensity(vec3 position) {
     float loResDensity = dot( loResNoise, normalizeL1(loResChannelWeights) );
     loResDensity = 1.f - loResDensity;  // invert the low-density by default
 
-    // Erosion: subtract low-res detail from hi-res noise, weighted such that
+    // detail erosion: subtract low-res detail from hi-res noise, weighted such that
     // the erosion is more pronounced near the boudary of the cloud (low hiResDensity)
     float erosionWeight = getErosionWeightCubic(hiResDensity);
     float density = hiResDensityWithOffset - erosionWeight*loResDensityWeight * loResDensity;
-    return max(density * densityMult, 0.f);
+    return max(density * densityMult * 10.f, 0.f);
 }
 
 float rayMarch(vec3 start) {
@@ -194,7 +199,8 @@ void main() {
 
     float lightEnergy = 0.f;
     float transmittance = 1.f;
-    float cosAngle = dot(rayDirWorld, testLight.dir);
+    vec3 rayDirLight = normalize(testLight.dir);
+    float cosAngle = dot(rayDirWorld, rayDirLight);
     float phaseVal = phase(cosAngle);
     glFragColor = vec4(0.f);
 
@@ -213,12 +219,13 @@ void main() {
     }
 
     vec3 cloudColor = lightEnergy * testLight.color;
-    vec3 backgroundColor = vec3(.5f); // TODO: currently no background color contribute
-    glFragColor = vec4(cloudColor + transmittance * backgroundColor, 1.f);
+    vec3 backgroundColor = vec3(.1f, .1f, .3f); // TODO: currently no background color contribute
+    vec3 finalColor = cloudColor + transmittance*backgroundColor;
 
-//    glFragColor.r = linear2srgb(glFragColor.r);
-//    glFragColor.g = linear2srgb(glFragColor.g);
-//    glFragColor.b = linear2srgb(glFragColor.b);
+    if (gammaCorrect)
+        finalColor = gammaCorrection(finalColor);
+    glFragColor = vec4(finalColor, 1.f);
+
 
 //    float sigma = sampleDensity(positionWorld);
 

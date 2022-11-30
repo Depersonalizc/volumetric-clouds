@@ -190,6 +190,7 @@ void Realtime::initializeGL() {
         // Noise
         glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult);
         glUniform1i(glGetUniformLocation(m_shader, "invertDensity"), settings.invertDensity);
+        glUniform1i(glGetUniformLocation(m_shader, "gammaCorrect"), settings.gammaCorrect);
         // hi-res
         glUniform1f(glGetUniformLocation(m_shader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
         glUniform3fv(glGetUniformLocation(m_shader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
@@ -257,6 +258,7 @@ void Realtime::settingsChanged() {
     // Noise
     glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult);
     glUniform1i(glGetUniformLocation(m_shader, "invertDensity"), settings.invertDensity);
+    glUniform1i(glGetUniformLocation(m_shader, "gammaCorrect"), settings.gammaCorrect);
     // hi-res
     glUniform1f(glGetUniformLocation(m_shader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
     glUniform3fv(glGetUniformLocation(m_shader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));

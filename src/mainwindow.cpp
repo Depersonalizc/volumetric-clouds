@@ -58,10 +58,10 @@ void MainWindow::initialize() {
     invertDensity->setText(QStringLiteral("Invert"));
     invertDensity->setChecked(true);
 
-    // Create checkbox for the future
-    filter2 = new QCheckBox();
-    filter2->setText(QStringLiteral("Dummy Checkbox"));
-    filter2->setChecked(false);
+    // Create checkbox for gamma correction
+    gammaCorrect = new QCheckBox();
+    gammaCorrect->setText(QStringLiteral("Gamma Correction"));
+    gammaCorrect->setChecked(false);
 
     // Create file uploader for scene file, not used
     uploadFile = new QPushButton();
@@ -309,7 +309,7 @@ void MainWindow::initialize() {
 
     vLayout->addWidget(options_label);
     vLayout->addWidget(invertDensity);
-    vLayout->addWidget(filter2);
+    vLayout->addWidget(gammaCorrect);
 
 //    vLayout->addWidget(ec_label);
 //    vLayout->addWidget(ec3);
@@ -325,7 +325,7 @@ void MainWindow::finish() {
 
 void MainWindow::connectUIElements() {
     connectInvertDensity();
-    connectKernelBasedFilter();
+    connectGammaCorrect();
     connectUploadFile();
     connectParam1();
     connectTrans();
@@ -341,8 +341,8 @@ void MainWindow::connectInvertDensity() {
     connect(invertDensity, &QCheckBox::clicked, this, &MainWindow::onInvertDensity);
 }
 
-void MainWindow::connectKernelBasedFilter() {
-    connect(filter2, &QCheckBox::clicked, this, &MainWindow::onKernelBasedFilter);
+void MainWindow::connectGammaCorrect() {
+    connect(gammaCorrect, &QCheckBox::clicked, this, &MainWindow::onGammaCorrect);
 }
 
 void MainWindow::connectUploadFile() {
@@ -425,8 +425,8 @@ void MainWindow::onInvertDensity() {
     realtime->settingsChanged();
 }
 
-void MainWindow::onKernelBasedFilter() {
-    settings.kernelBasedFilter = !settings.kernelBasedFilter;
+void MainWindow::onGammaCorrect() {
+    settings.gammaCorrect = !settings.gammaCorrect;
     realtime->settingsChanged();
 }
 
