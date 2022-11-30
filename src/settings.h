@@ -27,7 +27,7 @@ struct Settings {
     // Volume
     glm::vec3 volumeScaling = glm::vec3(1.f);
     glm::vec3 volumeTranslate = glm::vec3(0.f);
-    int numSteps = 64;
+    int numSteps = 100;
     float stepSize = 0.1f;    // world-space step size of rays, not used now
     bool gammaCorrect = false;
 

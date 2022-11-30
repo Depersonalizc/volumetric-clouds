@@ -4,8 +4,8 @@
 #define EARLY_STOP_LOG_THRESHOLD -4.6f
 #define EPSILON_INTERSECT 0.001f
 #define FOUR_PI 4*3.1415926535898
-#define XZ_FALLOFF_DIST 0.5f
-#define Y_FALLOFF_DIST 0.5f
+#define XZ_FALLOFF_DIST 1.f
+#define Y_FALLOFF_DIST 1.f
 
 // density volumes computed by the compute shader
 layout(binding = 0) uniform sampler3D volumeHighRes;
@@ -85,6 +85,17 @@ vec2 intersectBox(vec3 orig, vec3 dir) {
     return vec2(tn, tf);
 }
 
+// Pseudo-random number generator that approximtes U(0, 1)
+// http://www.reedbeta.com/blog/quick-and-easy-gpu-random-numbers-in-d3d11/
+float wangHash(int seed) {
+    seed = (seed ^ 61) ^ (seed >> 16);
+    seed *= 9;
+    seed = seed ^ (seed >> 4);
+    seed *= 0x27d4eb2d;
+    seed = seed ^ (seed >> 15);
+    return float(seed % 2147483647) / 2147483647.f;
+}
+
 float getErosionWeightCubic(float density) {
     return (1.f - density) * (1.f - density) * (1.f - density);
 }
@@ -104,7 +115,7 @@ float phase(float cosTheta) {
     return phaseParams.z + hgBlend * phaseParams.w;
 }
 
-float heightFalloff(vec3 position) {
+float yFalloff(vec3 position) {
     float ymin = -.5f * volumeScaling.y + volumeTranslate.y;
     float yt = (position.y - ymin) / volumeScaling.y;
     float distY = min(Y_FALLOFF_DIST, position.y - ymin);
@@ -129,9 +140,8 @@ float sampleDensity(vec3 position) {
     if (invertDensity)
         hiResDensity = 1.f - hiResDensity;
 
-    // reduce density at the bounday of the volume
-    // -1(bottom) <-> 1(top)
-    float falloff = heightFalloff(position) * xzFalloff(position);
+    // reduce density at the bounday of the volume and at the bottom of the cloud
+    float falloff = yFalloff(position) * xzFalloff(position);
     hiResDensity *= falloff;
 
     const float hiResDensityWithOffset = hiResDensity + hiResDensityOffset;
@@ -170,7 +180,7 @@ float rayMarch(vec3 rayOrig, vec3 rayDir) {
             break;
         pointWorld += ds;
     }
-    const float lightTransmittance = exp(tau);
+    float lightTransmittance = exp(tau);
 
     return lightTransmittance;
 //    return minLightTransmittance + lightTransmittance * (1.f - minLightTransmittance);
@@ -188,15 +198,19 @@ void main() {
     // starting from the near intersection, march the ray forward and sample
     const float dt = (tHit.y - tHit.x) / numSteps;
     const vec3 ds = rayDirWorld * dt;
-    vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
+
+    float randomOffset = wangHash(int(gl_FragCoord.x + 5000 * gl_FragCoord.y));
+    vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld
+                                   + (randomOffset * 1e-3f) * rayDirWorld;
+
 
     float lightEnergy = 0.f;
     float transmittance = 1.f;
     vec3 rayDirLight = normalize(testLight.dir);  // towards the light
     float cosAngle = dot(rayDirWorld, rayDirLight);
     float phaseVal = phase(cosAngle);  // directional light only for now
-    glFragColor = vec4(0.f);
 
+    glFragColor = vec4(0.f);
     for (int step = 0; step < numSteps; step++) {
         float density = sampleDensity(pointWorld);
 
