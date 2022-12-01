@@ -27,8 +27,9 @@ struct Settings {
     // Volume
     glm::vec3 volumeScaling = glm::vec3(1.f);
     glm::vec3 volumeTranslate = glm::vec3(0.f);
-    int numSteps = 25;
-    float stepSize = 0.1f;    // world-space step size of rays, not using now
+    int numSteps = 100;
+    float stepSize = 0.1f;    // world-space step size of rays, not used now
+    bool gammaCorrect = false;
 
     // Noise
     float densityMult = 1.f;  // density multiplier
@@ -44,9 +45,9 @@ struct Settings {
         },
         .scaling = 1.f,
         .translate = glm::vec3(0.f),
-        .channelWeights = glm::vec4(4.f, 1.f, 1.f, 1.f),
-        .persistence = 0.5f,
-        .densityOffset = -0.3f,
+        .channelWeights = glm::vec4(1.f, 1.f, 1.f, 1.f),
+        .persistence = 0.6f,
+        .densityOffset = -0.4f,
     };
 
     NoiseParams loResNoise = {
@@ -57,9 +58,9 @@ struct Settings {
             WorleyPointsParams{24, 12, 8},  // B
             WorleyPointsParams{32, 24, 12}, // A
         },
-        .scaling = 40.f,
-        .translate = glm::vec3(0.f),
-        .channelWeights = glm::vec4(1.f),
+        .scaling = 10.f,
+        .translate = glm::vec3(.3f),
+        .channelWeights = glm::vec4(1.f, 1.f, 1.f, 1.f),
         .persistence = 0.8f,
         .densityWeight = 2.f,
     };

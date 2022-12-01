@@ -1,61 +1,12 @@
 #version 430 core
 
-#define EARLY_STOP_THRESHOLD 0.01f
-//#define WORLEY_MAX_CELLS_PER_AXIS 32
-//#define WORLEY_MAX_NUM_POINTS WORLEY_MAX_CELLS_PER_AXIS*WORLEY_MAX_CELLS_PER_AXIS*WORLEY_MAX_CELLS_PER_AXIS
-//#define WORLEY_FINE_OFFSET 0
-//#define WORLEY_MEDIUM_OFFSET WORLEY_MAX_NUM_POINTS
-//#define WORLEY_COARSE_OFFSET 2*WORLEY_MAX_NUM_POINTS
-
-//const ivec3 CELL_OFFSETS[27] = {
-//    ivec3(-1, -1, -1), ivec3(-1, -1, 0), ivec3(-1, -1, 1),
-//    ivec3(-1,  0, -1), ivec3(-1,  0, 0), ivec3(-1,  0, 1),
-//    ivec3(-1,  1, -1), ivec3(-1,  1, 0), ivec3(-1,  1, 1),
-//    ivec3( 0, -1, -1), ivec3( 0, -1, 0), ivec3( 0, -1, 1),
-//    ivec3( 0,  0, -1), ivec3( 0,  0, 0), ivec3( 0,  0, 1),
-//    ivec3( 0,  1, -1), ivec3( 0,  1, 0), ivec3( 0,  1, 1),
-//    ivec3( 1, -1, -1), ivec3( 1, -1, 0), ivec3( 1, -1, 1),
-//    ivec3( 1,  0, -1), ivec3( 1,  0, 0), ivec3( 1,  0, 1),
-//    ivec3( 1,  1, -1), ivec3( 1,  1, 0), ivec3( 1,  1, 1),
-//};
-
-//// Worley sample points and cell params,
-//// updated when user changes cellsPerAxis
-//layout(std430, binding = 0) buffer worleyBuffer {
-//    // |       FINE      |       MEDIUM        |               COARSE               |
-//    // 0......WORLEY_MAX_NUM_POINTS..2*WORLEY_MAX_NUM_POINTS..3*WORLEY_MAX_NUM_POINTS
-//    vec4 worleyPoints[3*WORLEY_MAX_NUM_POINTS];
-//};
-//uniform int cellsPerAxisFine, cellsPerAxisMedium, cellsPerAxisCoarse;
-
-//// sample wrapped worley density at position
-//float sampleWorleyDensity(vec3 position, int offset, int cellsPerAxis) {
-//    // [0, 1] in world-space maps to [0..cellsPerAxis) in volume space
-//    const vec3 positionWrapped = fract(position);  // wrapped to [0, 1]^3
-//    const ivec3 cellID = ivec3(positionWrapped * cellsPerAxis);  // [0..cellsPerAxis)^3
-//    float minDist2 = 1.f;
-
-//    // loop over all 27 adjacent cells and find out min distance
-//    for (int offsetIndex = 0; offsetIndex < 27; offsetIndex++) {
-//        const ivec3 adjID = cellID + CELL_OFFSETS[offsetIndex];  // [-1..cellsPerAxis]^3
-//        const ivec3 adjIDWrapped = (adjID + cellsPerAxis) % cellsPerAxis;  // [0..cellsPerAxis)^3
-//        const int adjCellIndex = adjIDWrapped.x + cellsPerAxis * (adjIDWrapped.y + cellsPerAxis * adjIDWrapped.z);
-//        vec3 adjPosition = worleyPoints[offset + adjCellIndex].xyz;
-//        // wrap point position in boundary cells
-//        for (int comp = 0; comp < 3; comp++) {
-//            if (adjID[comp] == -1) adjPosition[comp] -= 1.f;
-//            else if (adjID[comp] == cellsPerAxis) adjPosition[comp] += 1.f;
-//        }
-//        const vec3 deltaPosition = positionWrapped - adjPosition;
-//        minDist2 = min(minDist2, dot(deltaPosition, deltaPosition));
-//    }
-
-//    float density = sqrt(minDist2) * cellsPerAxis;
-
-//    return density;
-////    return max(0.f, density - densityThreshold);
-//}
-
+#define EARLY_STOP_THRESHOLD 1e-2f
+#define EARLY_STOP_LOG_THRESHOLD -4.6f
+#define EPSILON_INTERSECT 1e-3f
+#define FOUR_PI 4*3.1415926535898
+#define XZ_FALLOFF_DIST 1.f
+#define Y_FALLOFF_DIST 1.f
+#define MAX_RANDOM_OFFSET 1e-2f
 
 // density volumes computed by the compute shader
 layout(binding = 0) uniform sampler3D volumeHighRes;
@@ -71,10 +22,12 @@ uniform vec3 volumeScaling, volumeTranslate;
 uniform vec3 rayOrigWorld;
 
 // rendering params, updated when user changes settings
-uniform bool invertDensity;
-uniform float densityMult;
 //uniform float stepSize;
 uniform int numSteps;
+uniform bool invertDensity, gammaCorrect;
+uniform float densityMult;
+uniform float cloudLightAbsorptionMult = .75f;
+uniform float minLightTransmittance = 0.01f;
 
 
 // Params for high resolution noise
@@ -97,11 +50,10 @@ struct LightData {
     vec3 dir;  // towards light source
     vec3 color;
 };
-//uniform int numLights;
 uniform LightData lightSource;
-//uniform LightData lights[10];
 uniform vec4 phaseParams;  // HG
-const LightData testLight = LightData(0, vec4(0), vec3(0,0,-1), vec3(1,1,1));
+//const LightData testLight = LightData(0, vec4(0), vec3(0, -1, -0.3), vec3(1,0.1,0.5));
+const LightData testLight = LightData(0, vec4(0), vec3(0, 1, 0), vec3(1,1,1));
 
 
 // normalized v so that dot(v, 1) = 1
@@ -114,6 +66,10 @@ float linear2srgb(float x) {
     if (x <= 0.0031308f)
         return 12.92f * x;
     return 1.055f * pow(x, 1.f / 2.4f) - 0.055f;
+}
+
+vec3 gammaCorrection(vec3 linearRGB) {
+    return vec3(linear2srgb(linearRGB.r), linear2srgb(linearRGB.g), linear2srgb(linearRGB.b));
 }
 
 // fast AABB intersection
@@ -130,6 +86,17 @@ vec2 intersectBox(vec3 orig, vec3 dir) {
     return vec2(tn, tf);
 }
 
+// Pseudo-random number generator that approximtes U(0, 1)
+// http://www.reedbeta.com/blog/quick-and-easy-gpu-random-numbers-in-d3d11/
+float wangHash(int seed) {
+    seed = (seed ^ 61) ^ (seed >> 16);
+    seed *= 9;
+    seed = seed ^ (seed >> 4);
+    seed *= 0x27d4eb2d;
+    seed = seed ^ (seed >> 15);
+    return float(seed % 2147483647) / 2147483647.f;
+}
+
 float getErosionWeightCubic(float density) {
     return (1.f - density) * (1.f - density) * (1.f - density);
 }
@@ -137,25 +104,48 @@ float getErosionWeightCubic(float density) {
 // Henyey-Greenstein Phase Function
 // inParam: float angle, float phaseParam (forwardScattering, backwardScattering) --> this is passed in hyperparam
 // outParam: float phaseVal
-float henyeyGreenstein(float a, float g) {
-    float g2 = g * g;
-    return (1-g2) / (4*3.14*pow(1+g2-2*g*a, 1.5));
+float henyeyGreenstein(float cosTheta, float g) {
+    const float g2 = g * g;
+    return (1-g2) / (FOUR_PI * pow(1+g2-2*g*cosTheta, 1.5));
 }
 
-float phase(float a) {
-    float blend = 0.5;
-    float hgBlend = henyeyGreenstein(a, phaseParams[0]) * (1-blend) + henyeyGreenstein(a, phaseParams[1]) * blend;
-    return phaseParams[2] + hgBlend * phaseParams[3];
+float phase(float cosTheta) {
+    const float blend = 0.5;
+    const float hgBlend = henyeyGreenstein(cosTheta, phaseParams.x) * (1-blend)
+                        + henyeyGreenstein(cosTheta, phaseParams.y) * (blend);
+    return phaseParams.z + hgBlend * phaseParams.w;
+}
+
+float yFalloff(vec3 position) {
+    float ymin = -.5f * volumeScaling.y + volumeTranslate.y;
+    float distY = min(Y_FALLOFF_DIST, position.y - ymin);
+    return distY / Y_FALLOFF_DIST;
+}
+
+float xzFalloff(vec3 position) {
+    float xmin = -.5f * volumeScaling.x + volumeTranslate.x;
+    float xmax = xmin + volumeScaling.x;
+    float zmin = -.5f * volumeScaling.z + volumeTranslate.z;
+    float zmax = zmin + volumeScaling.z;
+    float distX = min(XZ_FALLOFF_DIST, min(position.x - xmin, xmax - position.x));
+    float distZ = min(XZ_FALLOFF_DIST, min(position.z - zmin, zmax - position.z));
+    return min(distX, distZ) / XZ_FALLOFF_DIST;
 }
 
 float sampleDensity(vec3 position) {
     // sample high-res details
-    vec3 hiResPosition = position * hiResNoiseScaling * .1f + hiResNoiseTranslate * .1f;
-    vec4 hiResNoise = texture(volumeHighRes, hiResPosition);
+    const vec3 hiResPosition = position * hiResNoiseScaling * .1f + hiResNoiseTranslate;
+    const vec4 hiResNoise = texture(volumeHighRes, hiResPosition);
     float hiResDensity = dot( hiResNoise, normalizeL1(hiResChannelWeights) );
     if (invertDensity)
         hiResDensity = 1.f - hiResDensity;
-    // TODO: add height gradient
+
+    // reduce density at the bottom of the cloud to create crisp shape
+//    float falloff = yFalloff(position) * xzFalloff(position);
+//    float falloff = 1.f;
+    float falloff = yFalloff(position);
+    hiResDensity *= falloff;
+
     float hiResDensityWithOffset = hiResDensity + hiResDensityOffset;
 
     // return early if there is no cloud
@@ -163,20 +153,40 @@ float sampleDensity(vec3 position) {
         return 0.f;
 
     // add in low-res details
-    vec3 loResPosition = position * loResNoiseScaling * .1f + loResNoiseTranslate * .1f;
-    vec4 loResNoise = texture(volumeLowRes, loResPosition);
+    const vec3 loResPosition = position * hiResNoiseScaling * .1f + loResNoiseTranslate;
+    const vec4 loResNoise = texture(volumeLowRes, loResPosition);
     float loResDensity = dot( loResNoise, normalizeL1(loResChannelWeights) );
-    loResDensity = 1.f - loResDensity;  // invert the low-density by default
+    loResDensity = 1.f - loResDensity;  // invert the low-res density by default
 
-    // Erosion: subtract low-res detail from hi-res noise, weighted such that
+    // detail erosion: subtract low-res detail from hi-res noise, weighted such that
     // the erosion is more pronounced near the boudary of the cloud (low hiResDensity)
-    float erosionWeight = getErosionWeightCubic(hiResDensity);
-    float density = hiResDensityWithOffset - erosionWeight*loResDensityWeight * loResDensity;
-    return max(density * densityMult, 0.f);
+    const float erosionWeight = getErosionWeightCubic(hiResDensity);
+    const float density = hiResDensityWithOffset - erosionWeight*loResDensityWeight * loResDensity;
+    return max(density * densityMult*10.f, 0.f);
 }
 
-float rayMarch(vec3 start) {
-    return 1.f;
+// One-bounce ray marching to get light transmittance
+float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
+    const int numStepsRecursive = numSteps / 8;
+    const vec2 tHit = intersectBox(rayOrig, rayDir);
+    const float tFar = max(0.f, tHit.y);
+    const float dt = tFar / numStepsRecursive;
+    const vec3 ds = rayDir * dt;
+
+    vec3 pointWorld = rayOrig;
+    float tau = 0.f;  // log(transmittance)
+    for (float t = 0.f; t < tFar; t += dt) {
+        const float density = sampleDensity(pointWorld);
+        tau -= density * cloudLightAbsorptionMult * dt;
+        if (tau < EARLY_STOP_LOG_THRESHOLD)
+            break;
+        pointWorld += ds;
+    }
+
+    float lightTransmittance = exp(tau);
+    return lightTransmittance;
+//    return minLightTransmittance + lightTransmittance * (1.f - minLightTransmittance);
+//    return 1.f;
 }
 
 
@@ -185,48 +195,64 @@ void main() {
     vec2 tHit = intersectBox(rayOrigWorld, rayDirWorld);
 
     // keep the near intersection in front in case camera is inside volume
-    tHit.x = max(0.f, tHit.x);
+    tHit.x = max(0.f, tHit.x) + EPSILON_INTERSECT;
 
     // starting from the near intersection, march the ray forward and sample
     const float dt = (tHit.y - tHit.x) / numSteps;
     const vec3 ds = rayDirWorld * dt;
-    vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
+
+    float randomOffset = wangHash(int(gl_FragCoord.x + 4096*gl_FragCoord.y));
+    vec3 pointWorld = rayOrigWorld + (tHit.x + randomOffset * dt) * rayDirWorld;
 
     float lightEnergy = 0.f;
     float transmittance = 1.f;
-    float cosAngle = dot(rayDirWorld, testLight.dir);
-    float phaseVal = phase(cosAngle);
-    glFragColor = vec4(0.f);
+    vec3 dirLight = normalize(testLight.dir);  // towards the light
+    float cosRayLightAngle = dot(rayDirWorld, dirLight);
+    float phaseVal = phase(cosRayLightAngle);  // directional light only for now
 
+    glFragColor = vec4(0.f);
     for (int step = 0; step < numSteps; step++) {
         float density = sampleDensity(pointWorld);
 
-        float lightTransmittance = rayMarch(pointWorld); // TODO: add ray to sun
+        if (density > 0.f) {
+            float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
+    //        float lightTransmittance = 1.f;
 
-        lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
-        transmittance *= exp(-density * 0.75 * dt); // TODO: 0.75 is the lightAbsortionThroughCloud
+            lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
+            transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
 
-        if (transmittance < EARLY_STOP_THRESHOLD)
-            break;
+            if (transmittance < EARLY_STOP_THRESHOLD)
+                break;
+        }
 
         pointWorld += ds;
     }
 
     vec3 cloudColor = lightEnergy * testLight.color;
-    vec3 backgroundColor = vec3(.5f); // TODO: currently no background color contribute
-    glFragColor = vec4(cloudColor + transmittance * backgroundColor, 1.f);
 
-//    glFragColor.r = linear2srgb(glFragColor.r);
-//    glFragColor.g = linear2srgb(glFragColor.g);
-//    glFragColor.b = linear2srgb(glFragColor.b);
 
-//    float sigma = sampleDensity(positionWorld);
+    // composite sky background into the scene
+    // TODO: use texture to get sky color
+    vec3 backgroundColor = vec3(.0f, .5f, .64f);
+
+    // composite Sun into the scene
+    float sunIntensity = henyeyGreenstein(cosRayLightAngle, .9999);
+    sunIntensity = min(sunIntensity * transmittance, 1.f);
+
+    vec3 finalColor = min(cloudColor + transmittance*backgroundColor, 1.f);
+    finalColor = finalColor * (1 - sunIntensity) + testLight.color * sunIntensity;
+
+    if (gammaCorrect)
+        finalColor = gammaCorrection(finalColor);
+    glFragColor = vec4(finalColor, 1.f);
+
 
 
     // DEBUG
+//    float sigma = sampleDensity(positionWorld);
 //    vec3 position = positionWorld * hiResNoiseScaling * .1f + hiResNoiseTranslate * .1f;
     // show noise channels as BW images
-//    float sigma = texture(volumeHighRes, position).r;
+//    float sigma = sampleDensity(positionWorld);
 //    float sigma = texture(volumeHighRes, position).g;
 //    float sigma = texture(volumeHighRes, position).b;
 //    float sigma = texture(volumeHighRes, position).a;
