@@ -134,8 +134,8 @@ void Realtime::initializeGL() {
 //    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
     /* Create shader */
-    m_shader = ShaderLoader::createShaderProgram("resources/shaders/default.vert", "resources/shaders/default.frag");
-    m_worleyShader = ShaderLoader::createComputeShaderProgram("resources/shaders/worley.comp");
+    m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
+    m_worleyShader = ShaderLoader::createComputeShaderProgram(":/resources/shaders/worley.comp");
 
     /* Set up VBO, VAO, and SSBO */
     setUpVolume();
