@@ -53,7 +53,7 @@ struct LightData {
 uniform LightData lightSource;
 uniform vec4 phaseParams;  // HG
 //const LightData testLight = LightData(0, vec4(0), vec3(0, -1, -0.3), vec3(1,0.1,0.5));
-const LightData testLight = LightData(0, vec4(0), vec3(0, -1, -0.3), vec3(1,1,1));
+const LightData testLight = LightData(0, vec4(0), vec3(0, 1, 0), vec3(1,1,1));
 
 
 // normalized v so that dot(v, 1) = 1
@@ -162,7 +162,7 @@ float sampleDensity(vec3 position) {
     // the erosion is more pronounced near the boudary of the cloud (low hiResDensity)
     const float erosionWeight = getErosionWeightCubic(hiResDensity);
     const float density = hiResDensityWithOffset - erosionWeight*loResDensityWeight * loResDensity;
-    return max(density * densityMult * 10.f, 0.f);
+    return max(density * densityMult*10.f, 0.f);
 }
 
 // One-bounce ray marching to get light transmittance
@@ -182,8 +182,8 @@ float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
             break;
         pointWorld += ds;
     }
-    float lightTransmittance = exp(tau);
 
+    float lightTransmittance = exp(tau);
     return lightTransmittance;
 //    return minLightTransmittance + lightTransmittance * (1.f - minLightTransmittance);
 //    return 1.f;
@@ -206,39 +206,50 @@ void main() {
 
     float lightEnergy = 0.f;
     float transmittance = 1.f;
-    vec3 rayDirLight = normalize(testLight.dir);  // towards the light
-    float cosAngle = dot(rayDirWorld, rayDirLight);
-    float phaseVal = phase(cosAngle);  // directional light only for now
+    vec3 dirLight = normalize(testLight.dir);  // towards the light
+    float cosRayLightAngle = dot(rayDirWorld, dirLight);
+    float phaseVal = phase(cosRayLightAngle);  // directional light only for now
 
     glFragColor = vec4(0.f);
     for (int step = 0; step < numSteps; step++) {
         float density = sampleDensity(pointWorld);
 
-        float lightTransmittance = computeLightTransmittance(pointWorld, rayDirLight);
-//        float lightTransmittance = 1.f;
+        if (density > 0.f) {
+            float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
+    //        float lightTransmittance = 1.f;
 
-        lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
-        transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
+            lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
+            transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
 
-        if (transmittance < EARLY_STOP_THRESHOLD)
-            break;
+            if (transmittance < EARLY_STOP_THRESHOLD)
+                break;
+        }
 
         pointWorld += ds;
     }
 
     vec3 cloudColor = lightEnergy * testLight.color;
-    vec3 backgroundColor = vec3(.1f, .1f, .3f); // TODO: currently no background color contribute
-    vec3 finalColor = cloudColor + transmittance*backgroundColor;
+
+
+    // composite sky background into the scene
+    // TODO: use texture to get sky color
+    vec3 backgroundColor = vec3(.0f, .5f, .64f);
+
+    // composite Sun into the scene
+    float sunIntensity = henyeyGreenstein(cosRayLightAngle, .9999);
+    sunIntensity = min(sunIntensity * transmittance, 1.f);
+
+    vec3 finalColor = min(cloudColor + transmittance*backgroundColor, 1.f);
+    finalColor = finalColor * (1 - sunIntensity) + testLight.color * sunIntensity;
 
     if (gammaCorrect)
         finalColor = gammaCorrection(finalColor);
     glFragColor = vec4(finalColor, 1.f);
 
 
-//    float sigma = sampleDensity(positionWorld);
-
 
     // DEBUG
+//    float sigma = sampleDensity(positionWorld);
 //    vec3 position = positionWorld * hiResNoiseScaling * .1f + hiResNoiseTranslate * .1f;
     // show noise channels as BW images
 //    float sigma = sampleDensity(positionWorld);
