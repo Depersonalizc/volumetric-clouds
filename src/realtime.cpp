@@ -134,8 +134,8 @@ void Realtime::initializeGL() {
 //    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
     /* Create shader */
-    m_shader = ShaderLoader::createShaderProgram("resources/shaders/default.vert", "resources/shaders/default.frag");
-    m_worleyShader = ShaderLoader::createComputeShaderProgram("resources/shaders/worley.comp");
+    m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
+    m_worleyShader = ShaderLoader::createComputeShaderProgram(":/resources/shaders/worley.comp");
 
     /* Set up VBO, VAO, and SSBO */
     setUpVolume();
@@ -236,7 +236,6 @@ void Realtime::volumeChanged() {
 
 void Realtime::settingsChanged() {
     if (!glInitialized) return;  // avoid gl calls before initialization finishes
-
     makeCurrent();
 
     glUseProgram(m_shader);
@@ -248,6 +247,7 @@ void Realtime::settingsChanged() {
 
     // Noise
     glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult);
+    std::cout << "send to gpu" << std::endl;
     glUniform1i(glGetUniformLocation(m_shader, "invertDensity"), settings.invertDensity);
     glUniform1i(glGetUniformLocation(m_shader, "gammaCorrect"), settings.gammaCorrect);
     // hi-res

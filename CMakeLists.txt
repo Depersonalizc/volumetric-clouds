@@ -28,6 +28,7 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/realtime.cpp
     src/mainwindow.cpp
+#    test_qt_ui/mainwindow.cpp
     src/settings.cpp
 
     src/camera/camera.cpp
@@ -41,6 +42,8 @@ add_executable(${PROJECT_NAME}
     src/noise/worley.h
 
     src/utils/debug.h
+
+    src/mainwindow.ui
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
