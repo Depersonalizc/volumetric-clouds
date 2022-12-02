@@ -8,8 +8,10 @@
 
 
 struct SceneCameraData {
-    glm::vec4 pos  = {0.0, 0.0, 3.0, 1.0};
-    glm::vec4 look = {0.0, 0.0, -1.0, 0.0};
+//    glm::vec4 pos  = {0.0, 0.0, 3.0, 1.0};
+//    glm::vec4 look = {0.0, 0.0, -1.0, 0.0};
+    glm::vec4 pos  = {0.0, -10.0, 0.0, 1.0};
+    glm::vec4 look = {0.0, 1.0, -0.0001, 0.0};
     glm::vec4 up   = {0.0, 1.0, 0.0, 0.0};
 
     double heightAngle = glm::quarter_pi<double>();
