@@ -18,18 +18,18 @@
 #include "settings.h"
 
 
-constexpr std::array<GLfloat, 30> screenQuadData {
-    // POSITION          // UV
-    -1.0f,  1.0f, 0.0f,  0.f, 1.f,
-    -1.0f, -1.0f, 0.0f,  0.f, 0.f,
-     1.0f, -1.0f, 0.0f,  1.f, 0.f,
-     1.0f,  1.0f, 0.0f,  1.f, 1.f,
-    -1.0f,  1.0f, 0.0f,  0.f, 1.f,
-     1.0f, -1.0f, 0.0f,  1.f, 0.f,
-};
-constexpr float cube[] = {
+constexpr std::array<GLfloat, 42> cube = {
     .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, .5f, .5f, -.5f, .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, -.5f, -.5f, -.5f, -.5f,
     .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, -.5f, -.5f, -.5f, -.5f, -.5f
+};
+constexpr std::array<GLfloat, 30> screenQuadData {
+    // POSITION          // UV
+    -1.0f,  1.0f, 0.f,  0.f, 1.f,
+    -1.0f, -1.0f, 0.f,  0.f, 0.f,
+     1.0f, -1.0f, 0.f,  1.f, 0.f,
+     1.0f,  1.0f, 0.f,  1.f, 1.f,
+    -1.0f,  1.0f, 0.f,  0.f, 1.f,
+     1.0f, -1.0f, 0.f,  1.f, 0.f,
 };
 constexpr auto szVec3() { return sizeof(GLfloat) * 3; }
 constexpr auto szVec4() { return sizeof(GLfloat) * 4; }
@@ -64,10 +64,9 @@ private:
     void mouseMoveEvent(QMouseEvent *event) override;
     void timerEvent(QTimerEvent *event) override;
 
-    GLuint vbo, vao;
+    GLuint vboVolume, vaoVolume;
     GLuint vboScreenQuad, vaoScreenQuad;
     GLuint ssboWorley;
-//    GLuint ssboWorleyCoarse, ssboWorleyMedium, ssboWorleyFine;  // shader storage buffer for worley points
     GLuint volumeTexHighRes, volumeTexLowRes;
 
     static void glUnbindVBO() { glBindBuffer(GL_ARRAY_BUFFER, 0); }
@@ -78,9 +77,9 @@ private:
     void updateWorleyPoints(const WorleyPointsParams &worleyPointsParams);
     void setUpVolume();
     void drawVolume();
-    void glSetUpScreenQuad();
+    void setUpScreenQuad();
 
-    GLuint m_shader, m_worleyShader;             // Stores id for shader programs
+    GLuint m_volumeShader, m_worleyShader;             // Stores id for shader programs
     Camera m_camera;
     bool glInitialized = false;
 
@@ -108,17 +107,17 @@ private:
         GLchar name[bufSize]; // variable name in GLSL
         GLsizei length; // name length
         /* attribs */
-        glGetProgramiv(m_shader, GL_ACTIVE_ATTRIBUTES, &count);
+        glGetProgramiv(m_volumeShader, GL_ACTIVE_ATTRIBUTES, &count);
         printf("Active Attributes: %d\n", count);
         for (i = 0; i < count; i++) {
-            glGetActiveAttrib(m_shader, (GLuint)i, bufSize, &length, &size, &type, name);
+            glGetActiveAttrib(m_volumeShader, (GLuint)i, bufSize, &length, &size, &type, name);
             printf("Attribute #%d Type: %u Name: %s\n", i, type, name);
         }
         /* uniforms */
-        glGetProgramiv(m_shader, GL_ACTIVE_UNIFORMS, &count);
+        glGetProgramiv(m_volumeShader, GL_ACTIVE_UNIFORMS, &count);
         printf("#Active Uniforms: %d\n", count);
         for (i = 0; i < count; i++) {
-            glGetActiveUniform(m_shader, (GLuint)i, bufSize, &length, &size, &type, name);
+            glGetActiveUniform(m_volumeShader, (GLuint)i, bufSize, &length, &size, &type, name);
             printf("Uniform #%d Type: %u Name: %s\n", i, type, name);
         }
     }

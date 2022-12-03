@@ -1,9 +1,5 @@
 #version 430 core
 
-//layout(location = 0) in vec3 position;  // cube [0, 1]^3
-
-//out vec3 positionWorld;
-
 layout (location = 0) in vec3 position;  // screen quad
 layout (location = 1) in vec2 attribUV;
 
@@ -14,11 +10,6 @@ uniform mat4 projView;
 // added
 uniform float xMax, yMax;  // rayDirWorldspace lies within [-xMax, xMax] x [-yMax, yMax] x {1.0}
 uniform mat4 viewInverse;
-uniform vec3 rayOrigWorld;
-
-// volume transforms
-uniform vec3 volumeScaling;
-uniform vec3 volumeTranslate;
 
 
 void main() {
@@ -27,7 +18,6 @@ void main() {
 //    gl_Position = projView * vec4(positionWorld, 1.f);
 
     vec4 rayDirCameraspace = vec4(position.x * xMax, position.y * yMax, -1.f, 0.f);
-
     rayDirWorldspace = vec3(viewInverse * rayDirCameraspace);
 
     // DEBUG

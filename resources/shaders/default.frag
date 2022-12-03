@@ -142,8 +142,6 @@ float sampleDensity(vec3 position) {
         hiResDensity = 1.f - hiResDensity;
 
     // reduce density at the bottom of the cloud to create crisp shape
-//    float falloff = yFalloff(position) * xzFalloff(position);
-//    float falloff = 1.f;
     float falloff = yFalloff(position);
     hiResDensity *= falloff;
 
@@ -166,7 +164,7 @@ float sampleDensity(vec3 position) {
     return max(density * densityMult*10.f, 0.f);
 }
 
-// One-bounce ray marching to get light transmittance
+// One-bounce raymarch to get light transmittance
 float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
     const int numStepsRecursive = numSteps / 8;
     const vec2 tHit = intersectBox(rayOrig, rayDir);
@@ -174,91 +172,71 @@ float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
     const float dt = tFar / numStepsRecursive;
     const vec3 ds = rayDir * dt;
 
+    float tau = 0.f;  // log transmittance
     vec3 pointWorld = rayOrig;
-    float tau = 0.f;  // log(transmittance)
     for (float t = 0.f; t < tFar; t += dt) {
         const float density = sampleDensity(pointWorld);
-        tau -= density * cloudLightAbsorptionMult * dt;
-        if (tau < EARLY_STOP_LOG_THRESHOLD)
-            break;
+        tau -= density;
         pointWorld += ds;
     }
-
+    tau *= (cloudLightAbsorptionMult * dt);  // delay multiplication to save compute and avoid precision issues
     float lightTransmittance = exp(tau);
+
     return lightTransmittance;
 //    return minLightTransmittance + lightTransmittance * (1.f - minLightTransmittance);
 //    return 1.f;
 }
 
-
 void main() {
 //    const vec3 rayDirWorld = normalize(positionWorld - rayOrigWorld);
     const vec3 rayDirWorld = normalize(rayDirWorldspace);
     vec2 tHit = intersectBox(rayOrigWorld, rayDirWorld);
+    tHit.x = max(0.f, tHit.x);  // keep the near intersection in front of the camera
 
-    if (tHit.x >= tHit.y) {  // outside box
-        discard;
-    }
+    const vec3 dirLight = normalize(testLight.dir);  // towards the light
+    const float cosRayLightAngle = dot(rayDirWorld, dirLight);
+    const float phaseVal = phase(cosRayLightAngle);  // directional light only for now
 
-//    glFragColor = vec4(1.f);
-    glFragColor = vec4(rayDirWorld + 1.f / 2, 1.f);
-//    glFragColor = vec4(rayDirWorldspace + 1.f / 2, 1.f);
-//    glFragColor = vec4(rayDirWorld + 1.f / 2, 1.f);
-//    glFragColor = vec4(vec3(-rayDirWorld.z), 1.f);
-    return;
-
-    // keep the near intersection in front in case camera is inside volume
-    tHit.x = max(0.f, tHit.x) + EPSILON_INTERSECT;
-
-    // starting from the near intersection, march the ray forward and sample
-    const float dt = (tHit.y - tHit.x) / numSteps;
-    const vec3 ds = rayDirWorld * dt;
-
-    float randomOffset = wangHash(int(gl_FragCoord.x + 4096*gl_FragCoord.y));
-    vec3 pointWorld = rayOrigWorld + (tHit.x + randomOffset * dt) * rayDirWorld;
-
-    float lightEnergy = 0.f;
+    vec3 cloudColor = vec3(0.f);
     float transmittance = 1.f;
-    vec3 dirLight = normalize(testLight.dir);  // towards the light
-    float cosRayLightAngle = dot(rayDirWorld, dirLight);
-    float phaseVal = phase(cosRayLightAngle);  // directional light only for now
+    float lightEnergy = 0.f;
+    if (tHit.x < tHit.y) {  // hit box
+        // starting from the near intersection, march the ray forward and sample
+        const float dt = (tHit.y - tHit.x) / numSteps;
+        const vec3 ds = rayDirWorld * dt;
 
-    glFragColor = vec4(0.f);
-    for (int step = 0; step < numSteps; step++) {
-        float density = sampleDensity(pointWorld);
+        vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
 
-        if (density > 0.f) {
-            float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
-    //        float lightTransmittance = 1.f;
-
-            lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
-            transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
-
-            if (transmittance < EARLY_STOP_THRESHOLD)
-                break;
+        for (int step = 0; step < numSteps; step++) {
+            float density = sampleDensity(pointWorld);
+            if (density > 0.f) {
+                float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
+                lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
+                transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
+                if (transmittance < EARLY_STOP_THRESHOLD)
+                    break;
+            }
+            pointWorld += ds;
         }
 
-        pointWorld += ds;
+        cloudColor = lightEnergy * testLight.color;
     }
-
-    vec3 cloudColor = lightEnergy * testLight.color;
-
 
     // composite sky background into the scene
     // TODO: use texture to get sky color
     vec3 backgroundColor = vec3(.0f, .5f, .64f);
 
-    // composite Sun into the scene
+    // composite sun into the scene
+    const float MAX_SUN_INTENSITY = 10.f;
     float sunIntensity = henyeyGreenstein(cosRayLightAngle, .9999);
-    sunIntensity = min(sunIntensity * transmittance, 1.f);
+    sunIntensity = min(sunIntensity, MAX_SUN_INTENSITY) * transmittance;
 
-    vec3 finalColor = min(cloudColor + transmittance*backgroundColor, 1.f);
-    finalColor = finalColor * (1 - sunIntensity) + testLight.color * sunIntensity;
+    vec3 cloudSky = min(cloudColor + transmittance*backgroundColor, 1.f);
+    cloudSky = cloudSky*(1 - sunIntensity) + testLight.color*sunIntensity;
 
     if (gammaCorrect)
-        finalColor = gammaCorrection(finalColor);
-    glFragColor = vec4(finalColor, 1.f);
-
+        cloudSky = gammaCorrection(cloudSky);
+    glFragColor = vec4(cloudSky, 1.f);
 
 
     // DEBUG
