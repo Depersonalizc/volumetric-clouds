@@ -12,7 +12,8 @@
 layout(binding = 0) uniform sampler3D volumeHighRes;
 layout(binding = 1) uniform sampler3D volumeLowRes;
 
-in vec3 positionWorld;
+//in vec3 positionWorld;
+in vec3 rayDirWorldspace;
 out vec4 glFragColor;
 
 // volume transforms for computing ray-box intersection
@@ -191,8 +192,20 @@ float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
 
 
 void main() {
-    const vec3 rayDirWorld = normalize(positionWorld - rayOrigWorld);
+//    const vec3 rayDirWorld = normalize(positionWorld - rayOrigWorld);
+    const vec3 rayDirWorld = normalize(rayDirWorldspace);
     vec2 tHit = intersectBox(rayOrigWorld, rayDirWorld);
+
+    if (tHit.x >= tHit.y) {  // outside box
+        discard;
+    }
+
+//    glFragColor = vec4(1.f);
+    glFragColor = vec4(rayDirWorld + 1.f / 2, 1.f);
+//    glFragColor = vec4(rayDirWorldspace + 1.f / 2, 1.f);
+//    glFragColor = vec4(rayDirWorld + 1.f / 2, 1.f);
+//    glFragColor = vec4(vec3(-rayDirWorld.z), 1.f);
+    return;
 
     // keep the near intersection in front in case camera is inside volume
     tHit.x = max(0.f, tHit.x) + EPSILON_INTERSECT;

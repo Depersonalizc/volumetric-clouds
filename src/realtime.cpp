@@ -28,18 +28,31 @@ void Realtime::updateWorleyPoints(const WorleyPointsParams &worleyPointsParams) 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
+void Realtime::glSetUpScreenQuad() {
+    glGenBuffers(1, &vboScreenQuad);
+    glBindBuffer(GL_ARRAY_BUFFER, vboScreenQuad);
+    glBufferData(GL_ARRAY_BUFFER, screenQuadData.size()*sizeof(GLfloat), screenQuadData.data(), GL_STATIC_DRAW);
+    glGenVertexArrays(1, &vaoScreenQuad);
+    glBindVertexArray(vaoScreenQuad);
+    glEnableVertexAttribArray(0);  // pos
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), nullptr);
+    glEnableVertexAttribArray(1);  // uv
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
+                          reinterpret_cast<void*>(3 * sizeof(GLfloat)));
+}
+
 
 void Realtime::setUpVolume() {
     // VBO & VAO for the proxy cube
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glEnableVertexAttribArray(0);  // position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, szVec3(), 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
+//    glGenBuffers(1, &vbo);
+//    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+//    glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
+//    glGenVertexArrays(1, &vao);
+//    glBindVertexArray(vao);
+//    glEnableVertexAttribArray(0);  // position
+//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, szVec3(), 0);
+//    glBindBuffer(GL_ARRAY_BUFFER, 0);
+//    glBindVertexArray(0);
 
     // SSBO for Worley points of three frequencies, with enough memory prealloced
     glGenBuffers(1, &ssboWorley);
@@ -73,11 +86,22 @@ void Realtime::setUpVolume() {
 }
 
 void Realtime::drawVolume() {
+//    glUseProgram(m_shader);
+//    glBindVertexArray(vao);
+//    glDrawArrays(GL_TRIANGLE_STRIP, 0, 14);
+//    glUnbindVAO();
+//    glUseProgram(0);
+
+    glDisable(GL_DEPTH_TEST);
     glUseProgram(m_shader);
-    glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 14);
-    glUnbindVAO();
+    glBindVertexArray(vaoScreenQuad);
+//    glActiveTexture(GL_TEXTURE0);  // bind texture to slot 0 to make sampler works
+//    glBindTexture(GL_TEXTURE_2D, texture);
+    glDrawArrays(GL_TRIANGLES, 0, screenQuadData.size() / 5);
+//    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
     glUseProgram(0);
+
 }
 
 Realtime::Realtime(QWidget *parent) : QOpenGLWidget(parent) {
@@ -126,7 +150,7 @@ void Realtime::initializeGL() {
 
     glEnable(GL_DEPTH_TEST);
     glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);  // cull front face
+    glCullFace(GL_BACK);  // cull BACK face
     glClearColor(.5f, .5f, .5f, 1.f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  // composite with bg color
@@ -139,6 +163,7 @@ void Realtime::initializeGL() {
 
     /* Set up VBO, VAO, and SSBO */
     setUpVolume();
+    glSetUpScreenQuad();
 
     /* Set up default camera */
     m_camera = Camera(SceneCameraData(), size().width(), size().height(), settings.nearPlane, settings.farPlane);
@@ -197,6 +222,11 @@ void Realtime::initializeGL() {
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
         glUniform3fv(glGetUniformLocation(m_shader, "rayOrigWorld"), 1, glm::value_ptr(m_camera.getPos()));
 
+        glUniformMatrix4fv(glGetUniformLocation(m_shader, "viewInverse"), 1, GL_FALSE, glm::value_ptr(m_camera.getViewMatrixInverse()));
+        glUniform1f(glGetUniformLocation(m_shader , "xMax"), m_camera.xMax());
+        glUniform1f(glGetUniformLocation(m_shader , "yMax"), m_camera.yMax());
+
+
         // Lighting
 //        glUniform1i(glGetUniformLocation(m_shader, "numLights"), 0);
         glUniform4fv(glGetUniformLocation(m_shader, "phaseParams"), 1, glm::value_ptr(glm::vec4(0.83f, 0.3f, 0.8f, 0.15f))); // TODO: make it adjustable hyperparameters
@@ -213,6 +243,8 @@ void Realtime::initializeGL() {
 void Realtime::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     drawVolume();
+
+
 //    Debug::checkOpenGLErrors();
 }
 
@@ -226,6 +258,12 @@ void Realtime::resizeGL(int w, int h) {
         m_camera.updateProjView();
         glUseProgram(m_shader);  // Pass camera mat (proj * view)
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
+
+        glUniformMatrix4fv(glGetUniformLocation(m_shader, "viewInverse"), 1, GL_FALSE, glm::value_ptr(m_camera.getViewMatrixInverse()));
+        glUniform1f(glGetUniformLocation(m_shader , "xMax"), m_camera.xMax());
+        std::cout << m_camera.xMax() << ", " << m_camera.yMax() << "\n";
+        glUniform1f(glGetUniformLocation(m_shader , "yMax"), m_camera.yMax());
+
         glUseProgram(0);
     }
 }
@@ -352,9 +390,16 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         m_camera.updateViewMatrix();
         m_camera.updateProjView();
 
+        m_camera.printInfo();
+
         makeCurrent();
         glUseProgram(m_shader);  // Pass camera mat (proj * view)
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));        
+
+        glUniformMatrix4fv(glGetUniformLocation(m_shader, "viewInverse"), 1, GL_FALSE, glm::value_ptr(m_camera.getViewMatrixInverse()));
+        glUniform1f(glGetUniformLocation(m_shader , "xMax"), m_camera.xMax());
+        glUniform1f(glGetUniformLocation(m_shader , "yMax"), m_camera.yMax());
+
         glUseProgram(0);
 
         update(); // asks for a PaintGL() call to occur
@@ -398,6 +443,11 @@ void Realtime::timerEvent(QTimerEvent *event) {
     glUseProgram(m_shader);  // Pass camera uniforms
     glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
     glUniform3fv(glGetUniformLocation(m_shader, "rayOrigWorld"), 1, glm::value_ptr(m_camera.getPos()));
+
+    glUniformMatrix4fv(glGetUniformLocation(m_shader, "viewInverse"), 1, GL_FALSE, glm::value_ptr(m_camera.getViewMatrixInverse()));
+    glUniform1f(glGetUniformLocation(m_shader , "xMax"), m_camera.xMax());
+    glUniform1f(glGetUniformLocation(m_shader , "yMax"), m_camera.yMax());
+
     glUseProgram(0);
 
     update(); // asks for a PaintGL() call to occur

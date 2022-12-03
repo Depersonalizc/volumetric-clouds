@@ -18,6 +18,15 @@
 #include "settings.h"
 
 
+constexpr std::array<GLfloat, 30> screenQuadData {
+    // POSITION          // UV
+    -1.0f,  1.0f, 0.0f,  0.f, 1.f,
+    -1.0f, -1.0f, 0.0f,  0.f, 0.f,
+     1.0f, -1.0f, 0.0f,  1.f, 0.f,
+     1.0f,  1.0f, 0.0f,  1.f, 1.f,
+    -1.0f,  1.0f, 0.0f,  0.f, 1.f,
+     1.0f, -1.0f, 0.0f,  1.f, 0.f,
+};
 constexpr float cube[] = {
     .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, .5f, .5f, -.5f, .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, -.5f, -.5f, -.5f, -.5f,
     .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, -.5f, -.5f, -.5f, -.5f, -.5f
@@ -56,6 +65,7 @@ private:
     void timerEvent(QTimerEvent *event) override;
 
     GLuint vbo, vao;
+    GLuint vboScreenQuad, vaoScreenQuad;
     GLuint ssboWorley;
 //    GLuint ssboWorleyCoarse, ssboWorleyMedium, ssboWorleyFine;  // shader storage buffer for worley points
     GLuint volumeTexHighRes, volumeTexLowRes;
@@ -68,6 +78,7 @@ private:
     void updateWorleyPoints(const WorleyPointsParams &worleyPointsParams);
     void setUpVolume();
     void drawVolume();
+    void glSetUpScreenQuad();
 
     GLuint m_shader, m_worleyShader;             // Stores id for shader programs
     Camera m_camera;
