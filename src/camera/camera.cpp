@@ -35,6 +35,9 @@ double const & Camera::getHeightAngle() const { return heightAngle; }
 double const & Camera::getNearPlane() const { return nearPlane; }
 double const & Camera::getFarPlane() const { return farPlane; }
 
+double Camera::yMax() const { return std::tan(0.5f * heightAngle); }
+double Camera::xMax() const { return yMax() * aspectRatio; }
+
 void Camera::setPos(const glm::vec4 &newPos) { pos = newPos; }
 void Camera::setNearFarPlanes(double zNear, double zFar) {
     newProj = (zNear != nearPlane || zFar != farPlane);
@@ -55,6 +58,11 @@ void Camera::setThetaPhi(double newTheta, double newPhi) {
 void Camera::updateViewMatrix() {
     auto up3  = glm::vec3(up);
     auto pos3 = glm::vec3(pos);
+
+//    std::cout << "pos: " << glm::to_string(pos3) << "\n\n";
+//    viewMatrix = glm::lookAt(pos3, pos3 + glm::vec3(look), up3);
+//    viewMatrixInverse = glm::inverse(viewMatrix);
+
     auto w    = glm::vec3(-look);  // assume already normalized
     auto v    = glm::normalize(up3 - glm::dot(up3, w) * w);
     auto u    = glm::cross(v, w);
