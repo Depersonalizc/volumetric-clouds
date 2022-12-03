@@ -20,7 +20,7 @@ int main(int argc, char *argv[]) {
 
     MainWindow w;
     w.initialize();
-    w.resize(800, 600);
+    w.resize(1200, 600);
     int desktopArea = QGuiApplication::primaryScreen()->size().width() *
                       QGuiApplication::primaryScreen()->size().height();
     int widgetArea = w.width() * w.height();

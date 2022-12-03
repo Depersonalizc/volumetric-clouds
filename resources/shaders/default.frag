@@ -8,6 +8,13 @@
 #define Y_FALLOFF_DIST 1.f
 #define MAX_RANDOM_OFFSET 1e-2f
 
+// Params for adaptive ray marching
+#define SMALL_DST_SAMPLE_NUM 32
+#define COARSE_MULTIPLE 5.f
+#define SMALL_DENSITY 0.005f
+#define ADAP_THRESHOLD 5
+#define STEPSIZE_FINE 0.05f
+
 // density volumes computed by the compute shader
 layout(binding = 0) uniform sampler3D volumeHighRes;
 layout(binding = 1) uniform sampler3D volumeLowRes;
@@ -42,6 +49,8 @@ uniform float loResNoiseScaling;
 uniform vec3 loResNoiseTranslate;  // noise transforms
 uniform vec4 loResChannelWeights;  // how to aggregate RGBA channels
 uniform float loResDensityWeight;  // relative weight of lo-res noise about hi-res
+
+
 
 
 // light uniforms, not used rn
@@ -191,7 +200,8 @@ void main() {
 //    const vec3 rayDirWorld = normalize(positionWorld - rayOrigWorld);
     const vec3 rayDirWorld = normalize(rayDirWorldspace);
     vec2 tHit = intersectBox(rayOrigWorld, rayDirWorld);
-    tHit.x = max(0.f, tHit.x);  // keep the near intersection in front of the camera
+//    tHit.x = max(0.f, tHit.x);
+    tHit.x = max(0.f, tHit.x) + EPSILON_INTERSECT;  // keep the near intersection in front of the camera
 
     const vec3 dirLight = normalize(testLight.dir);  // towards the light
     const float cosRayLightAngle = dot(rayDirWorld, dirLight);
@@ -202,21 +212,43 @@ void main() {
     float lightEnergy = 0.f;
     if (tHit.x < tHit.y) {  // hit box
         // starting from the near intersection, march the ray forward and sample
-        const float dt = (tHit.y - tHit.x) / numSteps;
+        float dstTravelled = 0;
+        float totalDst = (tHit.y - tHit.x);
+        float curFineStepSize = min(STEPSIZE_FINE, totalDst/SMALL_DST_SAMPLE_NUM);
+        float curCoarseStepSize = curFineStepSize*COARSE_MULTIPLE;
+        int curThreshold = ADAP_THRESHOLD;
+//        const float dt = (tHit.y - tHit.x) / numSteps;
+        float dt = curFineStepSize;
         const vec3 ds = rayDirWorld * dt;
 
         vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
 
-        for (int step = 0; step < numSteps; step++) {
+        while (dstTravelled < totalDst){
             float density = sampleDensity(pointWorld);
+
+            dstTravelled += dt;
+
             if (density > 0.f) {
                 float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
                 lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
                 transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
                 if (transmittance < EARLY_STOP_THRESHOLD)
                     break;
+
+                // adjust next step
+                curThreshold = density < SMALL_DENSITY ? curThreshold - 1: ADAP_THRESHOLD;
+                // change to big step
+                if (curThreshold <= 0) {
+                    dt = curCoarseStepSize;
+                // check change to small step
+                } else {
+                    // if prev is big step, traceback and change to small step
+                    if (dt == curCoarseStepSize) {
+                        dt = curFineStepSize;
+                    }
+                }
             }
-            pointWorld += ds;
+            pointWorld += dt*rayDirWorld;
         }
 
         cloudColor = lightEnergy * testLight.color;
