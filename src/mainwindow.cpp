@@ -10,6 +10,14 @@
 #include <iostream>
 
 void MainWindow::initialize() {
+
+//    glWidget = new GLWidget;
+
+//    QHBoxLayout *container = new QHBoxLayout;
+//    container->addWidget(glWidget);
+//    this->setLayout(container);
+
+
     realtime = new Realtime;
 
     QHBoxLayout *hLayout = new QHBoxLayout; // horizontal alignment

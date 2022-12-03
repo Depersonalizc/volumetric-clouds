@@ -11,6 +11,7 @@
 #include <vector>
 #include <glm/gtc/type_ptr.hpp>
 #include <glm/gtx/component_wise.hpp>
+#include <QDir>
 
 #include "utils/debug.h"
 
@@ -70,6 +71,39 @@ void Realtime::setUpVolume() {
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, dimLoRes, dimLoRes, dimLoRes, 0, GL_RGBA, GL_FLOAT, nullptr);
+
+
+    // Terrain VAO/VBO
+//    std::vector<GLfloat> verts = m_terrain.generateTerrain();
+//    std::cout<<verts[30]<<std::endl;
+
+//    glGenBuffers(1, &m_terrainVbo);
+//    glBindBuffer(GL_ARRAY_BUFFER, m_terrainVbo);
+//    glBufferData(GL_ARRAY_BUFFER, verts.size() * sizeof(GLfloat), verts.data(), GL_STATIC_DRAW);
+//    glGenVertexArrays(1, &m_terrainVao);
+//    glBindVertexArray(m_terrainVao);
+//    glEnableVertexAttribArray(0);  // position
+//    glEnableVertexAttribArray(1);
+//    glEnableVertexAttribArray(2);
+
+//    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),
+//                             nullptr);
+
+//    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),
+//                             reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+
+//    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),
+//                             reinterpret_cast<void *>(6 * sizeof(GLfloat)));
+
+//    glBindBuffer(GL_ARRAY_BUFFER, 0);
+//    glBindVertexArray(0);
+
+//    m_world.setToIdentity();
+//    m_world.translate(QVector3D(-0.5,-0.5,0));
+
+//    m_camera_terrain.setToIdentity();
+//    m_camera_terrain.lookAt(QVector3D(1,1,1),QVector3D(0,0,0),QVector3D(0,0,1));
+
 }
 
 void Realtime::drawVolume() {
@@ -137,11 +171,70 @@ void Realtime::initializeGL() {
     m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
     m_worleyShader = ShaderLoader::createComputeShaderProgram(":/resources/shaders/worley.comp");
 
+    //m_terrainShader = ShaderLoader::createShaderProgram(":/resources/shaders/vertex.vert", ":/resources/shaders/fragment.frag");
+
+
     /* Set up VBO, VAO, and SSBO */
     setUpVolume();
 
     /* Set up default camera */
     m_camera = Camera(SceneCameraData(), size().width(), size().height(), settings.nearPlane, settings.farPlane);
+
+//    // Pass uniforms to the terrain shader
+//    glUseProgram(m_terrainShader);
+//    {
+//        glUniform1i(glGetUniformLocation(m_terrainShader, "wireshade"), m_terrain.m_wireshade);
+//        //QMatrix4x4 mv = m_camera_terrain * m_world;
+//        //glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projMatrix"), 1, GL_FALSE, (m_proj.data()));
+//        //glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "mvMatrix"), 1, GL_FALSE, (mv.data()));
+
+//        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
+
+//        glm::mat4 mview;
+//        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "mvMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera.getViewMatrix()));
+
+
+
+//    }
+    // Terrain shader related
+    //glClearColor(0, 0, 0, 1);
+    m_program = new QOpenGLShaderProgram;
+    std::cout << QDir::currentPath().toStdString() << std::endl;
+    m_program->addShaderFromSourceFile(QOpenGLShader::Vertex,":/resources/shaders/vertex.vert");
+    m_program->addShaderFromSourceFile(QOpenGLShader::Fragment,":/resources/shaders/fragment.frag");
+    m_program->link();
+    m_program->bind();
+
+    //m_terrainShader = ShaderLoader::createShaderProgram(":/resources/shaders/vertex.vert", ":/resources/shaders/fragment.frag");
+
+    m_projMatrixLoc = m_program->uniformLocation("projMatrix");
+    m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
+    m_terrainVao.create();
+    m_terrainVao.bind();
+
+    std::vector<GLfloat> verts = m_terrain.generateTerrain();
+
+    m_terrainVbo.create();
+    m_terrainVbo.bind();
+    m_terrainVbo.allocate(verts.data(),verts.size()*sizeof(GLfloat));
+
+    glEnableVertexAttribArray(0);
+    glEnableVertexAttribArray(1);
+    glEnableVertexAttribArray(2);
+
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),nullptr);
+    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),reinterpret_cast<void *>(6 * sizeof(GLfloat)));
+
+    m_terrainVbo.release();
+    m_world.setToIdentity();
+    m_world.translate(QVector3D(-0.5,-0.5,0));
+
+    m_camera_terrain.setToIdentity();
+    m_camera_terrain.lookAt(QVector3D(1,1,1),QVector3D(0,0,0),QVector3D(0,0,1));
+    m_program->release();
+
+
 
     /* Compute worley noise 3D textures */
     glUseProgram(m_worleyShader);
@@ -212,8 +305,41 @@ void Realtime::initializeGL() {
 
 void Realtime::paintGL() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    drawVolume();
+
 //    Debug::checkOpenGLErrors();
+
+//    glUseProgram(m_terrainShader);
+//    glBindVertexArray(m_terrainVao);
+//    //std::cout<<m_terrainVao<<std::endl;
+
+//    int res = m_terrain.getResolution();
+//    //std::cout<<res<<std::endl;
+
+//    glPolygonMode(GL_FRONT_AND_BACK,m_terrain.m_wireshade? GL_LINE : GL_FILL);
+//    glDrawArrays(GL_TRIANGLES, 0, res * res * 6);
+
+//    glUnbindVAO();
+//    glUseProgram(0);
+
+    drawVolume();
+
+    //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+    glEnable(GL_DEPTH_TEST);
+
+    m_program->bind();
+    m_program->setUniformValue(m_projMatrixLoc, m_proj);
+    m_program->setUniformValue(m_mvMatrixLoc, m_camera_terrain * m_world);
+    m_program->setUniformValue(m_program->uniformLocation("wireshade"),m_terrain.m_wireshade);
+
+    int res = m_terrain.getResolution();
+
+    glPolygonMode(GL_FRONT_AND_BACK,m_terrain.m_wireshade? GL_LINE : GL_FILL);
+    glDrawArrays(GL_TRIANGLES, 0, res * res * 6);
+
+    m_program->release();
+
+
+
 }
 
 void Realtime::resizeGL(int w, int h) {
@@ -228,6 +354,9 @@ void Realtime::resizeGL(int w, int h) {
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
         glUseProgram(0);
     }
+
+    m_proj.setToIdentity();
+    m_proj.perspective(45.0f, GLfloat(w) / h, 0.01f, 100.0f);
 }
 
 void Realtime::volumeChanged() {
@@ -324,6 +453,7 @@ void Realtime::mousePressEvent(QMouseEvent *event) {
         m_mouseDown = true;
         m_prev_mouse_pos = glm::vec2(event->position().x(), event->position().y());
     }
+     m_prevMousePos = event->pos();
 }
 
 void Realtime::mouseReleaseEvent(QMouseEvent *event) {
@@ -331,8 +461,13 @@ void Realtime::mouseReleaseEvent(QMouseEvent *event) {
         m_mouseDown = false;
     }
 }
+void Realtime::wheelEvent(QWheelEvent *event) {
+    m_zoom -= event->angleDelta().y() / 100.f;
+    rebuildMatrices();
+}
 
 void Realtime::mouseMoveEvent(QMouseEvent *event) {
+
     if (m_mouseDown) {
         int posX = event->position().x();
         int posY = event->position().y();
@@ -356,6 +491,17 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         glUseProgram(m_shader);  // Pass camera mat (proj * view)
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));        
         glUseProgram(0);
+
+        glUseProgram(m_terrainShader);  // Pass camera mat (proj * view)
+        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
+        glUseProgram(0);
+
+        m_angleX += 10 * (event->position().x() - m_prevMousePos.x()) / (float) width();
+        m_angleY += 10 * (event->position().y() - m_prevMousePos.y()) / (float) height();
+        m_prevMousePos = event->pos();
+        rebuildMatrices();
+
+
 
         update(); // asks for a PaintGL() call to occur
     }
@@ -401,4 +547,25 @@ void Realtime::timerEvent(QTimerEvent *event) {
     glUseProgram(0);
 
     update(); // asks for a PaintGL() call to occur
+}
+
+void Realtime::rebuildMatrices() {
+    m_camera_terrain.setToIdentity();
+    QMatrix4x4 rot;
+    rot.setToIdentity();
+    rot.rotate(-10 * m_angleX,QVector3D(0,0,1));
+    QVector3D eye = QVector3D(1,1,1);
+    eye = rot.map(eye);
+    rot.setToIdentity();
+    rot.rotate(-10 * m_angleY,QVector3D::crossProduct(QVector3D(0,0,1),eye));
+    eye = rot.map(eye);
+
+    eye = eye * m_zoom;
+
+    m_camera_terrain.lookAt(eye,QVector3D(0,0,0),QVector3D(0,0,1));
+
+    m_proj.setToIdentity();
+    m_proj.perspective(45.0f, 1.0 * width() / height(), 0.01f, 100.0f);
+
+    update();
 }

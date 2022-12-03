@@ -40,6 +40,11 @@ add_executable(${PROJECT_NAME}
     src/camera/camera.h
     src/noise/worley.h
 
+    src/terrain/glwidget.h
+    src/terrain/terraingenerator.h
+    src/terrain/glwidget.cpp
+    src/terrain/terraingenerator.cpp
+
     src/utils/debug.h
 )
 
@@ -68,6 +73,9 @@ qt6_add_resources(${PROJECT_NAME} "Resources"
         resources/shaders/default.frag
         resources/shaders/default.vert
         resources/shaders/worley.comp
+
+        resources/shaders/vertex.vert
+        resources/shaders/fragment.frag
 )
 
 # GLEW: this provides support for Windows (including 64-bit)

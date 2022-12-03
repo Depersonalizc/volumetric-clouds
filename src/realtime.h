@@ -1,10 +1,18 @@
 #pragma once
 
 // Defined before including GLEW to suppress deprecation messages on macOS
+//#include "qopenglshaderprogram.h"
+
+
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
 #endif
+
 #include <GL/glew.h>
+
+
+//#include "GL/glew.h"
+
 #include <glm/glm.hpp>
 
 #include <array>
@@ -16,6 +24,15 @@
 
 #include "camera/camera.h"
 #include "settings.h"
+#include "qopenglshaderprogram.h"
+
+#include <QOpenGLWidget>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLBuffer>
+#include "terrain/terraingenerator.h"
+#include <QMatrix4x4>
+
+
 
 
 constexpr float cube[] = {
@@ -54,15 +71,16 @@ private:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void timerEvent(QTimerEvent *event) override;
+    void wheelEvent(QWheelEvent *event) override;
 
     GLuint vbo, vao;
     GLuint ssboWorley;
 //    GLuint ssboWorleyCoarse, ssboWorleyMedium, ssboWorleyFine;  // shader storage buffer for worley points
     GLuint volumeTexHighRes, volumeTexLowRes;
 
-    static void glUnbindVBO() { glBindBuffer(GL_ARRAY_BUFFER, 0); }
-    static void glUnbindVAO() { glBindVertexArray(0); }
-    static void glUnbindSSBO() { glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); }
+    static void glUnbindVBO() { __glewBindBuffer(GL_ARRAY_BUFFER, 0); }
+    static void glUnbindVAO() { __glewBindVertexArray(0); }
+    static void glUnbindSSBO() { __glewBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); }
     static void glUnbind() { glUnbindVBO(); glUnbindVAO(); glUnbindSSBO(); }
 
     void updateWorleyPoints(const WorleyPointsParams &worleyPointsParams);
@@ -97,19 +115,44 @@ private:
         GLchar name[bufSize]; // variable name in GLSL
         GLsizei length; // name length
         /* attribs */
-        glGetProgramiv(m_shader, GL_ACTIVE_ATTRIBUTES, &count);
+        __glewGetProgramiv(m_shader, GL_ACTIVE_ATTRIBUTES, &count);
         printf("Active Attributes: %d\n", count);
         for (i = 0; i < count; i++) {
-            glGetActiveAttrib(m_shader, (GLuint)i, bufSize, &length, &size, &type, name);
+            __glewGetActiveAttrib(m_shader, (GLuint)i, bufSize, &length, &size, &type, name);
             printf("Attribute #%d Type: %u Name: %s\n", i, type, name);
         }
         /* uniforms */
-        glGetProgramiv(m_shader, GL_ACTIVE_UNIFORMS, &count);
+        __glewGetProgramiv(m_shader, GL_ACTIVE_UNIFORMS, &count);
         printf("#Active Uniforms: %d\n", count);
         for (i = 0; i < count; i++) {
-            glGetActiveUniform(m_shader, (GLuint)i, bufSize, &length, &size, &type, name);
+            __glewGetActiveUniform(m_shader, (GLuint)i, bufSize, &length, &size, &type, name);
             printf("Uniform #%d Type: %u Name: %s\n", i, type, name);
         }
     }
+
+
+    // Terrain related
+    GLuint m_terrainShader;
+    //GLuint m_terrainVbo, m_terrainVao;
+
+    QOpenGLShaderProgram *m_program = nullptr;
+    void rebuildMatrices();
+    int m_xRot = 0;
+    int m_yRot = 0;
+    int m_zRot = 0;
+    QOpenGLVertexArrayObject m_terrainVao;
+    QOpenGLBuffer m_terrainVbo;
+    QMatrix4x4 m_proj;
+    QMatrix4x4 m_camera_terrain;
+    QMatrix4x4 m_world;
+    TerrainGenerator m_terrain;
+
+    int m_projMatrixLoc = 0;
+    int m_mvMatrixLoc = 0;
+
+    QPoint m_prevMousePos;
+    float m_angleX;
+    float m_angleY;
+    float m_zoom;
 
 };

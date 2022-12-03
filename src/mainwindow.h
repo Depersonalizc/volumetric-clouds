@@ -7,6 +7,7 @@
 #include <QDoubleSpinBox>
 #include <QPushButton>
 #include "realtime.h"
+#include "terrain/glwidget.h"
 
 class MainWindow : public QWidget
 {
@@ -29,6 +30,8 @@ private:
     void connectGammaCorrect();
     void connectUploadFile();
     void connectExtraCredit();
+
+    GLWidget *glWidget;
 
     Realtime *realtime;
     QCheckBox *invertDensity;
