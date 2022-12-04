@@ -40,7 +40,7 @@ void MainWindow::on_stepSize_spinBox_valueChanged(int arg1)
 void MainWindow::on_lightAborspMulti_doubleSpinBox_valueChanged(double arg1)
 {
     ui->lightAborspMulti_doubleSpinBox->setValue(arg1);
-   // settings. = ui->stepSize_spinBox->value();
+    ///TO:DO change appropriate setting in settings.
     realtime->settingsChanged();
 }
 
@@ -48,7 +48,7 @@ void MainWindow::on_lightAborspMulti_doubleSpinBox_valueChanged(double arg1)
 void MainWindow::on_lightTrans_doubleSpinBox_valueChanged(double arg1)
 {
     ui->lightTrans_doubleSpinBox->setValue(arg1);
-   // settings.
+   ///TO:DO change appropriate setting in settings.
     realtime->settingsChanged();
 }
 
@@ -73,6 +73,412 @@ void MainWindow::on_valScaling3_doubleSpinBox_valueChanged(double arg1)
 {
     ui->valScaling3_doubleSpinBox->setValue(arg1);
     settings.volumeScaling[3] = ui->valScaling3_doubleSpinBox->value();
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_noiseScaling_horizontalSlider_sliderMoved(int position)
+{
+    ui->noiseScaling_horizontalSlider->setValue(position);
+    ui->noiseScaling_doubleSpinBox->setValue(position);
+    realtime->settingsChanged();
+
+}
+
+
+void MainWindow::on_noiseScaling_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->noiseScaling_doubleSpinBox->setValue(arg1);
+    ui->noiseScaling_horizontalSlider->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_invert_checkBox_stateChanged(int arg1)
+{
+    settings.invertDensity = !settings.invertDensity;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_gamma_checkBox_stateChanged(int arg1)
+{
+    settings.gammaCorrect = !settings.gammaCorrect;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_lightColor_R_spinBox_valueChanged(int arg1)
+{
+    ui->lightColor_R_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+
+}
+
+
+void MainWindow::on_lightColor_G_spinBox_valueChanged(int arg1)
+{
+    ui->lightColor_G_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_lightColor_B_spinBox_valueChanged(int arg1)
+{
+    ui->lightColor_B_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_lightColor_A_spinBox_valueChanged(int arg1)
+{
+    ui->lightColor_A_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_lightLatitude_horizontalSlider_sliderMoved(int position)
+{
+    ui->lightLatitude_horizontalSlider->setValue(position);
+    ui->lightLatitude_doubleSpinBox->setValue(position);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_lightLongitude_horizontalSlider_sliderMoved(int position)
+{
+    ui->lightLongitude_horizontalSlider->setValue(position);
+    ui->lightLongitude_doubleSpinBox->setValue(position);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_lightLatitude_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->lightLatitude_doubleSpinBox->setValue(arg1);
+    ui->lightLatitude_horizontalSlider->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_lightLongitude_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->lightLongitude_doubleSpinBox->setValue(arg1);
+    ui->lightLongitude_horizontalSlider->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTextureTrans1_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->detailTextureTrans1_doubleSpinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTextureTrans2_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->detailTextureTrans2_doubleSpinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTextureTrans3_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->detailTextureTrans3_doubleSpinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_fineR_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_fineR_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    // settings.newFineArray = arg1; ?
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_mediumR_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_mediumR_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_coarseR_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_coarseR_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_weightR_spinBox_valueChanged(double arg1)
+{
+    ui->detailTexture_weightR_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_fineG_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_fineG_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_mediumG_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_mediumG_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_coarseG_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_coarseG_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_weightG_spinBox_valueChanged(double arg1)
+{
+    ui->detailTexture_weightG_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_fineB_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_fineB_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_mediumB_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_mediumB_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_coarseB_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_coarseB_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_weightB_spinBox_valueChanged(double arg1)
+{
+    ui->detailTexture_weightB_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_fineA_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_fineA_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_mediumA_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_mediumA_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_coarseA_spinBox_valueChanged(int arg1)
+{
+    ui->detailTexture_coarseA_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_detailTexture_weightA_spinBox_valueChanged(double arg1)
+{
+    ui->detailTexture_weightA_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTextureTrans1_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->shapeTextureTrans1_doubleSpinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTextureTrans2_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->shapeTextureTrans2_doubleSpinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTextureTrans3_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->shapeTextureTrans3_doubleSpinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_fineR_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_fineR_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_mediumR_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_mediumR_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_coarseR_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_coarseR_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_weightR_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->shapeTexture_weightR_doubleSpinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_fineG_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_fineG_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_mediumG_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_mediumG_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_coarseG_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_coarseG_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_weightG_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->shapeTexture_weightG_doubleSpinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_fineB_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_fineB_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_mediumB_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_mediumB_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_coarseB_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_coarseB_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_weightB_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->shapeTexture_weightB_doubleSpinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_fineA_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_fineA_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_mediumA_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_mediumA_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_coarseA_spinBox_valueChanged(int arg1)
+{
+    ui->shapeTexture_coarseA_spinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_shapeTexture_weightA_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->shapeTexture_weightA_doubleSpinBox->setValue(arg1);
+    ///TO:DO change appropriate setting in settings.
     realtime->settingsChanged();
 }
 
