@@ -74,8 +74,11 @@ qt6_add_resources(${PROJECT_NAME} "Resources"
         resources/shaders/default.vert
         resources/shaders/worley.comp
 
-        resources/shaders/vertex.vert
-        resources/shaders/fragment.frag
+        resources/shaders/terrain_generator.vert
+        resources/shaders/terrain_generator.frag
+        resources/shaders/terrain_texture.vert
+        resources/shaders/terrain_texture.frag
+
 )
 
 # GLEW: this provides support for Windows (including 64-bit)

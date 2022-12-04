@@ -86,6 +86,8 @@ private:
     void updateWorleyPoints(const WorleyPointsParams &worleyPointsParams);
     void setUpVolume();
     void drawVolume();
+    void drawTerrain();
+
 
     GLuint m_shader, m_worleyShader;             // Stores id for shader programs
     Camera m_camera;
@@ -129,6 +131,25 @@ private:
             printf("Uniform #%d Type: %u Name: %s\n", i, type, name);
         }
     }
+
+    // FBO and texture related
+    GLuint m_defaultFBO;
+    int m_fbo_width;
+    int m_fbo_height;
+
+    // Texture related variables
+    GLuint m_terrain_texture_shader;
+    GLuint m_fullscreen_vbo;
+    GLuint m_fullscreen_vao;
+
+    GLuint m_fbo;
+    GLuint m_fbo_texture_color;
+    GLuint m_fbo_texture_depth;
+    GLuint m_fbo_renderbuffer;
+
+    void prepTexture();
+    void makeFBO();
+    void paintTexture(GLuint texture);
 
 
     // Terrain related

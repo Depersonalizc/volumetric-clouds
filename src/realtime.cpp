@@ -114,6 +114,8 @@ void Realtime::drawVolume() {
     glUseProgram(0);
 }
 
+
+
 Realtime::Realtime(QWidget *parent) : QOpenGLWidget(parent) {
     m_prev_mouse_pos = glm::vec2(size().width()/2, size().height()/2);
     setMouseTracking(true);
@@ -146,6 +148,12 @@ void Realtime::finish() {
 void Realtime::initializeGL() {
     m_devicePixelRatio = this->devicePixelRatio();
 
+    // FBO related
+    m_defaultFBO = 2;
+    m_fbo_width = size().width() * m_devicePixelRatio;
+    m_fbo_height = size().height() * m_devicePixelRatio;
+
+
     m_timer = startTimer(1000/60);
     m_elapsedTimer.start();
 
@@ -170,6 +178,7 @@ void Realtime::initializeGL() {
     /* Create shader */
     m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
     m_worleyShader = ShaderLoader::createComputeShaderProgram(":/resources/shaders/worley.comp");
+    m_terrain_texture_shader = ShaderLoader::createShaderProgram(":/resources/shaders/terrain_texture.vert", ":/resources/shaders/terrain_texture.frag");
 
     //m_terrainShader = ShaderLoader::createShaderProgram(":/resources/shaders/vertex.vert", ":/resources/shaders/fragment.frag");
 
@@ -193,46 +202,50 @@ void Realtime::initializeGL() {
 //        glm::mat4 mview;
 //        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "mvMatrix"), 1, GL_FALSE, glm::value_ptr(m_camera.getViewMatrix()));
 
-
-
 //    }
+
+
     // Terrain shader related
-    //glClearColor(0, 0, 0, 1);
-    m_program = new QOpenGLShaderProgram;
-    std::cout << QDir::currentPath().toStdString() << std::endl;
-    m_program->addShaderFromSourceFile(QOpenGLShader::Vertex,":/resources/shaders/vertex.vert");
-    m_program->addShaderFromSourceFile(QOpenGLShader::Fragment,":/resources/shaders/fragment.frag");
-    m_program->link();
-    m_program->bind();
+    {
+        glClearColor(0, 0, 0, 1);
+        m_program = new QOpenGLShaderProgram;
+        std::cout << QDir::currentPath().toStdString() << std::endl;
+        m_program->addShaderFromSourceFile(QOpenGLShader::Vertex,":/resources/shaders/terrain_generator.vert");
+        m_program->addShaderFromSourceFile(QOpenGLShader::Fragment,":/resources/shaders/terrain_generator.frag");
+        m_program->link();
+        m_program->bind();
 
-    //m_terrainShader = ShaderLoader::createShaderProgram(":/resources/shaders/vertex.vert", ":/resources/shaders/fragment.frag");
+        //m_terrainShader = ShaderLoader::createShaderProgram(":/resources/shaders/vertex.vert", ":/resources/shaders/fragment.frag");
 
-    m_projMatrixLoc = m_program->uniformLocation("projMatrix");
-    m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
-    m_terrainVao.create();
-    m_terrainVao.bind();
+        m_projMatrixLoc = m_program->uniformLocation("projMatrix");
+        m_mvMatrixLoc = m_program->uniformLocation("mvMatrix");
+        m_terrainVao.create();
+        m_terrainVao.bind();
 
-    std::vector<GLfloat> verts = m_terrain.generateTerrain();
+        std::vector<GLfloat> verts = m_terrain.generateTerrain();
+        std::cout<<verts[30]<<std::endl;
 
-    m_terrainVbo.create();
-    m_terrainVbo.bind();
-    m_terrainVbo.allocate(verts.data(),verts.size()*sizeof(GLfloat));
+        m_terrainVbo.create();
+        m_terrainVbo.bind();
+        m_terrainVbo.allocate(verts.data(),verts.size()*sizeof(GLfloat));
 
-    glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
+        glEnableVertexAttribArray(0);
+        glEnableVertexAttribArray(1);
+        glEnableVertexAttribArray(2);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),nullptr);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),reinterpret_cast<void *>(6 * sizeof(GLfloat)));
+        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),nullptr);
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),reinterpret_cast<void *>(6 * sizeof(GLfloat)));
 
-    m_terrainVbo.release();
-    m_world.setToIdentity();
-    m_world.translate(QVector3D(-0.5,-0.5,0));
+        m_terrainVbo.release();
+        m_world.setToIdentity();
+        m_world.translate(QVector3D(-0.5,-0.5,0));
 
-    m_camera_terrain.setToIdentity();
-    m_camera_terrain.lookAt(QVector3D(1,1,1),QVector3D(0,0,0),QVector3D(0,0,1));
-    m_program->release();
+        m_camera_terrain.setToIdentity();
+        m_camera_terrain.lookAt(QVector3D(1,1,1),QVector3D(0,0,0),QVector3D(0,0,1));
+        m_program->release();
+
+    }
 
 
 
@@ -301,30 +314,124 @@ void Realtime::initializeGL() {
     std::cout << "checking done\n";
 
     glInitialized = true;
+    prepTexture();
+}
+
+void Realtime::prepTexture() {
+
+    glUseProgram(m_terrain_texture_shader);
+    glUniform1i(glGetUniformLocation(m_terrain_texture_shader, "sampler_texture"), 0);
+    glUseProgram(0);
+
+    // "fullscreen" quad's vertex data
+    std::vector<GLfloat> fullscreen_quad_data =
+    { //     POSITIONS    //
+        -1.f,  1.f, 0.0f,
+         0.f,  1.f,
+        -1.f, -1.f, 0.0f,
+         0.f,  0.f,
+         1.f,  1.f, 0.0f,
+         1.f,  1.f,
+         1.f,  1.f, 0.0f,
+         1.f,  1.f,
+        -1.f,  -1.f, 0.0f,
+         0.f,  0.f,
+         1.f, -1.f, 0.0f,
+         1.f,  0.f
+    };
+    // Generate and bind a VBO and a VAO for a fullscreen quad
+    glGenBuffers(1, &m_fullscreen_vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, m_fullscreen_vbo);
+    glBufferData(GL_ARRAY_BUFFER, fullscreen_quad_data.size()*sizeof(GLfloat), fullscreen_quad_data.data(), GL_STATIC_DRAW);
+    glGenVertexArrays(1, &m_fullscreen_vao);
+    glBindVertexArray(m_fullscreen_vao);
+
+    glEnableVertexAttribArray(0);
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), nullptr);
+
+    glEnableVertexAttribArray(1);
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+
+    // Unbind the fullscreen quad's VBO and VAO
+    glBindBuffer(GL_ARRAY_BUFFER, 0);
+    glBindVertexArray(0);
+
+    makeFBO();
+    glUseProgram(0);
+}
+
+void Realtime::makeFBO(){
+    // Generate and bind an empty texture, set its min/mag filter interpolation, then unbind --- this is the texture for colors
+    glGenTextures(1, &m_fbo_texture_color);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_fbo_texture_color);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    // Set min and mag filters' interpolation mode to linear
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+
+    // Generate and bind an empty texture, set its min/mag filter interpolation, then unbind --- this is the texture for depths
+    glGenTextures(1, &m_fbo_texture_depth);
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, m_fbo_texture_depth);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    // Set min and mag filters' interpolation mode to linear
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    // Generate and bind an FBO
+    glGenFramebuffers(1, &m_fbo);
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+
+    // Add our texture_color as a color attachment, and our texture_depth as a depth+stencil attachment, to our FBO
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_fbo_texture_color, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_TEXTURE_2D, m_fbo_texture_depth, 0);
+
+    std::cout << m_fbo_texture_color << std::endl;
+    std::cout << m_fbo_texture_depth << std::endl;
+
+    //glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_fbo_renderbuffer);
+
+    // Unbind the FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+
 }
 
 void Realtime::paintGL() {
+    // Bind our FBO
+    glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
+
+    // Call glViewport
+    glViewport(0,0,m_fbo_width, m_fbo_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 //    Debug::checkOpenGLErrors();
 
-//    glUseProgram(m_terrainShader);
-//    glBindVertexArray(m_terrainVao);
-//    //std::cout<<m_terrainVao<<std::endl;
-
-//    int res = m_terrain.getResolution();
-//    //std::cout<<res<<std::endl;
-
-//    glPolygonMode(GL_FRONT_AND_BACK,m_terrain.m_wireshade? GL_LINE : GL_FILL);
-//    glDrawArrays(GL_TRIANGLES, 0, res * res * 6);
-
-//    glUnbindVAO();
-//    glUseProgram(0);
-
-    drawVolume();
+    //drawVolume();
 
     //glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    drawTerrain();
+
+    // After drawing the scene: Bind the default framebuffer
+    glBindFramebuffer(GL_FRAMEBUFFER, m_defaultFBO);
+    glViewport(0,0,m_fbo_width, m_fbo_height);
+
+    // Clear the color and depth buffers
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+
+    // Call paintTexture to draw our FBO color attachment texture
+    paintTexture(m_fbo_texture_color);
+}
+
+void Realtime::drawTerrain() {
     glEnable(GL_DEPTH_TEST);
+    //std::cout<<"here"<<std::endl;
 
     m_program->bind();
     m_program->setUniformValue(m_projMatrixLoc, m_proj);
@@ -337,9 +444,24 @@ void Realtime::paintGL() {
     glDrawArrays(GL_TRIANGLES, 0, res * res * 6);
 
     m_program->release();
+}
 
+void Realtime::paintTexture(GLuint texture){
+    glUseProgram(m_terrain_texture_shader);
 
+    // Pass in uniforms
+    glUniform1f(glGetUniformLocation(m_terrain_texture_shader, "w"), size().width());
+    glUniform1f(glGetUniformLocation(m_terrain_texture_shader, "h"), size().height());
 
+    glBindVertexArray(m_fullscreen_vao);
+    // Bind "texture" to slot 0
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_2D, texture);
+
+    glDrawArrays(GL_TRIANGLES, 0, 6);
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
+    glUseProgram(0);
 }
 
 void Realtime::resizeGL(int w, int h) {
@@ -354,6 +476,16 @@ void Realtime::resizeGL(int w, int h) {
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
         glUseProgram(0);
     }
+
+    // Delete Texture, Renderbuffer, and Framebuffer memory
+    glDeleteTextures(1, &m_fbo_texture_color);
+    glDeleteTextures(1, &m_fbo_texture_depth);
+    glDeleteFramebuffers(1, &m_fbo);
+
+    m_fbo_width = w * m_devicePixelRatio;
+    m_fbo_height = h * m_devicePixelRatio;
+    // Regenerate your FBO
+    makeFBO();
 
     m_proj.setToIdentity();
     m_proj.perspective(45.0f, GLfloat(w) / h, 0.01f, 100.0f);
