@@ -41,6 +41,8 @@ add_executable(${PROJECT_NAME}
     src/noise/worley.h
 
     src/utils/debug.h
+
+    src/mainwindow.ui
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
