@@ -24,10 +24,12 @@ public:
     GLuint getFullscreenVao();
     GLuint getFbo();
     GLuint getDefaultFbo();
-    GLuint getFboTexture();
+    GLuint getFboDepthTexture();
+    GLuint getFboColorTexture();
 
     // Delete
-    void deleteTexture();
+    void deleteDepthTexture();
+    void deleteColorTexture();
     void deleteRenderBuffer();
     void deleteFrameBuffer();
 
@@ -51,8 +53,11 @@ private:
     GLuint m_fullscreen_vao;
 
     GLuint m_fbo;
-    GLuint m_fbo_texture;
+    GLuint m_fbo_depth_texture;
     GLuint m_fbo_renderbuffer;
+    GLuint m_fbo_color_texture;
+    std::vector<GLuint> m_DrawBuffers = std::vector<GLuint>(3);
+
 
 
 

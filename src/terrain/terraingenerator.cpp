@@ -37,8 +37,8 @@ TerrainGenerator::~TerrainGenerator()
 // Helper for generateTerrain()
 void addPointToVector(glm::vec3 point, std::vector<float>& vector) {
     vector.push_back(point.x);
-    vector.push_back(point.y);
     vector.push_back(point.z);
+    vector.push_back(point.y);
 }
 
 // Generates the geometry of the output triangle mesh
@@ -111,13 +111,22 @@ glm::vec2 TerrainGenerator::sampleRandomVector(int row, int col)
 // Takes a grid coordinate (row, col), [0, m_resolution), which describes a vertex in a plane mesh
 // Returns a normalized position (x, y, z); x and y in range from [0, 1), and z is obtained from getHeight()
 glm::vec3 TerrainGenerator::getPosition(int row, int col) {
-    // Normalizing the planar coordinates to a unit square 
+    // Normalizing the planar coordinates to a unit square
     // makes scaling independent of sampling resolution.
     float x = 1.0 * row / m_resolution;
     float y = 1.0 * col / m_resolution;
     float z = getHeight(x, y);
     return glm::vec3(x,y,z);
 }
+
+//glm::vec3 TerrainGenerator::getPosition(int row, int col) {
+//    // Normalizing the planar coordinates to a unit square
+//    // makes scaling independent of sampling resolution.
+//    float x = 1.0 * row / m_resolution;
+//    float z = 1.0 * col / m_resolution;
+//    float y = getHeight(x, z);
+//    return glm::vec3(x,y,z);
+//}
 
 // ================== Students, please focus on the code below this point
 
@@ -178,7 +187,7 @@ glm::vec3 TerrainGenerator::getNormal(int row, int col) {
 glm::vec3 TerrainGenerator::getColor(glm::vec3 normal, glm::vec3 position) {
     // Task 10: compute color as a function of the normal and position
     if (position[2] < 0.005) {
-        return glm::vec3(0.0,0.4,0.0);
+        return glm::vec3(0.0,0.0,0.4);
     }
     if (glm::dot(normal, glm::vec3(0,0,1)) >= 0.6 && position[2] > 0.06) {
         return glm::vec3(1,1,1);

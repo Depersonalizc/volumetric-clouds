@@ -35,13 +35,21 @@ GLuint FBO::getDefaultFbo() {
     return m_defaultFBO;
 }
 
-GLuint FBO::getFboTexture() {
-    return m_fbo_texture;
+GLuint FBO::getFboDepthTexture() {
+    return m_fbo_depth_texture;
+}
+
+GLuint FBO::getFboColorTexture() {
+    return m_fbo_color_texture;
 }
 
 // DELETE
-void FBO::deleteTexture() {
-    glDeleteTextures(1, &m_fbo_texture);
+void FBO::deleteDepthTexture() {
+    glDeleteTextures(1, &m_fbo_depth_texture);
+}
+
+void FBO::deleteColorTexture() {
+    glDeleteTextures(1, &m_fbo_color_texture);
 }
 
 void FBO::deleteRenderBuffer() {
@@ -87,9 +95,9 @@ void FBO::generateBindFullscreen() {
 
 void FBO::makeFBO(){
     // Task 19: Generate and bind an empty texture, set its min/mag filter interpolation, then unbind
-    glGenTextures(1, &m_fbo_texture);
+    glGenTextures(1, &m_fbo_depth_texture);
     glActiveTexture(GL_TEXTURE0);
-    glBindTexture(GL_TEXTURE_2D, m_fbo_texture);
+    glBindTexture(GL_TEXTURE_2D, m_fbo_depth_texture);
     glTexImage2D(GL_TEXTURE_2D, 0, GL_DEPTH_COMPONENT, m_fbo_width, m_fbo_height, 0, GL_DEPTH_COMPONENT, GL_FLOAT, NULL);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameterf(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -114,14 +122,27 @@ void FBO::makeFBO(){
 //    glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, m_fbo_width, m_fbo_height);
 //    glBindRenderbuffer(GL_RENDERBUFFER, 0);
 
+    // Generate and bind another texture for the color attachment ------ texture location 1
+    glGenTextures(1, &m_fbo_color_texture);
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, m_fbo_color_texture);
+
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_fbo_width, m_fbo_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
     // Task 18: Generate and bind an FBO
     glGenFramebuffers(1, &m_fbo);
     glBindFramebuffer(GL_FRAMEBUFFER, m_fbo);
 
     // Task 21: Add our texture as a color attachment, and our renderbuffer as a depth+stencil attachment, to our FBO
-    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_fbo_texture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, GL_TEXTURE_2D, m_fbo_depth_texture, 0);
+    glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, m_fbo_color_texture, 0);
+
     glDrawBuffer(GL_NONE);
     glReadBuffer(GL_NONE);
+    m_DrawBuffers[0] = GL_COLOR_ATTACHMENT0;
+    glDrawBuffers(1, &m_DrawBuffers[0]);
 //    glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, m_fbo_renderbuffer);
 
     GLenum Status = glCheckFramebufferStatus(GL_FRAMEBUFFER);

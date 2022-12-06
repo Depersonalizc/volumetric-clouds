@@ -86,15 +86,18 @@ void Realtime::drawVolume() {
 
 void Realtime::drawTerrain() {
     int res = m_terrain.getResolution();
-    std::cout << "here" << m_terrain.generateTerrain().size() << "\n";
+    //std::cout << "here" << m_terrain.generateTerrain().size() << "\n";
 
     auto projLoc  = glGetUniformLocation(m_terrainShader, "projMatrix");
-    m_proj = glm::perspective(45.0f, (float)width() / height(), 0.01f, 100.f);
+//    m_proj = glm::perspective(45.0f, (float)width() / height(), 0.01f, 100.f);
+    m_proj = m_camera.getProjMatrix();
     glUniformMatrix4fv(projLoc,  1, GL_FALSE, &m_proj[0][0]);
 
 //    std::cout <<" proj " << glm::to_string(m_proj) << "\n";
 
-    glm::mat4 mvMatrix = m_terrain_camera*m_world;
+//    glm::mat4 mvMatrix = m_terrain_camera*m_world;
+    glm::mat4 mvMatrix = m_camera.getViewMatrix()*m_world;
+
 //    std::cout <<"mv " << glm::to_string(mvMatrix) << "\n";
     auto mvMatrixLoc = glGetUniformLocation(m_terrainShader, "mvMatrix");
     glUniformMatrix4fv(mvMatrixLoc,  1, GL_FALSE, &mvMatrix[0][0]);
@@ -180,11 +183,17 @@ void Realtime::initializeGL() {
 
         m_world = glm::mat4(1.f);
         m_world = glm::translate(m_world, glm::vec3(-0.5, -0.5, 0));
+        //m_world = glm::scale(m_world, glm::vec3(2, 2, 2));
 
         setUpTerrain();
         glUseProgram(m_terrainTextureShader);
-        GLint texture_loc = glGetUniformLocation(m_terrainTextureShader, "texture_sampler");
-        glUniform1i(texture_loc, 0);
+        GLint depth_texture_loc = glGetUniformLocation(m_terrainTextureShader, "depth_sampler");
+        glUniform1i(depth_texture_loc, 0);
+        GLint color_texture_loc = glGetUniformLocation(m_terrainTextureShader, "color_sampler");
+        glUniform1i(color_texture_loc, 1);
+
+        glUniform1f(glGetUniformLocation(m_terrainTextureShader, "near"), settings.nearPlane);
+        glUniform1f(glGetUniformLocation(m_terrainTextureShader, "far"), settings.farPlane);
     }
     glUseProgram(0);
 
@@ -261,7 +270,6 @@ void Realtime::initializeGL() {
 }
 
 void Realtime::setUpTerrain() {
-    // Create geometry for a sphere
 
     // Generate and bind the VBO
     glGenBuffers(1, &m_terrain_vbo);
@@ -309,8 +317,12 @@ void Realtime::paintGL() {
 
 //    drawVolume();
     drawTerrain();
+
     glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getDefaultFbo());
-    paintTerrainTexture(m_FBO.get()->getFboTexture());
+    paintTerrainTexture(m_FBO.get()->getFboColorTexture());
+//    std::cout<<m_FBO.get()->getFboColorTexture()<<std::endl;
+//    std::cout<<m_FBO.get()->getFboDepthTexture()<<std::endl;
+
     glUseProgram(0);
 }
 
@@ -319,7 +331,7 @@ void Realtime::paintTerrainTexture(GLuint texture) {
 
     glBindVertexArray(m_FBO.get()->getFullscreenVao());
 
-    glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE1);
     glBindTexture(GL_TEXTURE_2D, texture);
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
@@ -341,10 +353,13 @@ void Realtime::resizeGL(int w, int h) {
         glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
         glUseProgram(0);
     }
-    m_proj = glm::perspective(45.0f, (float)width() / height(), 0.01f, 100.f);
+    //m_proj = glm::perspective(45.0f, (float)width() / height(), 0.01f, 100.f);
+    m_proj = m_camera.getProjMatrix();
+
 
     m_FBO.get()->deleteRenderBuffer();
-    m_FBO.get()->deleteTexture();
+    m_FBO.get()->deleteDepthTexture();
+    m_FBO.get()->deleteColorTexture();
     m_FBO.get()->deleteFrameBuffer();
     m_screen_width = size().width() * m_devicePixelRatio;
     m_screen_height = size().height() * m_devicePixelRatio;
@@ -493,7 +508,7 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         m_angleX += 10 * (event->position().x() - m_prevMousePos.x()) / (float) width();
         m_angleY += 10 * (event->position().y() - m_prevMousePos.y()) / (float) height();
         m_prevMousePos = event->pos();
-        rebuildMatrices();
+        //rebuildMatrices();
 
 
 
@@ -556,11 +571,14 @@ void Realtime::rebuildMatrices() {
 
     eye = eye * m_zoom;
 
-    m_terrain_camera = glm::mat4(1);
+   /* m_terrain_camera = glm::mat4(1);
     m_terrain_camera = glm::lookAt(glm::vec3(eye[0], eye[1], eye[2]),glm::vec3(0,0,0),glm::vec3(0,0,1));
 
     m_proj = glm::mat4(1.f);
-    m_proj = glm::perspective(45.0f, (float)width() / height(), 0.01f, 100.f);
+    m_proj = glm::perspective(45.0f, (float)width() / height(), 0.01f, 100.f)*/;
+
+    m_camera.setPos(glm::vec4(eye[0], eye[1], eye[2], 1.0));
+    m_proj = m_camera.getProjMatrix();
 
 
     update();
