@@ -4,7 +4,7 @@
 in vec2 uv;
 
 // Add a sampler2D uniform
-uniform sampler2D sampler_texture;
+uniform sampler2D texture_sampler;
 
 
 
@@ -13,12 +13,18 @@ uniform float h;
 
 out vec4 fragColor;
 
+float near_plane = 0.01f;
+float far_plane = 100.f;
+
+float LinearizeDepth(float depth)
+{
+    float z = depth * 2.0 - 1.0; // Back to NDC
+    return (2.0 * near_plane * far_plane) / (far_plane + near_plane - z * (far_plane - near_plane));
+}
 
 void main()
 {
-    //fragColor = vec4(1);
-    // Set fragColor using the sampler2D at the UV coordinate
-    fragColor = texture(sampler_texture, uv);
-    fragColor = vec4(1.0, 0.0, 0.0, 1.0);
-
+    float depth = texture(texture_sampler, uv).r;
+    float linear_depth = LinearizeDepth(depth);
+    fragColor = vec4(linear_depth, linear_depth, linear_depth, 1);
 }

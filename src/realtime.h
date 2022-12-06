@@ -32,6 +32,7 @@
 #include "terrain/terraingenerator.h"
 #include <QMatrix4x4>
 
+#include "src/glStructure/FBO.h"
 
 
 
@@ -86,10 +87,13 @@ private:
     void updateWorleyPoints(const WorleyPointsParams &worleyPointsParams);
     void setUpVolume();
     void drawVolume();
+    void setUpTerrain();
     void drawTerrain();
+    void paintTerrainTexture(GLuint texture);
+    void rebuildMatrices();
 
 
-    GLuint m_shader, m_worleyShader;             // Stores id for shader programs
+    GLuint m_shader, m_worleyShader, m_terrainShader, m_terrainTextureShader;             // Stores id for shader programs
     Camera m_camera;
     bool glInitialized = false;
 
@@ -104,6 +108,27 @@ private:
 
     // Device Correction Variables
     int m_devicePixelRatio;
+
+    // Terrain
+    std::vector<float> m_terrain_data;
+    GLuint m_terrain_vbo;
+    GLuint m_terrain_vao;
+
+    glm::mat4 m_proj;
+    glm::mat4 m_terrain_camera;
+    glm::mat4 m_world;
+
+    TerrainGenerator m_terrain;
+
+    QPoint m_prevMousePos;
+    float m_angleX;
+    float m_angleY;
+    float m_zoom;
+
+    std::unique_ptr<FBO> m_FBO;
+    void paintTexture(GLuint texture);
+    int m_screen_width;
+    int m_screen_height;
 
     friend class MainWindow;
 
@@ -132,48 +157,5 @@ private:
         }
     }
 
-    // FBO and texture related
-    GLuint m_defaultFBO;
-    int m_fbo_width;
-    int m_fbo_height;
-
-    // Texture related variables
-    GLuint m_terrain_texture_shader;
-    GLuint m_fullscreen_vbo;
-    GLuint m_fullscreen_vao;
-
-    GLuint m_fbo;
-    GLuint m_fbo_texture_color;
-    GLuint m_fbo_texture_depth;
-    GLuint m_fbo_renderbuffer;
-
-    void prepTexture();
-    void makeFBO();
-    void paintTexture(GLuint texture);
-
-
-    // Terrain related
-    GLuint m_terrainShader;
-    //GLuint m_terrainVbo, m_terrainVao;
-
-    QOpenGLShaderProgram *m_program = nullptr;
-    void rebuildMatrices();
-    int m_xRot = 0;
-    int m_yRot = 0;
-    int m_zRot = 0;
-    QOpenGLVertexArrayObject m_terrainVao;
-    QOpenGLBuffer m_terrainVbo;
-    QMatrix4x4 m_proj;
-    QMatrix4x4 m_camera_terrain;
-    QMatrix4x4 m_world;
-    TerrainGenerator m_terrain;
-
-    int m_projMatrixLoc = 0;
-    int m_mvMatrixLoc = 0;
-
-    QPoint m_prevMousePos;
-    float m_angleX;
-    float m_angleY;
-    float m_zoom;
 
 };
