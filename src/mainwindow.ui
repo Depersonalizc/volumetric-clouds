@@ -1,0 +1,691 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>1397</width>
+    <height>649</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QHBoxLayout" name="horizontalLayout">
+    <item>
+     <layout class="QVBoxLayout" name="leftLayout">
+      <item>
+       <widget class="QGroupBox" name="groupBox_2">
+        <property name="minimumSize">
+         <size>
+          <width>457</width>
+          <height>586</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>457</width>
+          <height>586</height>
+         </size>
+        </property>
+        <property name="title">
+         <string/>
+        </property>
+        <widget class="QGroupBox" name="renderBox">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>40</y>
+           <width>431</width>
+           <height>281</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>400</width>
+           <height>200</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>1000</width>
+           <height>2500</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Render Params</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout">
+          <item row="0" column="0" colspan="2">
+           <widget class="QLabel" name="label_129">
+            <property name="text">
+             <string>density multiplier</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QDoubleSpinBox" name="densityMultiplier">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="3">
+           <widget class="QCheckBox" name="stepNumber_checkBox">
+            <property name="text">
+             <string>step number</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QSpinBox" name="stepNumber_spinBox">
+            <property name="minimum">
+             <number>10</number>
+            </property>
+            <property name="maximum">
+             <number>150</number>
+            </property>
+            <property name="value">
+             <number>32</number>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0" colspan="3">
+           <widget class="QCheckBox" name="stepSize_checkBox">
+            <property name="text">
+             <string>step size</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="3">
+           <widget class="QSpinBox" name="stepSize_spinBox">
+            <property name="minimum">
+             <number>2</number>
+            </property>
+            <property name="maximum">
+             <number>100</number>
+            </property>
+            <property name="value">
+             <number>16</number>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0" colspan="3">
+           <widget class="QLabel" name="label_130">
+            <property name="text">
+             <string>light absorption multiplier</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3">
+           <widget class="QDoubleSpinBox" name="lightAborspMulti_doubleSpinBox"/>
+          </item>
+          <item row="4" column="0" colspan="3">
+           <widget class="QLabel" name="label_131">
+            <property name="text">
+             <string>min light transmittance</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3">
+           <widget class="QDoubleSpinBox" name="lightTrans_doubleSpinBox"/>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_132">
+            <property name="text">
+             <string>volume scaling</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QDoubleSpinBox" name="valScaling1_doubleSpinBox">
+            <property name="minimumSize">
+             <size>
+              <width>62</width>
+              <height>22</height>
+             </size>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="valScaling2_doubleSpinBox">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="3">
+           <widget class="QDoubleSpinBox" name="valScaling3_doubleSpinBox">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_133">
+            <property name="text">
+             <string>noise scaling</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0" colspan="3">
+           <widget class="QSlider" name="noiseScaling_horizontalSlider">
+            <property name="value">
+             <number>1</number>
+            </property>
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="3">
+           <widget class="QDoubleSpinBox" name="noiseScaling_doubleSpinBox">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0">
+           <widget class="QCheckBox" name="invert_checkBox">
+            <property name="text">
+             <string>Invert</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="2" colspan="2">
+           <widget class="QCheckBox" name="gamma_checkBox">
+            <property name="text">
+             <string>Gamma</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QPushButton" name="pushButton">
+         <property name="geometry">
+          <rect>
+           <x>0</x>
+           <y>10</y>
+           <width>451</width>
+           <height>24</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Load Terrain File</string>
+         </property>
+        </widget>
+        <widget class="QGroupBox" name="lightSourceBox">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>337</y>
+           <width>431</width>
+           <height>231</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>400</width>
+           <height>200</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>1000</width>
+           <height>800</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Light Source Params</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_4">
+          <item row="0" column="0" colspan="3">
+           <widget class="QLabel" name="label_182">
+            <property name="text">
+             <string>light color</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0">
+           <widget class="QLabel" name="label_183">
+            <property name="text">
+             <string>R</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1">
+           <widget class="QLabel" name="label_184">
+            <property name="text">
+             <string>G</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="2">
+           <widget class="QLabel" name="label_185">
+            <property name="text">
+             <string>B</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="3">
+           <widget class="QLabel" name="label_186">
+            <property name="text">
+             <string>A</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QSpinBox" name="lightColor_R_spinBox"/>
+          </item>
+          <item row="2" column="1">
+           <widget class="QSpinBox" name="lightColor_G_spinBox"/>
+          </item>
+          <item row="2" column="2">
+           <widget class="QSpinBox" name="lightColor_B_spinBox"/>
+          </item>
+          <item row="2" column="3">
+           <widget class="QSpinBox" name="lightColor_A_spinBox"/>
+          </item>
+          <item row="3" column="0" colspan="2">
+           <widget class="QLabel" name="label_187">
+            <property name="text">
+             <string>light latitude</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0" colspan="3">
+           <widget class="QSlider" name="lightLatitude_horizontalSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3">
+           <widget class="QDoubleSpinBox" name="lightLatitude_doubleSpinBox"/>
+          </item>
+          <item row="5" column="0" colspan="2">
+           <widget class="QLabel" name="label_188">
+            <property name="text">
+             <string>light longitude</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0" colspan="3">
+           <widget class="QSlider" name="lightLongitude_horizontalSlider">
+            <property name="orientation">
+             <enum>Qt::Horizontal</enum>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="3">
+           <widget class="QDoubleSpinBox" name="lightLongitude_doubleSpinBox"/>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </item>
+    <item>
+     <layout class="QHBoxLayout" name="screen"/>
+    </item>
+    <item>
+     <layout class="QVBoxLayout" name="rightLayout">
+      <item>
+       <widget class="QGroupBox" name="groupBox_6">
+        <property name="minimumSize">
+         <size>
+          <width>457</width>
+          <height>586</height>
+         </size>
+        </property>
+        <property name="maximumSize">
+         <size>
+          <width>457</width>
+          <height>586</height>
+         </size>
+        </property>
+        <property name="title">
+         <string/>
+        </property>
+        <widget class="QGroupBox" name="shapeTextureBox">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>281</y>
+           <width>441</width>
+           <height>231</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>400</width>
+           <height>200</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>1000</width>
+           <height>2500</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Shape Texture Params</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_3">
+          <item row="6" column="1" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_coarseR_spinBox"/>
+          </item>
+          <item row="1" column="7" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTextureTrans3_doubleSpinBox"/>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_153">
+            <property name="text">
+             <string>weights</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_152">
+            <property name="text">
+             <string>coarse#</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="3" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_coarseG_spinBox"/>
+          </item>
+          <item row="4" column="7" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_fineA_spinBox"/>
+          </item>
+          <item row="5" column="7" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_mediumA_spinBox"/>
+          </item>
+          <item row="4" column="5" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_fineB_spinBox"/>
+          </item>
+          <item row="7" column="7" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTexture_weightA_doubleSpinBox"/>
+          </item>
+          <item row="7" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTexture_weightR_doubleSpinBox"/>
+          </item>
+          <item row="7" column="3" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTexture_weightG_doubleSpinBox"/>
+          </item>
+          <item row="5" column="1" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_mediumR_spinBox"/>
+          </item>
+          <item row="7" column="5" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTexture_weightB_doubleSpinBox"/>
+          </item>
+          <item row="6" column="5" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_coarseB_spinBox"/>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_151">
+            <property name="text">
+             <string>medium#</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="5">
+           <widget class="QLabel" name="label_144">
+            <property name="text">
+             <string>texture translation</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_fineR_spinBox"/>
+          </item>
+          <item row="5" column="5" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_mediumB_spinBox"/>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_146">
+            <property name="text">
+             <string> fine#</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_fineG_spinBox"/>
+          </item>
+          <item row="2" column="0" colspan="5">
+           <widget class="QLabel" name="label_145">
+            <property name="text">
+             <string>channels</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTextureTrans1_doubleSpinBox"/>
+          </item>
+          <item row="6" column="7" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_coarseA_spinBox"/>
+          </item>
+          <item row="1" column="4" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTextureTrans2_doubleSpinBox"/>
+          </item>
+          <item row="5" column="3" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_mediumG_spinBox"/>
+          </item>
+          <item row="3" column="1" colspan="2">
+           <widget class="QLabel" name="label_148">
+            <property name="text">
+             <string>R</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3" colspan="2">
+           <widget class="QLabel" name="label_149">
+            <property name="text">
+             <string>G</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="5" colspan="2">
+           <widget class="QLabel" name="label_150">
+            <property name="text">
+             <string>B</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="7" colspan="2">
+           <widget class="QLabel" name="label_147">
+            <property name="text">
+             <string>A</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+        <widget class="QGroupBox" name="DetailTextureBox">
+         <property name="geometry">
+          <rect>
+           <x>10</x>
+           <y>10</y>
+           <width>441</width>
+           <height>251</height>
+          </rect>
+         </property>
+         <property name="minimumSize">
+          <size>
+           <width>400</width>
+           <height>200</height>
+          </size>
+         </property>
+         <property name="maximumSize">
+          <size>
+           <width>1000</width>
+           <height>2500</height>
+          </size>
+         </property>
+         <property name="title">
+          <string>Detail Texture Params</string>
+         </property>
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="2" column="0" colspan="5">
+           <widget class="QLabel" name="label_135">
+            <property name="text">
+             <string>channels</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="5">
+           <widget class="QLabel" name="label_134">
+            <property name="text">
+             <string>texture translation</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_141">
+            <property name="text">
+             <string>medium#</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_fineR_spinBox"/>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_143">
+            <property name="text">
+             <string>weights</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_coarseR_spinBox"/>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_136">
+            <property name="text">
+             <string> fine#</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_142">
+            <property name="text">
+             <string>coarse#</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_mediumR_spinBox"/>
+          </item>
+          <item row="1" column="7" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTextureTrans3_doubleSpinBox"/>
+          </item>
+          <item row="1" column="4" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTextureTrans2_doubleSpinBox"/>
+          </item>
+          <item row="7" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTexture_weightR_spinBox"/>
+          </item>
+          <item row="4" column="3" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_fineG_spinBox"/>
+          </item>
+          <item row="5" column="3" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_mediumG_spinBox"/>
+          </item>
+          <item row="6" column="3" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_coarseG_spinBox"/>
+          </item>
+          <item row="7" column="3" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTexture_weightG_spinBox"/>
+          </item>
+          <item row="4" column="5" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_fineB_spinBox"/>
+          </item>
+          <item row="5" column="5" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_mediumB_spinBox"/>
+          </item>
+          <item row="6" column="5" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_coarseB_spinBox"/>
+          </item>
+          <item row="7" column="5" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTexture_weightB_spinBox"/>
+          </item>
+          <item row="4" column="7" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_fineA_spinBox"/>
+          </item>
+          <item row="5" column="7" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_mediumA_spinBox"/>
+          </item>
+          <item row="6" column="7" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_coarseA_spinBox"/>
+          </item>
+          <item row="7" column="7" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTexture_weightA_spinBox"/>
+          </item>
+          <item row="1" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTextureTrans1_doubleSpinBox"/>
+          </item>
+          <item row="3" column="1" colspan="2">
+           <widget class="QLabel" name="label_138">
+            <property name="text">
+             <string>R</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3" colspan="2">
+           <widget class="QLabel" name="label_139">
+            <property name="text">
+             <string>G</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="5" colspan="2">
+           <widget class="QLabel" name="label_140">
+            <property name="text">
+             <string>B</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="7" colspan="2">
+           <widget class="QLabel" name="label_137">
+            <property name="text">
+             <string>A</string>
+            </property>
+           </widget>
+          </item>
+         </layout>
+        </widget>
+       </widget>
+      </item>
+     </layout>
+    </item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>1397</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <widget class="QMenu" name="menuCloud">
+    <property name="title">
+     <string>Cloud Computing</string>
+    </property>
+   </widget>
+   <addaction name="menuCloud"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

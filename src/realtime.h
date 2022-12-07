@@ -36,9 +36,18 @@
 
 
 
-constexpr float cube[] = {
+constexpr std::array<GLfloat, 42> cube = {
     .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, .5f, .5f, -.5f, .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, -.5f, -.5f, -.5f, -.5f,
     .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, -.5f, -.5f, -.5f, -.5f, -.5f
+};
+constexpr std::array<GLfloat, 30> screenQuadData {
+    // POSITION          // UV
+    -1.0f,  1.0f, 0.f,  0.f, 1.f,
+    -1.0f, -1.0f, 0.f,  0.f, 0.f,
+     1.0f, -1.0f, 0.f,  1.f, 0.f,
+     1.0f,  1.0f, 0.f,  1.f, 1.f,
+    -1.0f,  1.0f, 0.f,  0.f, 1.f,
+     1.0f, -1.0f, 0.f,  1.f, 0.f,
 };
 constexpr auto szVec3() { return sizeof(GLfloat) * 3; }
 constexpr auto szVec4() { return sizeof(GLfloat) * 4; }
@@ -73,12 +82,7 @@ private:
     void mouseMoveEvent(QMouseEvent *event) override;
     void timerEvent(QTimerEvent *event) override;
     void wheelEvent(QWheelEvent *event) override;
-
-    GLuint vbo, vao;
-    GLuint ssboWorley;
-//    GLuint ssboWorleyCoarse, ssboWorleyMedium, ssboWorleyFine;  // shader storage buffer for worley points
-    GLuint volumeTexHighRes, volumeTexLowRes;
-
+    
     static void glUnbindVBO() { __glewBindBuffer(GL_ARRAY_BUFFER, 0); }
     static void glUnbindVAO() { __glewBindVertexArray(0); }
     static void glUnbindSSBO() { __glewBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); }
@@ -91,11 +95,16 @@ private:
     void drawTerrain();
     void paintTerrainTexture(GLuint texture);
     void rebuildMatrices();
+    void setUpScreenQuad();
 
+    GLuint vboScreenQuad, vaoScreenQuad;
+    GLuint ssboWorley;
+    GLuint volumeTexHighRes, volumeTexLowRes;
+    GLuint m_volumeShader, m_worleyShader, m_terrainShader, m_terrainTextureShader;       // Stores id for shader programs
 
-    GLuint m_shader, m_worleyShader, m_terrainShader, m_terrainTextureShader;             // Stores id for shader programs
     Camera m_camera;
     bool glInitialized = false;
+        GLuint vboVolume, vaoVolume;
 
     // Tick Related Variables
     int m_timer;                                 // Stores timer which attempts to run ~60 times per second
@@ -142,17 +151,17 @@ private:
         GLchar name[bufSize]; // variable name in GLSL
         GLsizei length; // name length
         /* attribs */
-        __glewGetProgramiv(m_shader, GL_ACTIVE_ATTRIBUTES, &count);
+        glGetProgramiv(m_volumeShader, GL_ACTIVE_ATTRIBUTES, &count);
         printf("Active Attributes: %d\n", count);
         for (i = 0; i < count; i++) {
-            __glewGetActiveAttrib(m_shader, (GLuint)i, bufSize, &length, &size, &type, name);
+            glGetActiveAttrib(m_volumeShader, (GLuint)i, bufSize, &length, &size, &type, name);
             printf("Attribute #%d Type: %u Name: %s\n", i, type, name);
         }
         /* uniforms */
-        __glewGetProgramiv(m_shader, GL_ACTIVE_UNIFORMS, &count);
+        glGetProgramiv(m_volumeShader, GL_ACTIVE_UNIFORMS, &count);
         printf("#Active Uniforms: %d\n", count);
         for (i = 0; i < count; i++) {
-            __glewGetActiveUniform(m_shader, (GLuint)i, bufSize, &length, &size, &type, name);
+            glGetActiveUniform(m_volumeShader, (GLuint)i, bufSize, &length, &size, &type, name);
             printf("Uniform #%d Type: %u Name: %s\n", i, type, name);
         }
     }

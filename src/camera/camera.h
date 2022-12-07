@@ -10,7 +10,8 @@
 struct SceneCameraData {
     glm::vec4 pos  = {0.0, 0.0, 3.0, 1.0};
     glm::vec4 look = {0.0, 0.0, -1.0, 0.0};
-
+//    glm::vec4 pos  = {0.0, -10.0, 0.0, 1.0};
+//    glm::vec4 look = {0.0, 1.0, -0.0001, 0.0};
     glm::vec4 up   = {0.0, 1.0, 0.0, 0.0};
 
     double heightAngle = glm::quarter_pi<double>();
@@ -50,6 +51,11 @@ public:
     double const & getNearPlane() const;
     double const & getFarPlane() const;
 
+
+    double yMax() const;
+    double xMax() const;
+
+
     void setNearFarPlanes(double zNear, double zFar);
     void setWidthHeight(int width, int height);
     void setPos(const glm::vec4 &newPos);
@@ -68,11 +74,12 @@ public:
         std::cout << "[Camera]\n";
         std::cout << "pos: " << glm::to_string(pos) << "\n";
         std::cout << "dir: " << glm::to_string(look) << "\n";
-        std::cout << "near: " << nearPlane << "\n";
-        std::cout << "far: " << farPlane << "\n";
-        std::cout << "proj: " << glm::to_string(projMatrix) << "\n";
+        std::cout << "(theta, phi) = (" << theta << ", " << phi << ")\n";
         std::cout << "view: " << glm::to_string(viewMatrix) << "\n";
-        std::cout << "projView: " << glm::to_string(projView) << "\n";
+//        std::cout << "near: " << nearPlane << "\n";
+//        std::cout << "far: " << farPlane << "\n";
+//        std::cout << "proj: " << glm::to_string(projMatrix) << "\n";
+//        std::cout << "projView: " << glm::to_string(projView) << "\n";
     }
 
 private:

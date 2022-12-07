@@ -29,19 +29,20 @@ void Realtime::updateWorleyPoints(const WorleyPointsParams &worleyPointsParams) 
     glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0);
 }
 
+void Realtime::setUpScreenQuad() {
+    glGenBuffers(1, &vboScreenQuad);
+    glBindBuffer(GL_ARRAY_BUFFER, vboScreenQuad);
+    glBufferData(GL_ARRAY_BUFFER, screenQuadData.size()*sizeof(GLfloat), screenQuadData.data(), GL_STATIC_DRAW);
+    glGenVertexArrays(1, &vaoScreenQuad);
+    glBindVertexArray(vaoScreenQuad);
+    glEnableVertexAttribArray(0);  // pos
+    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), nullptr);
+    glEnableVertexAttribArray(1);  // uv
+    glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
+                          reinterpret_cast<void*>(3 * sizeof(GLfloat)));
+}
 
 void Realtime::setUpVolume() {
-    // VBO & VAO for the proxy cube
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube), cube, GL_STATIC_DRAW);
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
-    glEnableVertexAttribArray(0);  // position
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, szVec3(), 0);
-    glBindBuffer(GL_ARRAY_BUFFER, 0);
-    glBindVertexArray(0);
-
     // SSBO for Worley points of three frequencies, with enough memory prealloced
     glGenBuffers(1, &ssboWorley);
     glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, ssboWorley);
@@ -77,9 +78,10 @@ void Realtime::setUpVolume() {
 }
 
 void Realtime::drawVolume() {
-    glUseProgram(m_shader);
-    glBindVertexArray(vao);
-    glDrawArrays(GL_TRIANGLE_STRIP, 0, 14);
+    glDisable(GL_DEPTH_TEST);  // disable depth test to draw full screen quad
+    glUseProgram(m_volumeShader);
+    glBindVertexArray(vaoScreenQuad);
+    glDrawArrays(GL_TRIANGLES, 0, screenQuadData.size() / 5);
     glUnbindVAO();
     glUseProgram(0);
 }
@@ -128,10 +130,12 @@ void Realtime::finish() {
     killTimer(m_timer);
     this->makeCurrent();
 
-    glDeleteBuffers(1, &vbo);
+    glDeleteBuffers(1, &vboVolume);
+    glDeleteBuffers(1, &vboScreenQuad);
     glDeleteBuffers(1, &ssboWorley);
-    glDeleteVertexArrays(1, &vao);
-    glDeleteProgram(m_shader);
+    glDeleteVertexArrays(1, &vaoVolume);
+    glDeleteVertexArrays(1, &vaoScreenQuad);
+    glDeleteProgram(m_volumeShader);
     glDeleteProgram(m_worleyShader);
     glDeleteTextures(1, &volumeTexHighRes);
     glDeleteTextures(1, &volumeTexLowRes);
@@ -153,23 +157,23 @@ void Realtime::initializeGL() {
     }
     std::cout << "Initialized GL: Version " << glewGetString(GLEW_VERSION) << std::endl;
 
-    glEnable(GL_DEPTH_TEST);
-//    glEnable(GL_CULL_FACE);
-    glCullFace(GL_FRONT);  // cull front face
-    glClearColor(0.f, 0.f, 0.f, 1.f);
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);  // cull back face
+    glClearColor(.5f, .5f, .5f, 1.f);
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  // composite with bg color
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
 //    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
     /* Create shader */
-    m_shader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
+    m_volumeShader = ShaderLoader::createShaderProgram(":/resources/shaders/default.vert", ":/resources/shaders/default.frag");
     m_worleyShader = ShaderLoader::createComputeShaderProgram(":/resources/shaders/worley.comp");
     m_terrainShader = ShaderLoader::createShaderProgram(":/resources/shaders/terrain_generator.vert", ":/resources/shaders/terrain_generator.frag");
     m_terrainTextureShader = ShaderLoader::createShaderProgram(":/resources/shaders/terrain_texture.vert", ":/resources/shaders/terrain_texture.frag");
 
 
     /* Set up VBO, VAO, and SSBO */
+    setUpScreenQuad();
     setUpVolume();
 
     /* Set up default camera */
@@ -224,37 +228,39 @@ void Realtime::initializeGL() {
         }
     }
 
-    /* Pass uniforms to default shader */
-    glUseProgram(m_shader);
+    /* Pass uniforms to volume shader */
+    glUseProgram(m_volumeShader);
     {
         // Volume
-        glUniform3fv(glGetUniformLocation(m_shader, "volumeScaling"), 1, glm::value_ptr(settings.volumeScaling));
-        glUniform3fv(glGetUniformLocation(m_shader, "volumeTranslate"), 1, glm::value_ptr(settings.volumeTranslate));
-        glUniform1i(glGetUniformLocation(m_shader, "numSteps"), settings.numSteps);
-//        glUniform1f(glGetUniformLocation(m_shader, "stepSize"), settings.stepSize);
+        glUniform3fv(glGetUniformLocation(m_volumeShader, "volumeScaling"), 1, glm::value_ptr(settings.volumeScaling));
+        glUniform3fv(glGetUniformLocation(m_volumeShader, "volumeTranslate"), 1, glm::value_ptr(settings.volumeTranslate));
+        glUniform1i(glGetUniformLocation(m_volumeShader, "numSteps"), settings.numSteps);
+//        glUniform1f(glGetUniformLocation(m_volumeShader, "stepSize"), settings.stepSize);
 
         // Noise
-        glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult);
-        glUniform1i(glGetUniformLocation(m_shader, "invertDensity"), settings.invertDensity);
-        glUniform1i(glGetUniformLocation(m_shader, "gammaCorrect"), settings.gammaCorrect);
+        glUniform1f(glGetUniformLocation(m_volumeShader, "densityMult"), settings.densityMult);
+        glUniform1i(glGetUniformLocation(m_volumeShader, "invertDensity"), settings.invertDensity);
+        glUniform1i(glGetUniformLocation(m_volumeShader, "gammaCorrect"), settings.gammaCorrect);
         // hi-res
-        glUniform1f(glGetUniformLocation(m_shader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
-        glUniform3fv(glGetUniformLocation(m_shader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
-        glUniform4fv(glGetUniformLocation(m_shader, "hiResChannelWeights"), 1, glm::value_ptr(settings.hiResNoise.channelWeights));
-        glUniform1f(glGetUniformLocation(m_shader , "hiResDensityOffset"), settings.hiResNoise.densityOffset);
+        glUniform1f(glGetUniformLocation(m_volumeShader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
+        glUniform3fv(glGetUniformLocation(m_volumeShader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
+        glUniform4fv(glGetUniformLocation(m_volumeShader, "hiResChannelWeights"), 1, glm::value_ptr(settings.hiResNoise.channelWeights));
+        glUniform1f(glGetUniformLocation(m_volumeShader , "hiResDensityOffset"), settings.hiResNoise.densityOffset);
         // lo-res
-        glUniform1f(glGetUniformLocation(m_shader , "loResNoiseScaling"), settings.loResNoise.scaling);
-        glUniform3fv(glGetUniformLocation(m_shader, "loResNoiseTranslate"), 1, glm::value_ptr(settings.loResNoise.translate));
-        glUniform4fv(glGetUniformLocation(m_shader, "loResChannelWeights"), 1, glm::value_ptr(settings.loResNoise.channelWeights));
-        glUniform1f(glGetUniformLocation(m_shader , "loResDensityWeight"), settings.loResNoise.densityWeight);
+        glUniform1f(glGetUniformLocation(m_volumeShader , "loResNoiseScaling"), settings.loResNoise.scaling);
+        glUniform3fv(glGetUniformLocation(m_volumeShader, "loResNoiseTranslate"), 1, glm::value_ptr(settings.loResNoise.translate));
+        glUniform4fv(glGetUniformLocation(m_volumeShader, "loResChannelWeights"), 1, glm::value_ptr(settings.loResNoise.channelWeights));
+        glUniform1f(glGetUniformLocation(m_volumeShader , "loResDensityWeight"), settings.loResNoise.densityWeight);
 
         // Camera
-        glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
-        glUniform3fv(glGetUniformLocation(m_shader, "rayOrigWorld"), 1, glm::value_ptr(m_camera.getPos()));
+        glUniform1f(glGetUniformLocation(m_volumeShader , "xMax"), m_camera.xMax());
+        glUniform1f(glGetUniformLocation(m_volumeShader , "yMax"), m_camera.yMax());
+        glUniform3fv(glGetUniformLocation(m_volumeShader, "rayOrigWorld"), 1, glm::value_ptr(m_camera.getPos()));
+        glUniformMatrix4fv(glGetUniformLocation(m_volumeShader, "viewInverse"), 1, GL_FALSE, glm::value_ptr(m_camera.getViewMatrixInverse()));
 
         // Lighting
-//        glUniform1i(glGetUniformLocation(m_shader, "numLights"), 0);
-        glUniform4fv(glGetUniformLocation(m_shader, "phaseParams"), 1, glm::value_ptr(glm::vec4(0.83f, 0.3f, 0.8f, 0.15f))); // TODO: make it adjustable hyperparameters
+//        glUniform1i(glGetUniformLocation(m_volumeShader, "numLights"), 0);
+        glUniform4fv(glGetUniformLocation(m_volumeShader, "phaseParams"), 1, glm::value_ptr(glm::vec4(0.83f, 0.3f, 0.8f, 0.15f))); // TODO: make it adjustable hyperparameters
     }
     glUseProgram(0);
 
@@ -342,15 +348,17 @@ void Realtime::paintTerrainTexture(GLuint texture) {
 
 
 void Realtime::resizeGL(int w, int h) {
+    makeCurrent();
+
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
 
     m_camera.setWidthHeight(w, h);
+
     if (m_camera.projChanged()) {
-        makeCurrent();
         m_camera.updateProjMatrix();  // only recompute proj matrices if clip planes updated
         m_camera.updateProjView();
-        glUseProgram(m_shader);  // Pass camera mat (proj * view)
-        glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
+        glUseProgram(m_terrainShader);  // Pass camera mat (proj * view)
+        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
         glUseProgram(0);
     }
     //m_proj = glm::perspective(45.0f, (float)width() / height(), 0.01f, 100.f);
@@ -366,6 +374,11 @@ void Realtime::resizeGL(int w, int h) {
     m_FBO.get()->setFboWidth(m_screen_width);
     m_FBO.get()->setFboHeight(m_screen_height);
     m_FBO.get()->makeFBO();
+
+    glUseProgram(m_volumeShader);  // Pass camera mat (proj * view)
+    glUniform1f(glGetUniformLocation(m_volumeShader , "xMax"), m_camera.xMax());
+//    glUniform1f(glGetUniformLocation(m_volumeShader , "yMax"), m_camera.yMax());
+    glUseProgram(0);
 }
 
 void Realtime::volumeChanged() {
@@ -377,27 +390,27 @@ void Realtime::settingsChanged() {
 
     makeCurrent();
 
-    glUseProgram(m_shader);
+    glUseProgram(m_volumeShader);
     // Volume
-    glUniform3fv(glGetUniformLocation(m_shader, "volumeScaling"), 1, glm::value_ptr(settings.volumeScaling));
-    glUniform3fv(glGetUniformLocation(m_shader, "volumeTranslate"), 1, glm::value_ptr(settings.volumeTranslate));
-    glUniform1i(glGetUniformLocation(m_shader, "numSteps"), settings.numSteps);
-//        glUniform1f(glGetUniformLocation(m_shader, "stepSize"), settings.stepSize);
+    glUniform3fv(glGetUniformLocation(m_volumeShader, "volumeScaling"), 1, glm::value_ptr(settings.volumeScaling));
+    glUniform3fv(glGetUniformLocation(m_volumeShader, "volumeTranslate"), 1, glm::value_ptr(settings.volumeTranslate));
+    glUniform1i(glGetUniformLocation(m_volumeShader, "numSteps"), settings.numSteps);
+//        glUniform1f(glGetUniformLocation(m_volumeShader, "stepSize"), settings.stepSize);
 
     // Noise
-    glUniform1f(glGetUniformLocation(m_shader, "densityMult"), settings.densityMult);
-    glUniform1i(glGetUniformLocation(m_shader, "invertDensity"), settings.invertDensity);
-    glUniform1i(glGetUniformLocation(m_shader, "gammaCorrect"), settings.gammaCorrect);
+    glUniform1f(glGetUniformLocation(m_volumeShader, "densityMult"), settings.densityMult);
+    glUniform1i(glGetUniformLocation(m_volumeShader, "invertDensity"), settings.invertDensity);
+    glUniform1i(glGetUniformLocation(m_volumeShader, "gammaCorrect"), settings.gammaCorrect);
     // hi-res
-    glUniform1f(glGetUniformLocation(m_shader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
-    glUniform3fv(glGetUniformLocation(m_shader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
-    glUniform4fv(glGetUniformLocation(m_shader, "hiResChannelWeights"), 1, glm::value_ptr(settings.hiResNoise.channelWeights));
-    glUniform1f(glGetUniformLocation(m_shader , "hiResDensityOffset"), settings.hiResNoise.densityOffset);
+    glUniform1f(glGetUniformLocation(m_volumeShader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
+    glUniform3fv(glGetUniformLocation(m_volumeShader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
+    glUniform4fv(glGetUniformLocation(m_volumeShader, "hiResChannelWeights"), 1, glm::value_ptr(settings.hiResNoise.channelWeights));
+    glUniform1f(glGetUniformLocation(m_volumeShader , "hiResDensityOffset"), settings.hiResNoise.densityOffset);
     // lo-res
-    glUniform1f(glGetUniformLocation(m_shader , "loResNoiseScaling"), settings.loResNoise.scaling);
-    glUniform3fv(glGetUniformLocation(m_shader, "loResNoiseTranslate"), 1, glm::value_ptr(settings.loResNoise.translate));
-    glUniform4fv(glGetUniformLocation(m_shader, "loResChannelWeights"), 1, glm::value_ptr(settings.loResNoise.channelWeights));
-    glUniform1f(glGetUniformLocation(m_shader , "loResDensityWeight"), settings.loResNoise.densityWeight);
+    glUniform1f(glGetUniformLocation(m_volumeShader , "loResNoiseScaling"), settings.loResNoise.scaling);
+    glUniform3fv(glGetUniformLocation(m_volumeShader, "loResNoiseTranslate"), 1, glm::value_ptr(settings.loResNoise.translate));
+    glUniform4fv(glGetUniformLocation(m_volumeShader, "loResChannelWeights"), 1, glm::value_ptr(settings.loResNoise.channelWeights));
+    glUniform1f(glGetUniformLocation(m_volumeShader , "loResDensityWeight"), settings.loResNoise.densityWeight);
 
 
     glUseProgram(m_worleyShader);
@@ -494,11 +507,10 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         m_camera.setThetaPhi(newTheta, newPhi);
         m_camera.updateLook();
         m_camera.updateViewMatrix();
-        m_camera.updateProjView();
 
         makeCurrent();
-        glUseProgram(m_shader);  // Pass camera mat (proj * view)
-        glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));        
+        glUseProgram(m_volumeShader);  // Pass camera mat (proj * view)
+        glUniformMatrix4fv(glGetUniformLocation(m_volumeShader, "viewInverse"), 1, GL_FALSE, glm::value_ptr(m_camera.getViewMatrixInverse()));
         glUseProgram(0);
 
         glUseProgram(m_terrainShader);  // Pass camera mat (proj * view)
@@ -547,12 +559,10 @@ void Realtime::timerEvent(QTimerEvent *event) {
                                        + goUp    * m_camera.getUp();
 
     m_camera.setPos(newCamPos);
-    m_camera.updateViewMatrix();
-    m_camera.updateProjView();
+    m_camera.updateViewMatrix();  // also stores u, v, w in viewInverse
     makeCurrent();
-    glUseProgram(m_shader);  // Pass camera uniforms
-    glUniformMatrix4fv(glGetUniformLocation(m_shader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
-    glUniform3fv(glGetUniformLocation(m_shader, "rayOrigWorld"), 1, glm::value_ptr(m_camera.getPos()));
+    glUseProgram(m_volumeShader);  // Pass camera uniforms
+    glUniform3fv(glGetUniformLocation(m_volumeShader, "rayOrigWorld"), 1, glm::value_ptr(m_camera.getPos()));
     glUseProgram(0);
 
     update(); // asks for a PaintGL() call to occur

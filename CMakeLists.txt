@@ -56,6 +56,8 @@ add_executable(${PROJECT_NAME}
     src/glStructure/FBO.h
 
     src/utils/debug.h
+
+    src/mainwindow.ui
 )
 
 # GLM: this creates its library and allows you to `#include "glm/..."`
