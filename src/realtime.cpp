@@ -313,19 +313,19 @@ void Realtime::setUpTerrain() {
 
 void Realtime::paintGL() {
     // Bind our FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
+ //   glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
 
     // Call glViewport TODO: change parameter to the one in the FBO class
 //    glViewport(0,0,m_fbo_width, m_fbo_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(m_terrainShader);
+  //  glUseProgram(m_terrainShader);
 //    Debug::checkOpenGLErrors();
 
-//    drawVolume();
-    drawTerrain();
+    drawVolume();
+ //   drawTerrain();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getDefaultFbo());
-    paintTerrainTexture(m_FBO.get()->getFboColorTexture());
+ //   glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getDefaultFbo());
+//    paintTerrainTexture(m_FBO.get()->getFboColorTexture());
 //    std::cout<<m_FBO.get()->getFboColorTexture()<<std::endl;
 //    std::cout<<m_FBO.get()->getFboDepthTexture()<<std::endl;
 
@@ -401,6 +401,9 @@ void Realtime::settingsChanged() {
     glUniform1f(glGetUniformLocation(m_volumeShader, "densityMult"), settings.densityMult);
     glUniform1i(glGetUniformLocation(m_volumeShader, "invertDensity"), settings.invertDensity);
     glUniform1i(glGetUniformLocation(m_volumeShader, "gammaCorrect"), settings.gammaCorrect);
+    glUniform1f(glGetUniformLocation(m_volumeShader, "cloudLightAbsorptionMult"), settings.cloudLightAbsorptionMult);
+    glUniform1f(glGetUniformLocation(m_volumeShader, "minLightTransmittance"), settings.minLightTransmittance);
+
     // hi-res
     glUniform1f(glGetUniformLocation(m_volumeShader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
     glUniform3fv(glGetUniformLocation(m_volumeShader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
@@ -411,6 +414,7 @@ void Realtime::settingsChanged() {
     glUniform3fv(glGetUniformLocation(m_volumeShader, "loResNoiseTranslate"), 1, glm::value_ptr(settings.loResNoise.translate));
     glUniform4fv(glGetUniformLocation(m_volumeShader, "loResChannelWeights"), 1, glm::value_ptr(settings.loResNoise.channelWeights));
     glUniform1f(glGetUniformLocation(m_volumeShader , "loResDensityWeight"), settings.loResNoise.densityWeight);
+
 
 
     glUseProgram(m_worleyShader);

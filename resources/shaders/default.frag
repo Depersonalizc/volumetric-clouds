@@ -34,9 +34,8 @@ uniform vec3 rayOrigWorld;
 uniform int numSteps;
 uniform bool invertDensity, gammaCorrect;
 uniform float densityMult;
-uniform float cloudLightAbsorptionMult = .75f;
-uniform float minLightTransmittance = 0.01f;
-
+uniform float cloudLightAbsorptionMult;
+uniform float minLightTransmittance;
 
 // Params for high resolution noise
 uniform float hiResNoiseScaling;
@@ -63,8 +62,8 @@ struct LightData {
 uniform LightData lightSource;
 uniform vec4 phaseParams;  // HG
 //const LightData testLight = LightData(0, vec4(0), vec3(0, -1, -0.3), vec3(1,0.1,0.5));
-const LightData testLight = LightData(0, vec4(0), vec3(0, 1, 0), vec3(1,1,1));
-
+//const LightData testLight = LightData(0, vec4(0), vec3(0, 1, 0), vec3(1,1,1));
+uniform LightData lightData;
 
 // normalized v so that dot(v, 1) = 1
 vec4 normalizeL1(vec4 v) {
