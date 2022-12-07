@@ -108,6 +108,7 @@
 //};
 
 #include "realtime.h"
+#include "terrain/glwidget.h"
 
 #ifndef MAINWINDOW_H
 #define MAINWINDOW_H

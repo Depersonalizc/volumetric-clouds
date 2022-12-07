@@ -1,10 +1,18 @@
 #pragma once
 
 // Defined before including GLEW to suppress deprecation messages on macOS
+//#include "qopenglshaderprogram.h"
+
+
 #ifdef __APPLE__
 #define GL_SILENCE_DEPRECATION
 #endif
+
 #include <GL/glew.h>
+
+
+//#include "GL/glew.h"
+
 #include <glm/glm.hpp>
 
 #include <array>
@@ -16,6 +24,16 @@
 
 #include "camera/camera.h"
 #include "settings.h"
+#include "qopenglshaderprogram.h"
+
+#include <QOpenGLWidget>
+#include <QOpenGLVertexArrayObject>
+#include <QOpenGLBuffer>
+#include "terrain/terraingenerator.h"
+#include <QMatrix4x4>
+
+#include "src/glStructure/FBO.h"
+
 
 
 constexpr std::array<GLfloat, 42> cube = {
@@ -63,25 +81,30 @@ private:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void timerEvent(QTimerEvent *event) override;
-
-    GLuint vboVolume, vaoVolume;
-    GLuint vboScreenQuad, vaoScreenQuad;
-    GLuint ssboWorley;
-    GLuint volumeTexHighRes, volumeTexLowRes;
-
-    static void glUnbindVBO() { glBindBuffer(GL_ARRAY_BUFFER, 0); }
-    static void glUnbindVAO() { glBindVertexArray(0); }
-    static void glUnbindSSBO() { glBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); }
+    void wheelEvent(QWheelEvent *event) override;
+    
+    static void glUnbindVBO() { __glewBindBuffer(GL_ARRAY_BUFFER, 0); }
+    static void glUnbindVAO() { __glewBindVertexArray(0); }
+    static void glUnbindSSBO() { __glewBindBuffer(GL_SHADER_STORAGE_BUFFER, 0); }
     static void glUnbind() { glUnbindVBO(); glUnbindVAO(); glUnbindSSBO(); }
 
     void updateWorleyPoints(const WorleyPointsParams &worleyPointsParams);
     void setUpVolume();
     void drawVolume();
+    void setUpTerrain();
+    void drawTerrain();
+    void paintTerrainTexture(GLuint texture);
+    void rebuildMatrices();
     void setUpScreenQuad();
 
-    GLuint m_volumeShader, m_worleyShader;             // Stores id for shader programs
+    GLuint vboScreenQuad, vaoScreenQuad;
+    GLuint ssboWorley;
+    GLuint volumeTexHighRes, volumeTexLowRes;
+    GLuint m_volumeShader, m_worleyShader, m_terrainShader, m_terrainTextureShader;       // Stores id for shader programs
+
     Camera m_camera;
     bool glInitialized = false;
+        GLuint vboVolume, vaoVolume;
 
     // Tick Related Variables
     int m_timer;                                 // Stores timer which attempts to run ~60 times per second
@@ -94,6 +117,27 @@ private:
 
     // Device Correction Variables
     int m_devicePixelRatio;
+
+    // Terrain
+    std::vector<float> m_terrain_data;
+    GLuint m_terrain_vbo;
+    GLuint m_terrain_vao;
+
+    glm::mat4 m_proj;
+    glm::mat4 m_terrain_camera;
+    glm::mat4 m_world;
+
+    TerrainGenerator m_terrain;
+
+    QPoint m_prevMousePos;
+    float m_angleX;
+    float m_angleY;
+    float m_zoom;
+
+    std::unique_ptr<FBO> m_FBO;
+    void paintTexture(GLuint texture);
+    int m_screen_width;
+    int m_screen_height;
 
     friend class MainWindow;
 
@@ -121,5 +165,6 @@ private:
             printf("Uniform #%d Type: %u Name: %s\n", i, type, name);
         }
     }
+
 
 };

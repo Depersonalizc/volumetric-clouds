@@ -25,6 +25,7 @@ include_directories(src)
 
 # Specifies .cpp and .h files to be passed to the compiler
 add_executable(${PROJECT_NAME}
+    # Source files
     src/main.cpp
     src/realtime.cpp
     src/mainwindow.cpp
@@ -33,12 +34,26 @@ add_executable(${PROJECT_NAME}
     src/camera/camera.cpp
     src/noise/worley.cpp
 
+    src/terrain/glwidget.cpp
+    src/terrain/terraingenerator.cpp
+
+    src/glStructure/FBO.cpp
+
+
+    # Header files
     src/mainwindow.h
     src/realtime.h
     src/settings.h
+
     src/utils/shaderloader.h
+
+    src/terrain/glwidget.h
+    src/terrain/terraingenerator.h
+
     src/camera/camera.h
     src/noise/worley.h
+
+    src/glStructure/FBO.h
 
     src/utils/debug.h
 
@@ -70,6 +85,12 @@ qt6_add_resources(${PROJECT_NAME} "Resources"
         resources/shaders/default.frag
         resources/shaders/default.vert
         resources/shaders/worley.comp
+
+        resources/shaders/terrain_generator.vert
+        resources/shaders/terrain_generator.frag
+        resources/shaders/terrain_texture.vert
+        resources/shaders/terrain_texture.frag
+
 )
 
 # GLEW: this provides support for Windows (including 64-bit)
