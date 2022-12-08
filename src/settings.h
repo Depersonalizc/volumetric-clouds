@@ -47,7 +47,7 @@ struct Settings {
             WorleyPointsParams{32, 24, 12}, // A
         },
         .scaling = 1.f,
-        .translate = glm::vec3(0.f),
+        .translate = glm::vec3(0.3f),
         .channelWeights = glm::vec4(1.f, 1.f, 1.f, 1.f),
         .persistence = 0.6f,
         .densityOffset = -0.4f,
@@ -71,6 +71,8 @@ struct Settings {
     bool newFineArray = false;    // flag to tell if fine Worley array needs update
     bool newMediumArray = false;  // flag to tell if medium Worley array needs update
     bool newCoarseArray = false;  // flag to tell if coarse Worley array needs update
+
+    int curSlot, curChannel; // to denote which one changed
 
     // Camera
     double nearPlane = 0.01;

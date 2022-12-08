@@ -314,7 +314,7 @@ void Realtime::setUpTerrain() {
 void Realtime::paintGL() {
     // Bind our FBO
  //   glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
-
+glUseProgram(m_volumeShader);
     // Call glViewport TODO: change parameter to the one in the FBO class
 //    glViewport(0,0,m_fbo_width, m_fbo_height);
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -397,19 +397,20 @@ void Realtime::settingsChanged() {
     glUniform1i(glGetUniformLocation(m_volumeShader, "numSteps"), settings.numSteps);
 //        glUniform1f(glGetUniformLocation(m_volumeShader, "stepSize"), settings.stepSize);
 
-    // Noise
+    // Render Params
     glUniform1f(glGetUniformLocation(m_volumeShader, "densityMult"), settings.densityMult);
     glUniform1i(glGetUniformLocation(m_volumeShader, "invertDensity"), settings.invertDensity);
     glUniform1i(glGetUniformLocation(m_volumeShader, "gammaCorrect"), settings.gammaCorrect);
     glUniform1f(glGetUniformLocation(m_volumeShader, "cloudLightAbsorptionMult"), settings.cloudLightAbsorptionMult);
     glUniform1f(glGetUniformLocation(m_volumeShader, "minLightTransmittance"), settings.minLightTransmittance);
 
-    // hi-res
+    // Shape texture: hi-res
     glUniform1f(glGetUniformLocation(m_volumeShader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
     glUniform3fv(glGetUniformLocation(m_volumeShader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
     glUniform4fv(glGetUniformLocation(m_volumeShader, "hiResChannelWeights"), 1, glm::value_ptr(settings.hiResNoise.channelWeights));
     glUniform1f(glGetUniformLocation(m_volumeShader , "hiResDensityOffset"), settings.hiResNoise.densityOffset);
-    // lo-res
+
+    // Detailed texture: low-res
     glUniform1f(glGetUniformLocation(m_volumeShader , "loResNoiseScaling"), settings.loResNoise.scaling);
     glUniform3fv(glGetUniformLocation(m_volumeShader, "loResNoiseTranslate"), 1, glm::value_ptr(settings.loResNoise.translate));
     glUniform4fv(glGetUniformLocation(m_volumeShader, "loResChannelWeights"), 1, glm::value_ptr(settings.loResNoise.channelWeights));
@@ -434,7 +435,11 @@ void Realtime::settingsChanged() {
             settings.newCoarseArray = false;
         }
 
-        for (GLuint texSlot : {0, 1}) {  // high and low res volumes
+        int texSlot = settings.curSlot;
+        int channelIdx = settings.curChannel;
+        std::cout << "check" << texSlot << " " << channelIdx << '\n';
+
+//        for (GLuint texSlot : {0, 1}) {  // high and low res volumes
             // pass uniforms
             const auto &noiseParams = texSlot == 0 ? settings.hiResNoise : settings.loResNoise;
             glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), noiseParams.persistence);
@@ -443,20 +448,22 @@ void Realtime::settingsChanged() {
             const auto &volumeTex = texSlot == 0 ? volumeTexHighRes : volumeTexLowRes;
             glBindImageTexture(0, volumeTex, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA32F);
 
-            for (int channelIdx = 0; channelIdx < 4; channelIdx++) {
+
+//            for (int channelIdx = 0; channelIdx < 4; channelIdx++) {
                 glm::vec4 channelMask(0.f);
                 channelMask[channelIdx] = 1.f;
                 glUniform4fv(glGetUniformLocation(m_worleyShader, "channelMask"), 1, glm::value_ptr(channelMask));
 
                 const auto &worleyPointsParams = noiseParams.worleyPointsParams[channelIdx];
+                std::cout << "ss" << worleyPointsParams.cellsPerAxisFine << '\n';
                 updateWorleyPoints(worleyPointsParams);  // generate new worley points into SSBO
                 glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), worleyPointsParams.cellsPerAxisFine);
                 glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), worleyPointsParams.cellsPerAxisMedium);
                 glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), worleyPointsParams.cellsPerAxisCoarse);
                 glDispatchCompute(noiseParams.resolution, noiseParams.resolution, noiseParams.resolution);
                 glMemoryBarrier(GL_ALL_BARRIER_BITS);
-            }
-        }
+//            }
+//        }
     }
 
     glUseProgram(0);

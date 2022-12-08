@@ -185,7 +185,7 @@ void MainWindow::on_lightLongitude_doubleSpinBox_valueChanged(double arg1)
 void MainWindow::on_detailTextureTrans1_doubleSpinBox_valueChanged(double arg1)
 {
     ui->detailTextureTrans1_doubleSpinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.loResNoise.translate[0] = arg1;
     realtime->settingsChanged();
 }
 
@@ -193,7 +193,7 @@ void MainWindow::on_detailTextureTrans1_doubleSpinBox_valueChanged(double arg1)
 void MainWindow::on_detailTextureTrans2_doubleSpinBox_valueChanged(double arg1)
 {
     ui->detailTextureTrans2_doubleSpinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.loResNoise.translate[1] = arg1;
     realtime->settingsChanged();
 }
 
@@ -201,7 +201,7 @@ void MainWindow::on_detailTextureTrans2_doubleSpinBox_valueChanged(double arg1)
 void MainWindow::on_detailTextureTrans3_doubleSpinBox_valueChanged(double arg1)
 {
     ui->detailTextureTrans3_doubleSpinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.loResNoise.translate[2] = arg1;
     realtime->settingsChanged();
 }
 
@@ -209,8 +209,10 @@ void MainWindow::on_detailTextureTrans3_doubleSpinBox_valueChanged(double arg1)
 void MainWindow::on_detailTexture_fineR_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_fineR_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
-    // settings.newFineArray = arg1; ?
+    settings.loResNoise.worleyPointsParams[0].cellsPerAxisFine = arg1;
+    settings.newFineArray = true;
+    settings.curSlot = 1;
+    settings.curChannel = 0;
     realtime->settingsChanged();
 }
 
@@ -218,7 +220,10 @@ void MainWindow::on_detailTexture_fineR_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_mediumR_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_mediumR_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.loResNoise.worleyPointsParams[0].cellsPerAxisMedium = arg1;
+    settings.newMediumArray = true;
+    settings.curSlot = 1;
+    settings.curChannel = 0;
     realtime->settingsChanged();
 }
 
@@ -226,7 +231,10 @@ void MainWindow::on_detailTexture_mediumR_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_coarseR_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_coarseR_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.loResNoise.worleyPointsParams[0].cellsPerAxisCoarse = arg1;
+    settings.newCoarseArray = true;
+    settings.curSlot = 1;
+    settings.curChannel = 0;
     realtime->settingsChanged();
 }
 
@@ -234,7 +242,7 @@ void MainWindow::on_detailTexture_coarseR_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_weightR_spinBox_valueChanged(double arg1)
 {
     ui->detailTexture_weightR_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.loResNoise.channelWeights[0] = arg1;
     realtime->settingsChanged();
 }
 
@@ -242,7 +250,10 @@ void MainWindow::on_detailTexture_weightR_spinBox_valueChanged(double arg1)
 void MainWindow::on_detailTexture_fineG_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_fineG_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.loResNoise.worleyPointsParams[1].cellsPerAxisFine = arg1;
+    settings.newFineArray = true;
+    settings.curSlot = 1;
+    settings.curChannel = 1;
     realtime->settingsChanged();
 }
 
@@ -250,7 +261,10 @@ void MainWindow::on_detailTexture_fineG_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_mediumG_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_mediumG_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newMediumArray = true;
+    settings.loResNoise.worleyPointsParams[1].cellsPerAxisMedium = arg1;
+    settings.curSlot = 1;
+    settings.curChannel = 1;
     realtime->settingsChanged();
 }
 
@@ -258,7 +272,10 @@ void MainWindow::on_detailTexture_mediumG_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_coarseG_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_coarseG_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newCoarseArray = true;
+    settings.loResNoise.worleyPointsParams[1].cellsPerAxisCoarse = arg1;
+    settings.curSlot = 1;
+    settings.curChannel = 1;
     realtime->settingsChanged();
 }
 
@@ -266,7 +283,7 @@ void MainWindow::on_detailTexture_coarseG_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_weightG_spinBox_valueChanged(double arg1)
 {
     ui->detailTexture_weightG_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.loResNoise.channelWeights[1] = arg1;
     realtime->settingsChanged();
 }
 
@@ -274,7 +291,10 @@ void MainWindow::on_detailTexture_weightG_spinBox_valueChanged(double arg1)
 void MainWindow::on_detailTexture_fineB_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_fineB_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newFineArray = true;
+    settings.loResNoise.worleyPointsParams[2].cellsPerAxisFine = arg1;
+    settings.curSlot = 1;
+    settings.curChannel = 2;
     realtime->settingsChanged();
 }
 
@@ -282,7 +302,10 @@ void MainWindow::on_detailTexture_fineB_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_mediumB_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_mediumB_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newMediumArray = true;
+    settings.loResNoise.worleyPointsParams[2].cellsPerAxisMedium = arg1;
+    settings.curSlot = 1;
+    settings.curChannel = 2;
     realtime->settingsChanged();
 }
 
@@ -290,7 +313,10 @@ void MainWindow::on_detailTexture_mediumB_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_coarseB_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_coarseB_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newCoarseArray = true;
+    settings.loResNoise.worleyPointsParams[2].cellsPerAxisCoarse = arg1;
+    settings.curSlot = 1;
+    settings.curChannel = 2;
     realtime->settingsChanged();
 }
 
@@ -298,7 +324,7 @@ void MainWindow::on_detailTexture_coarseB_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_weightB_spinBox_valueChanged(double arg1)
 {
     ui->detailTexture_weightB_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.loResNoise.channelWeights[2] = arg1;
     realtime->settingsChanged();
 }
 
@@ -306,7 +332,10 @@ void MainWindow::on_detailTexture_weightB_spinBox_valueChanged(double arg1)
 void MainWindow::on_detailTexture_fineA_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_fineA_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newFineArray = true;
+    settings.loResNoise.worleyPointsParams[3].cellsPerAxisFine = arg1;
+    settings.curSlot = 1;
+    settings.curChannel = 3;
     realtime->settingsChanged();
 }
 
@@ -314,7 +343,10 @@ void MainWindow::on_detailTexture_fineA_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_mediumA_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_mediumA_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newMediumArray = true;
+    settings.loResNoise.worleyPointsParams[3].cellsPerAxisMedium = arg1;
+    settings.curSlot = 1;
+    settings.curChannel = 3;
     realtime->settingsChanged();
 }
 
@@ -322,7 +354,10 @@ void MainWindow::on_detailTexture_mediumA_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_coarseA_spinBox_valueChanged(int arg1)
 {
     ui->detailTexture_coarseA_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newCoarseArray = true;
+    settings.loResNoise.worleyPointsParams[3].cellsPerAxisCoarse = arg1;
+    settings.curSlot = 1;
+    settings.curChannel = 3;
     realtime->settingsChanged();
 }
 
@@ -330,15 +365,15 @@ void MainWindow::on_detailTexture_coarseA_spinBox_valueChanged(int arg1)
 void MainWindow::on_detailTexture_weightA_spinBox_valueChanged(double arg1)
 {
     ui->detailTexture_weightA_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.loResNoise.channelWeights[3] = arg1;
     realtime->settingsChanged();
 }
 
-
+// high res
 void MainWindow::on_shapeTextureTrans1_doubleSpinBox_valueChanged(double arg1)
 {
     ui->shapeTextureTrans1_doubleSpinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.hiResNoise.translate[0] = arg1;
     realtime->settingsChanged();
 }
 
@@ -346,7 +381,7 @@ void MainWindow::on_shapeTextureTrans1_doubleSpinBox_valueChanged(double arg1)
 void MainWindow::on_shapeTextureTrans2_doubleSpinBox_valueChanged(double arg1)
 {
     ui->shapeTextureTrans2_doubleSpinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.hiResNoise.translate[1] = arg1;
     realtime->settingsChanged();
 }
 
@@ -354,7 +389,7 @@ void MainWindow::on_shapeTextureTrans2_doubleSpinBox_valueChanged(double arg1)
 void MainWindow::on_shapeTextureTrans3_doubleSpinBox_valueChanged(double arg1)
 {
     ui->shapeTextureTrans3_doubleSpinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.hiResNoise.translate[2] = arg1;
     realtime->settingsChanged();
 }
 
@@ -362,7 +397,11 @@ void MainWindow::on_shapeTextureTrans3_doubleSpinBox_valueChanged(double arg1)
 void MainWindow::on_shapeTexture_fineR_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_fineR_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.hiResNoise.worleyPointsParams[0].cellsPerAxisFine = arg1;
+//    std::cout << "changed" << settings.hiResNoise.worleyPointsParams[0].cellsPerAxisFine << '\n';
+    settings.newFineArray = true;
+    settings.curSlot = 0;
+    settings.curChannel = 0;
     realtime->settingsChanged();
 }
 
@@ -370,7 +409,10 @@ void MainWindow::on_shapeTexture_fineR_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_mediumR_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_mediumR_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.hiResNoise.worleyPointsParams[0].cellsPerAxisMedium = arg1;
+    settings.newMediumArray = true;
+    settings.curSlot = 0;
+    settings.curChannel = 0;
     realtime->settingsChanged();
 }
 
@@ -378,7 +420,10 @@ void MainWindow::on_shapeTexture_mediumR_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_coarseR_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_coarseR_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.hiResNoise.worleyPointsParams[0].cellsPerAxisCoarse = arg1;
+    settings.newCoarseArray = true;
+    settings.curSlot = 0;
+    settings.curChannel = 0;
     realtime->settingsChanged();
 }
 
@@ -386,7 +431,7 @@ void MainWindow::on_shapeTexture_coarseR_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_weightR_doubleSpinBox_valueChanged(double arg1)
 {
     ui->shapeTexture_weightR_doubleSpinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.hiResNoise.channelWeights[0] = arg1;
     realtime->settingsChanged();
 }
 
@@ -394,7 +439,11 @@ void MainWindow::on_shapeTexture_weightR_doubleSpinBox_valueChanged(double arg1)
 void MainWindow::on_shapeTexture_fineG_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_fineG_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newFineArray = true;
+    settings.hiResNoise.worleyPointsParams[1].cellsPerAxisFine = arg1;
+//    std::cout << "changed" << settings.hiResNoise.worleyPointsParams[1].cellsPerAxisFine << '\n';
+    settings.curSlot = 0;
+    settings.curChannel = 1;
     realtime->settingsChanged();
 }
 
@@ -402,7 +451,10 @@ void MainWindow::on_shapeTexture_fineG_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_mediumG_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_mediumG_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newMediumArray = true;
+    settings.hiResNoise.worleyPointsParams[1].cellsPerAxisMedium = arg1;
+    settings.curSlot = 0;
+    settings.curChannel = 1;
     realtime->settingsChanged();
 }
 
@@ -410,7 +462,10 @@ void MainWindow::on_shapeTexture_mediumG_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_coarseG_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_coarseG_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newCoarseArray = true;
+    settings.hiResNoise.worleyPointsParams[1].cellsPerAxisCoarse = arg1;
+    settings.curSlot = 0;
+    settings.curChannel = 1;
     realtime->settingsChanged();
 }
 
@@ -418,7 +473,7 @@ void MainWindow::on_shapeTexture_coarseG_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_weightG_doubleSpinBox_valueChanged(double arg1)
 {
     ui->shapeTexture_weightG_doubleSpinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.hiResNoise.channelWeights[1] = arg1;
     realtime->settingsChanged();
 }
 
@@ -426,7 +481,10 @@ void MainWindow::on_shapeTexture_weightG_doubleSpinBox_valueChanged(double arg1)
 void MainWindow::on_shapeTexture_fineB_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_fineB_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newFineArray = true;
+    settings.hiResNoise.worleyPointsParams[2].cellsPerAxisFine = arg1;
+    settings.curSlot = 0;
+    settings.curChannel = 2;
     realtime->settingsChanged();
 }
 
@@ -434,7 +492,10 @@ void MainWindow::on_shapeTexture_fineB_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_mediumB_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_mediumB_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newMediumArray = true;
+    settings.hiResNoise.worleyPointsParams[2].cellsPerAxisMedium = arg1;
+    settings.curSlot = 0;
+    settings.curChannel = 2;
     realtime->settingsChanged();
 }
 
@@ -442,7 +503,10 @@ void MainWindow::on_shapeTexture_mediumB_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_coarseB_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_coarseB_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newCoarseArray = true;
+    settings.hiResNoise.worleyPointsParams[2].cellsPerAxisCoarse = arg1;
+    settings.curSlot = 0;
+    settings.curChannel = 2;
     realtime->settingsChanged();
 }
 
@@ -450,7 +514,7 @@ void MainWindow::on_shapeTexture_coarseB_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_weightB_doubleSpinBox_valueChanged(double arg1)
 {
     ui->shapeTexture_weightB_doubleSpinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.hiResNoise.channelWeights[2] = arg1;
     realtime->settingsChanged();
 }
 
@@ -458,7 +522,10 @@ void MainWindow::on_shapeTexture_weightB_doubleSpinBox_valueChanged(double arg1)
 void MainWindow::on_shapeTexture_fineA_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_fineA_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newFineArray = true;
+    settings.hiResNoise.worleyPointsParams[3].cellsPerAxisFine = arg1;
+    settings.curSlot = 0;
+    settings.curChannel = 3;
     realtime->settingsChanged();
 }
 
@@ -466,7 +533,10 @@ void MainWindow::on_shapeTexture_fineA_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_mediumA_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_mediumA_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newMediumArray = true;
+    settings.hiResNoise.worleyPointsParams[3].cellsPerAxisMedium = arg1;
+    settings.curSlot = 0;
+    settings.curChannel = 3;
     realtime->settingsChanged();
 }
 
@@ -474,7 +544,10 @@ void MainWindow::on_shapeTexture_mediumA_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_coarseA_spinBox_valueChanged(int arg1)
 {
     ui->shapeTexture_coarseA_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.newCoarseArray = true;
+    settings.hiResNoise.worleyPointsParams[3].cellsPerAxisCoarse = arg1;
+    settings.curSlot = 0;
+    settings.curChannel = 3;
     realtime->settingsChanged();
 }
 
@@ -482,6 +555,6 @@ void MainWindow::on_shapeTexture_coarseA_spinBox_valueChanged(int arg1)
 void MainWindow::on_shapeTexture_weightA_doubleSpinBox_valueChanged(double arg1)
 {
     ui->shapeTexture_weightA_doubleSpinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
+    settings.hiResNoise.channelWeights[3] = arg1;
     realtime->settingsChanged();
 }

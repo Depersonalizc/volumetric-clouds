@@ -72,7 +72,7 @@ void main() {
     const vec3 position = voxelID / float(volumeResolution);  // center of the voxel
 
     // sum and weight three layers of density
-    const float densityFine   = sampleWorleyDensity(position, WORLEY_FINE_OFFSET  , cellsPerAxisFine  );
+    const float densityFine   = sampleWorleyDensity(position, WORLEY_FINE_OFFSET  , cellsPerAxisFine);
     const float densityMedium = sampleWorleyDensity(position, WORLEY_MEDIUM_OFFSET, cellsPerAxisMedium);
     const float densityCoarse = sampleWorleyDensity(position, WORLEY_COARSE_OFFSET, cellsPerAxisCoarse);
     float densityWeighted = densityCoarse
