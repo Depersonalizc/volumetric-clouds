@@ -86,27 +86,11 @@ void Realtime::drawVolume() {
     glUseProgram(0);
 }
 
+
 void Realtime::drawTerrain() {
     int res = m_terrain.getResolution();
-    //std::cout << "here" << m_terrain.generateTerrain().size() << "\n";
-
-    auto projLoc  = glGetUniformLocation(m_terrainShader, "projMatrix");
-//    m_proj = glm::perspective(45.0f, (float)width() / height(), 0.01f, 100.f);
-    m_proj = m_camera.getProjMatrix();
-    glUniformMatrix4fv(projLoc,  1, GL_FALSE, &m_proj[0][0]);
-
-//    std::cout <<" proj " << glm::to_string(m_proj) << "\n";
-
-//    glm::mat4 mvMatrix = m_terrain_camera*m_world;
-    glm::mat4 mvMatrix = m_camera.getViewMatrix()*m_world;
-
-//    std::cout <<"mv " << glm::to_string(mvMatrix) << "\n";
-    auto mvMatrixLoc = glGetUniformLocation(m_terrainShader, "mvMatrix");
-    glUniformMatrix4fv(mvMatrixLoc,  1, GL_FALSE, &mvMatrix[0][0]);
-
-
     glBindVertexArray(m_terrain_vao);
-    glDrawArrays(GL_TRIANGLES, 0, res*res*6);
+    glDrawArrays(GL_TRIANGLES, 0, res*res*6 * m_terrainScaleX * m_terrainScaleY);
     glBindVertexArray(0);
 }
 
@@ -183,11 +167,17 @@ void Realtime::initializeGL() {
     /* Set up terrain shader and terrain data */
     glUseProgram(m_terrainShader);
     {
-        m_terrain_camera = glm::lookAt(glm::vec3(1,1,1),glm::vec3(0,0,0),glm::vec3(0,0,1));
+//        m_terrain_camera = glm::lookAt(glm::vec3(1,1,1),glm::vec3(0,0,0),glm::vec3(0,0,1));
 
         m_world = glm::mat4(1.f);
         m_world = glm::translate(m_world, glm::vec3(-0.5, -0.5, 0));
         //m_world = glm::scale(m_world, glm::vec3(2, 2, 2));
+
+        glm::mat4 projView = m_camera.getProjMatrix() * m_camera.getViewMatrix() * m_world;
+        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projViewMatrix"), 1, GL_FALSE, glm::value_ptr(projView));
+
+        glm::mat4 transInv = glm::transpose(glm::inverse(m_camera.getViewMatrix() * m_world));
+        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "transInvViewMatrix"), 1, GL_FALSE, glm::value_ptr(transInv));
 
         setUpTerrain();
         glUseProgram(m_terrainTextureShader);
@@ -281,6 +271,16 @@ void Realtime::setUpTerrain() {
     glGenBuffers(1, &m_terrain_vbo);
     glBindBuffer(GL_ARRAY_BUFFER, m_terrain_vbo);
 
+    // Terrain parameters
+    m_terrainScaleX = 1.0;
+    m_terrainScaleY = 1.0;
+    m_terrainRes = 100;
+    m_terrainTranslation = glm::vec3(0.0, 0.0, -0.0);
+
+    m_terrain.setResolution(m_terrainRes);
+    m_terrain.setMxMy(m_terrainScaleX, m_terrainScaleY);
+    m_terrain.setTranslation(m_terrainTranslation);
+
     // Put data into the VBO
     m_terrain_data = m_terrain.generateTerrain();
     glBufferData(GL_ARRAY_BUFFER,
@@ -313,21 +313,23 @@ void Realtime::setUpTerrain() {
 
 void Realtime::paintGL() {
     // Bind our FBO
- //   glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
-glUseProgram(m_volumeShader);
-    // Call glViewport TODO: change parameter to the one in the FBO class
+    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
+
+//    glUseProgram(m_volumeShader);
+
 //    glViewport(0,0,m_fbo_width, m_fbo_height);
+
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-  //  glUseProgram(m_terrainShader);
+    glUseProgram(m_terrainShader);
+
 //    Debug::checkOpenGLErrors();
 
-    drawVolume();
- //   drawTerrain();
+//    drawVolume();
+    drawTerrain();
 
- //   glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getDefaultFbo());
-//    paintTerrainTexture(m_FBO.get()->getFboColorTexture());
-//    std::cout<<m_FBO.get()->getFboColorTexture()<<std::endl;
-//    std::cout<<m_FBO.get()->getFboDepthTexture()<<std::endl;
+    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getDefaultFbo());
+    paintTerrainTexture(m_FBO.get()->getFboColorTexture());
+
 
     glUseProgram(0);
 }
@@ -358,11 +360,14 @@ void Realtime::resizeGL(int w, int h) {
         m_camera.updateProjMatrix();  // only recompute proj matrices if clip planes updated
         m_camera.updateProjView();
         glUseProgram(m_terrainShader);  // Pass camera mat (proj * view)
-        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
+//        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
+        glm::mat4 projView = m_camera.getProjMatrix() * m_camera.getViewMatrix() * m_world;
+        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projViewMatrix"), 1, GL_FALSE, glm::value_ptr(projView));
+
         glUseProgram(0);
     }
     //m_proj = glm::perspective(45.0f, (float)width() / height(), 0.01f, 100.f);
-    m_proj = m_camera.getProjMatrix();
+//    m_proj = m_camera.getProjMatrix();
 
 
     m_FBO.get()->deleteRenderBuffer();
@@ -533,7 +538,13 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         glUseProgram(0);
 
         glUseProgram(m_terrainShader);  // Pass camera mat (proj * view)
-        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
+//        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projView"), 1, GL_FALSE, glm::value_ptr(m_camera.getProjView()));
+        glm::mat4 projView = m_camera.getProjMatrix() * m_camera.getViewMatrix() * m_world;
+        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projViewMatrix"), 1, GL_FALSE, glm::value_ptr(projView));
+
+        glm::mat4 transInv = glm::transpose(glm::inverse(m_camera.getViewMatrix() * m_world));
+        glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "transInvViewMatrix"), 1, GL_FALSE, glm::value_ptr(transInv));
+
         glUseProgram(0);
 
         m_angleX += 10 * (event->position().x() - m_prevMousePos.x()) / (float) width();
@@ -582,6 +593,16 @@ void Realtime::timerEvent(QTimerEvent *event) {
     makeCurrent();
     glUseProgram(m_volumeShader);  // Pass camera uniforms
     glUniform3fv(glGetUniformLocation(m_volumeShader, "rayOrigWorld"), 1, glm::value_ptr(m_camera.getPos()));
+    glUseProgram(0);
+
+    glUseProgram(m_terrainShader);  // Pass camera mat (proj * view)
+
+    glm::mat4 projView = m_camera.getProjMatrix() * m_camera.getViewMatrix() * m_world;
+    glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "projViewMatrix"), 1, GL_FALSE, glm::value_ptr(projView));
+
+    glm::mat4 transInv = glm::transpose(glm::inverse(m_camera.getViewMatrix() * m_world));
+    glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "transInvViewMatrix"), 1, GL_FALSE, glm::value_ptr(transInv));
+
     glUseProgram(0);
 
     update(); // asks for a PaintGL() call to occur
