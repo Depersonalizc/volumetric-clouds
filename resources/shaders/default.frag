@@ -51,19 +51,29 @@ uniform float loResDensityWeight;  // relative weight of lo-res noise about hi-r
 
 
 
-
 // light uniforms, not used rn
 struct LightData {
     int type;
     vec4 pos;
     vec3 dir;  // towards light source
     vec3 color;
-};
+    float longitude;
+    float latitude;
+} light;
+
 uniform LightData lightSource;
 uniform vec4 phaseParams;  // HG
 //const LightData testLight = LightData(0, vec4(0), vec3(0, -1, -0.3), vec3(1,0.1,0.5));
-const LightData testLight = LightData(0, vec4(0), vec3(0, 1, 0), vec3(1,1,1));
-//uniform LightData testLight;
+//const LightData testLight = LightData(0, vec4(0), vec3(0, 1, 0), vec3(1,1,1), 0, 0);
+uniform LightData testLight;
+
+vec3 shpere2Cartesian(vec3 curPnt) {
+    float x, y, z;
+    x = curPnt[0]*sin(curPnt[2])*sin(curPnt[1]);
+    y = curPnt[0]*cos(curPnt[2]);
+    z = curPnt[0]*sin(curPnt[2])*cos(curPnt[1]);
+    return vec3(x,y,z);
+}
 
 // normalized v so that dot(v, 1) = 1
 vec4 normalizeL1(vec4 v) {
@@ -196,13 +206,14 @@ float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
 }
 
 void main() {
+
 //    const vec3 rayDirWorld = normalize(positionWorld - rayOrigWorld);
     const vec3 rayDirWorld = normalize(rayDirWorldspace);
     vec2 tHit = intersectBox(rayOrigWorld, rayDirWorld);
 //    tHit.x = max(0.f, tHit.x);
     tHit.x = max(0.f, tHit.x) + EPSILON_INTERSECT;  // keep the near intersection in front of the camera
-
-    const vec3 dirLight = normalize(testLight.dir);  // towards the light
+    const vec3 dirLight = normalize(shpere2Cartesian(vec3(1, radians(testLight.latitude), radians(testLight.longitude))));  // towards the light
+//    const vec3 dirLight = normalize(testLight.dir);  // towards the light
     const float cosRayLightAngle = dot(rayDirWorld, dirLight);
     const float phaseVal = phase(cosRayLightAngle);  // directional light only for now
 

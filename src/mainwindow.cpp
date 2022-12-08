@@ -112,45 +112,13 @@ void MainWindow::on_gamma_checkBox_stateChanged(int arg1)
 }
 
 
-void MainWindow::on_lightColor_R_spinBox_valueChanged(int arg1)
-{
-    ui->lightColor_R_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
-    realtime->settingsChanged();
-
-}
-
-
-void MainWindow::on_lightColor_G_spinBox_valueChanged(int arg1)
-{
-    ui->lightColor_G_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
-    realtime->settingsChanged();
-}
-
-
-void MainWindow::on_lightColor_B_spinBox_valueChanged(int arg1)
-{
-    ui->lightColor_B_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
-    realtime->settingsChanged();
-}
-
-
-void MainWindow::on_lightColor_A_spinBox_valueChanged(int arg1)
-{
-    ui->lightColor_A_spinBox->setValue(arg1);
-    ///TO:DO change appropriate setting in settings.
-    realtime->settingsChanged();
-}
-
 
 void MainWindow::on_lightLatitude_horizontalSlider_sliderMoved(int position)
 {
     ui->lightLatitude_horizontalSlider->setValue(position);
     ui->lightLatitude_doubleSpinBox->setValue(position);
 
-    ///TO:DO change appropriate setting in settings.
+    settings.lightData.latitude = position;
     realtime->settingsChanged();
 }
 
@@ -159,7 +127,7 @@ void MainWindow::on_lightLongitude_horizontalSlider_sliderMoved(int position)
 {
     ui->lightLongitude_horizontalSlider->setValue(position);
     ui->lightLongitude_doubleSpinBox->setValue(position);
-    ///TO:DO change appropriate setting in settings.
+    settings.lightData.longitude = position;
     realtime->settingsChanged();
 }
 
@@ -558,3 +526,27 @@ void MainWindow::on_shapeTexture_weightA_doubleSpinBox_valueChanged(double arg1)
     settings.hiResNoise.channelWeights[3] = arg1;
     realtime->settingsChanged();
 }
+
+void MainWindow::on_lightColor_R_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->lightColor_R_doubleSpinBox->setValue(arg1);
+    settings.lightData.color[0] = arg1;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_lightColor_G_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->lightColor_R_doubleSpinBox->setValue(arg1);
+    settings.lightData.color[1] = arg1;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_lightColor_B_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->lightColor_R_doubleSpinBox->setValue(arg1);
+    settings.lightData.color[2] = arg1;
+    realtime->settingsChanged();
+}
+

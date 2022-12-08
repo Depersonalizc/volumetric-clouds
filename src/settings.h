@@ -21,12 +21,30 @@ struct NoiseParams {
     float densityWeight;                       // for hi-res detail noise
 };
 
+struct LightParams {
+    glm::vec3 color;
+    glm::vec3 dir;
+    glm::vec4 pos;
+    int type;
+    float longitude;
+    float latitude;
+};
+
 struct Settings {
     std::string volumeFilePath;
 
+    // Light
+    LightParams lightData = {
+        .color = glm::vec3(1),
+        .dir = glm::vec3(0,1,0),
+        .pos = glm::vec4(0),
+        .type = 1,
+        .longitude = 0.f,
+        .latitude = 0.f,
+    };
+
     // Volume
     glm::vec3 volumeScaling = glm::vec3(1.f);
-//    glm::vec3 volumeScaling = glm::vec3(10.f, 3.f, 10.f);
     glm::vec3 volumeTranslate = glm::vec3(0.f);
     int numSteps = 100; // SMALL_DST_SAMPLE_NUM
     float stepSize = 0.1f;    // world-space step size of rays, not used now

@@ -152,14 +152,6 @@ private slots:
 
     void on_gamma_checkBox_stateChanged(int arg1);
 
-    void on_lightColor_R_spinBox_valueChanged(int arg1);
-
-    void on_lightColor_G_spinBox_valueChanged(int arg1);
-
-    void on_lightColor_B_spinBox_valueChanged(int arg1);
-
-    void on_lightColor_A_spinBox_valueChanged(int arg1);
-
     void on_lightLatitude_horizontalSlider_sliderMoved(int position);
 
     void on_lightLongitude_horizontalSlider_sliderMoved(int position);
@@ -243,6 +235,12 @@ private slots:
     void on_shapeTexture_coarseA_spinBox_valueChanged(int arg1);
 
     void on_shapeTexture_weightA_doubleSpinBox_valueChanged(double arg1);
+
+    void on_lightColor_R_doubleSpinBox_valueChanged(double arg1);
+
+    void on_lightColor_G_doubleSpinBox_valueChanged(double arg1);
+
+    void on_lightColor_B_doubleSpinBox_valueChanged(double arg1);
 
 private:
     Ui::MainWindow *ui;
