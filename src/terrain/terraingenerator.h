@@ -11,6 +11,11 @@ public:
     TerrainGenerator();
     ~TerrainGenerator();
     int getResolution() { return m_resolution; };
+    void setResolution(int res) {
+        m_resolution = res;
+    }
+    void setMxMy(float x, float y);
+    void setTranslation(glm::vec3 trans);
     std::vector<float> generateTerrain();
 
 private:
@@ -19,6 +24,9 @@ private:
     std::vector<glm::vec2> m_randVecLookup;
     int m_resolution;
     int m_lookupSize;
+    float m_xScale = 1.0;
+    float m_yScale = 1.0;
+    glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
 
     // Samples the (infinite) random vector grid at (row, col)
     glm::vec2 sampleRandomVector(int row, int col);

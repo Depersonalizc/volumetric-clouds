@@ -1,6 +1,8 @@
 #include "terraingenerator.h"
 
 #include <cmath>
+#include <iostream>
+#include <ostream>
 #include "glm/glm.hpp"
 
 // Constructor
@@ -41,12 +43,17 @@ void addPointToVector(glm::vec3 point, std::vector<float>& vector) {
     vector.push_back(point.y);
 }
 
+
 // Generates the geometry of the output triangle mesh
 std::vector<float> TerrainGenerator::generateTerrain() {
     std::vector<float> verts;
+//    verts.reserve(m_x * m_resolution * m_y * m_resolution * 6);
     verts.reserve(m_resolution * m_resolution * 6);
 
-    for(int x = 0; x < m_resolution; x++) {
+
+//    for(int x = 0; x < m_x * m_resolution; x++) {
+//        for(int y = 0; y < m_y * m_resolution; y++) {
+    for(int x = 0; x <  m_resolution; x++) {
         for(int y = 0; y < m_resolution; y++) {
             int x1 = x;
             int y1 = y;
@@ -59,42 +66,49 @@ std::vector<float> TerrainGenerator::generateTerrain() {
             glm::vec3 p3 = getPosition(x2,y2);
             glm::vec3 p4 = getPosition(x1,y2);
 
+//            p1 += translation;
+//            p2 += translation;
+//            p3 += translation;
+//            p4 += translation;
+
+
             glm::vec3 n1 = getNormal(x1,y1);
             glm::vec3 n2 = getNormal(x2,y1);
             glm::vec3 n3 = getNormal(x2,y2);
             glm::vec3 n4 = getNormal(x1,y2);
 
-            // tris 1
-            // x1y1z1
-            // x2y1z2
-            // x2y2z3
-            addPointToVector(p1, verts);
-            addPointToVector(n1, verts);
-            addPointToVector(getColor(n1, p1), verts);
 
-            addPointToVector(p2, verts);
+            addPointToVector(p3 + translation, verts);
+            addPointToVector(n3, verts);
+            addPointToVector(getColor(n3, p3), verts);
+
+            addPointToVector(p2 + translation, verts);
             addPointToVector(n2, verts);
             addPointToVector(getColor(n2, p2), verts);
 
-            addPointToVector(p3, verts);
-            addPointToVector(n3, verts);
-            addPointToVector(getColor(n3, p3), verts);
+            addPointToVector(p1+ translation, verts);
+            addPointToVector(n1, verts);
+            addPointToVector(getColor(n1, p1), verts);
 
             // tris 2
             // x1y1z1
             // x2y2z3
             // x1y2z4
-            addPointToVector(p1, verts);
-            addPointToVector(n1, verts);
-            addPointToVector(getColor(n1, p1), verts);
+            addPointToVector(p4+ translation, verts);
+            addPointToVector(n4, verts);
+            addPointToVector(getColor(n4, p4), verts);
 
-            addPointToVector(p3, verts);
+
+            addPointToVector(p3+ translation, verts);
             addPointToVector(n3, verts);
             addPointToVector(getColor(n3, p3), verts);
 
-            addPointToVector(p4, verts);
-            addPointToVector(n4, verts);
-            addPointToVector(getColor(n4, p4), verts);
+            addPointToVector(p1+ translation, verts);
+            addPointToVector(n1, verts);
+            addPointToVector(getColor(n1, p1), verts);
+
+
+
         }
     }
     return verts;
@@ -113,20 +127,21 @@ glm::vec2 TerrainGenerator::sampleRandomVector(int row, int col)
 glm::vec3 TerrainGenerator::getPosition(int row, int col) {
     // Normalizing the planar coordinates to a unit square
     // makes scaling independent of sampling resolution.
-    float x = 1.0 * row / m_resolution;
-    float y = 1.0 * col / m_resolution;
+    float x = m_xScale * row / m_resolution ;
+    float y = m_yScale * col / m_resolution ;
     float z = getHeight(x, y);
     return glm::vec3(x,y,z);
 }
 
-//glm::vec3 TerrainGenerator::getPosition(int row, int col) {
-//    // Normalizing the planar coordinates to a unit square
-//    // makes scaling independent of sampling resolution.
-//    float x = 1.0 * row / m_resolution;
-//    float z = 1.0 * col / m_resolution;
-//    float y = getHeight(x, z);
-//    return glm::vec3(x,y,z);
-//}
+void TerrainGenerator::setMxMy(float x, float y) {
+    m_xScale = x;
+    m_yScale = y;
+
+}
+void TerrainGenerator::setTranslation(glm::vec3 trans) {
+    translation = glm::vec3(trans[0], trans[2], trans[1]);
+
+}
 
 // ================== Students, please focus on the code below this point
 
