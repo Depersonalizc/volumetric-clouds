@@ -124,10 +124,16 @@ private:
     GLuint m_terrain_vao;
 
     glm::mat4 m_proj;
+    glm::mat4 m_projView;
+
     glm::mat4 m_terrain_camera;
     glm::mat4 m_world;
 
     TerrainGenerator m_terrain;
+    int m_terrainRes;
+    float m_terrainScaleX;
+    float m_terrainScaleY;
+    glm::vec3 m_terrainTranslation;
 
     QPoint m_prevMousePos;
     float m_angleX;
