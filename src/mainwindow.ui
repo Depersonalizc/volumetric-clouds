@@ -59,24 +59,31 @@
           <string>Render Params</string>
          </property>
          <layout class="QGridLayout" name="gridLayout">
-          <item row="0" column="0" colspan="2">
-           <widget class="QLabel" name="label_129">
-            <property name="text">
-             <string>density multiplier</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <widget class="QDoubleSpinBox" name="densityMultiplier">
+          <item row="6" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="valScaling2_doubleSpinBox">
             <property name="value">
              <double>1.000000000000000</double>
             </property>
            </widget>
           </item>
-          <item row="1" column="0" colspan="3">
-           <widget class="QCheckBox" name="stepNumber_checkBox">
+          <item row="4" column="0" colspan="3">
+           <widget class="QLabel" name="label_131">
             <property name="text">
-             <string>step number</string>
+             <string>min light transmittance</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_133">
+            <property name="text">
+             <string>noise scaling</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="2" colspan="2">
+           <widget class="QCheckBox" name="gamma_checkBox">
+            <property name="text">
+             <string>Gamma</string>
             </property>
            </widget>
           </item>
@@ -93,10 +100,71 @@
             </property>
            </widget>
           </item>
-          <item row="2" column="0" colspan="3">
-           <widget class="QCheckBox" name="stepSize_checkBox">
+          <item row="8" column="3">
+           <widget class="QDoubleSpinBox" name="noiseScaling_doubleSpinBox">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="0" colspan="3">
+           <widget class="QCheckBox" name="stepNumber_checkBox">
             <property name="text">
-             <string>step size</string>
+             <string>step number</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3">
+           <widget class="QDoubleSpinBox" name="lightAborspMulti_doubleSpinBox"/>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_132">
+            <property name="text">
+             <string>volume scaling</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0">
+           <widget class="QCheckBox" name="invert_checkBox">
+            <property name="text">
+             <string>Invert</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QDoubleSpinBox" name="valScaling1_doubleSpinBox">
+            <property name="minimumSize">
+             <size>
+              <width>62</width>
+              <height>22</height>
+             </size>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="2">
+           <widget class="QLabel" name="label_129">
+            <property name="text">
+             <string>density multiplier</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3">
+           <widget class="QDoubleSpinBox" name="lightTrans_doubleSpinBox"/>
+          </item>
+          <item row="6" column="3">
+           <widget class="QDoubleSpinBox" name="valScaling3_doubleSpinBox">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QDoubleSpinBox" name="densityMultiplier">
+            <property name="value">
+             <double>1.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -120,57 +188,10 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="3">
-           <widget class="QDoubleSpinBox" name="lightAborspMulti_doubleSpinBox"/>
-          </item>
-          <item row="4" column="0" colspan="3">
-           <widget class="QLabel" name="label_131">
+          <item row="2" column="0" colspan="3">
+           <widget class="QCheckBox" name="stepSize_checkBox">
             <property name="text">
-             <string>min light transmittance</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="3">
-           <widget class="QDoubleSpinBox" name="lightTrans_doubleSpinBox"/>
-          </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="label_132">
-            <property name="text">
-             <string>volume scaling</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="0">
-           <widget class="QDoubleSpinBox" name="valScaling1_doubleSpinBox">
-            <property name="minimumSize">
-             <size>
-              <width>62</width>
-              <height>22</height>
-             </size>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1" colspan="2">
-           <widget class="QDoubleSpinBox" name="valScaling2_doubleSpinBox">
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="3">
-           <widget class="QDoubleSpinBox" name="valScaling3_doubleSpinBox">
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="0">
-           <widget class="QLabel" name="label_133">
-            <property name="text">
-             <string>noise scaling</string>
+             <string>step size</string>
             </property>
            </widget>
           </item>
@@ -181,27 +202,6 @@
             </property>
             <property name="orientation">
              <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
-          </item>
-          <item row="8" column="3">
-           <widget class="QDoubleSpinBox" name="noiseScaling_doubleSpinBox">
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="0">
-           <widget class="QCheckBox" name="invert_checkBox">
-            <property name="text">
-             <string>Invert</string>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="2" colspan="2">
-           <widget class="QCheckBox" name="gamma_checkBox">
-            <property name="text">
-             <string>Gamma</string>
             </property>
            </widget>
           </item>
@@ -674,7 +674,7 @@
      <x>0</x>
      <y>0</y>
      <width>1397</width>
-     <height>21</height>
+     <height>17</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuCloud">

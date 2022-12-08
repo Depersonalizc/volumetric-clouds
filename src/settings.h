@@ -34,6 +34,8 @@ struct Settings {
 
     // Noise
     float densityMult = 1.f;  // density multiplier
+    float cloudLightAbsorptionMult = 0.75f;
+    float minLightTransmittance = 0.01f;
     bool invertDensity = true;
 
     NoiseParams hiResNoise = {
