@@ -93,7 +93,7 @@ private:
     void drawVolume();
     void setUpTerrain();
     void drawTerrain();
-    void paintTerrainTexture(GLuint texture);
+    void paintTerrainTexture(/*GLuint texture*/);
     void rebuildMatrices();
     void setUpScreenQuad();
 

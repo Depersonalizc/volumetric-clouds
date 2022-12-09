@@ -78,20 +78,23 @@ void Realtime::setUpVolume() {
 }
 
 void Realtime::drawVolume() {
-    glDisable(GL_DEPTH_TEST);  // disable depth test to draw full screen quad
     glUseProgram(m_volumeShader);
+    glDisable(GL_DEPTH_TEST);  // disable depth test for volume rendering
     glBindVertexArray(vaoScreenQuad);
     glDrawArrays(GL_TRIANGLES, 0, screenQuadData.size() / 5);
-    glUnbindVAO();
+    glBindVertexArray(0);
+    glEnable(GL_DEPTH_TEST);
     glUseProgram(0);
 }
 
 
 void Realtime::drawTerrain() {
+    glUseProgram(m_terrainShader);
     int res = m_terrain.getResolution();
     glBindVertexArray(m_terrain_vao);
     glDrawArrays(GL_TRIANGLES, 0, res*res*6 * m_terrainScaleX * m_terrainScaleY);
     glBindVertexArray(0);
+    glUseProgram(0);
 }
 
 
@@ -180,9 +183,9 @@ void Realtime::initializeGL() {
         setUpTerrain();
         glUseProgram(m_terrainTextureShader);
         GLint depth_texture_loc = glGetUniformLocation(m_terrainTextureShader, "depth_sampler");
-        glUniform1i(depth_texture_loc, 0);
+        glUniform1i(depth_texture_loc, 2);
         GLint color_texture_loc = glGetUniformLocation(m_terrainTextureShader, "color_sampler");
-        glUniform1i(color_texture_loc, 1);
+        glUniform1i(color_texture_loc, 3);
 
         glUniform1f(glGetUniformLocation(m_terrainTextureShader, "near"), settings.nearPlane);
         glUniform1f(glGetUniformLocation(m_terrainTextureShader, "far"), settings.farPlane);
@@ -310,35 +313,38 @@ void Realtime::setUpTerrain() {
 }
 
 void Realtime::paintGL() {
-    // Bind our FBO
+
+    /* render terrain along with depth map */
+    // Bind terrain FBO, clear depth + color
     glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
-
-//    glUseProgram(m_volumeShader);
-
+    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //    glViewport(0,0,m_fbo_width, m_fbo_height);
 
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glUseProgram(m_terrainShader);
-
-//    Debug::checkOpenGLErrors();
-
-//    drawVolume();
     drawTerrain();
 
+
+    /* drawing to main screen */
     glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getDefaultFbo());
-    paintTerrainTexture(m_FBO.get()->getFboColorTexture());
+//    paintTerrainTexture();
+    drawVolume();
 
 
     glUseProgram(0);
+//    Debug::checkOpenGLErrors();
+
 }
 
-void Realtime::paintTerrainTexture(GLuint texture) {
+void Realtime::paintTerrainTexture() {
     glUseProgram(m_terrainTextureShader);
 
     glBindVertexArray(m_FBO.get()->getFullscreenVao());
 
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture);
+    // binding depth to slot #2 and color to #3
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboDepthTexture());
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboColorTexture());
 
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -380,7 +386,6 @@ void Realtime::resizeGL(int w, int h) {
 
     glUseProgram(m_volumeShader);  // Pass camera mat (proj * view)
     glUniform1f(glGetUniformLocation(m_volumeShader , "xMax"), m_camera.xMax());
-//    glUniform1f(glGetUniformLocation(m_volumeShader , "yMax"), m_camera.yMax());
     glUseProgram(0);
 }
 

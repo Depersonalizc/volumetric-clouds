@@ -4,7 +4,9 @@
 in vec2 uv;
 
 // Add a sampler2D uniform
+//layout (binding = 2)
 uniform sampler2D depth_sampler;
+//layout (binding = 3)
 uniform sampler2D color_sampler;
 
 
@@ -27,8 +29,8 @@ void main()
 {
     float depth = texture(depth_sampler, uv).r;
     float linearDepth = linearizeDepth(depth);
-    fragColor = vec4(vec3(linearDepth), 1);
+//    fragColor = vec4(vec3(linearDepth), 1);
 
-//    fragColor = texture(color_sampler, uv);
+    fragColor = texture(color_sampler, uv);
 
 }

@@ -9,15 +9,17 @@
 #define MAX_RANDOM_OFFSET 1e-2f
 
 // Params for adaptive ray marching
-#define SMALL_DST_SAMPLE_NUM 32
-#define COARSE_MULTIPLE 5.f
-#define SMALL_DENSITY 0.005f
-#define ADAP_THRESHOLD 5
-#define STEPSIZE_FINE 0.05f
+#define SMALL_DST_SAMPLE_NUM 64
+#define COARSE_STEPSIZE_MULTIPLIER 10.f
+//#define SMALL_DENSITY 0.005f
+#define MAX_MISSED_STEPS 5
+#define STEPSIZE_FINE 0.01f
 
 // density volumes computed by the compute shader
 layout(binding = 0) uniform sampler3D volumeHighRes;
 layout(binding = 1) uniform sampler3D volumeLowRes;
+layout(binding = 2) uniform sampler2D solidDepth;
+layout(binding = 3) uniform sampler2D solidColor;
 
 //in vec3 positionWorld;
 in vec3 rayDirWorldspace;
@@ -67,12 +69,12 @@ uniform vec4 phaseParams;  // HG
 //const LightData testLight = LightData(0, vec4(0), vec3(0, 1, 0), vec3(1,1,1), 0, 0);
 uniform LightData testLight;
 
-vec3 shpere2Cartesian(vec3 curPnt) {
+vec3 dirSph2Cart(float latitudeRadians, float longitudeRadians) {
     float x, y, z;
-    x = curPnt[0]*sin(curPnt[2])*sin(curPnt[1]);
-    y = curPnt[0]*cos(curPnt[2]);
-    z = curPnt[0]*sin(curPnt[2])*cos(curPnt[1]);
-    return vec3(x,y,z);
+    x = sin(longitudeRadians) * sin(latitudeRadians);
+    y = cos(longitudeRadians);
+    z = sin(longitudeRadians) * cos(latitudeRadians);
+    return vec3(x, y, z);
 }
 
 // normalized v so that dot(v, 1) = 1
@@ -207,12 +209,14 @@ float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
 
 void main() {
 
-//    const vec3 rayDirWorld = normalize(positionWorld - rayOrigWorld);
     const vec3 rayDirWorld = normalize(rayDirWorldspace);
     vec2 tHit = intersectBox(rayOrigWorld, rayDirWorld);
+
 //    tHit.x = max(0.f, tHit.x);
     tHit.x = max(0.f, tHit.x) + EPSILON_INTERSECT;  // keep the near intersection in front of the camera
-    const vec3 dirLight = normalize(shpere2Cartesian(vec3(1, radians(testLight.latitude), radians(testLight.longitude))));  // towards the light
+
+    const vec3 dirLight = dirSph2Cart(radians(testLight.latitude),
+                                      radians(testLight.longitude));  // towards the light
 //    const vec3 dirLight = normalize(testLight.dir);  // towards the light
     const float cosRayLightAngle = dot(rayDirWorld, dirLight);
     const float phaseVal = phase(cosRayLightAngle);  // directional light only for now
@@ -220,45 +224,68 @@ void main() {
     vec3 cloudColor = vec3(0.f);
     float transmittance = 1.f;
     float lightEnergy = 0.f;
-    if (tHit.x < tHit.y) {  // hit box
-        // starting from the near intersection, march the ray forward and sample
-        float dstTravelled = 0;
-        float totalDst = (tHit.y - tHit.x);
-        float curFineStepSize = min(STEPSIZE_FINE, totalDst/SMALL_DST_SAMPLE_NUM);
-        float curCoarseStepSize = curFineStepSize*COARSE_MULTIPLE;
-        int curThreshold = ADAP_THRESHOLD;
+    if (tHit.x < tHit.y) {  // hit box, do volume render
+
+        // Mode A. adaptive step size
+        const float distTotal = (tHit.y - tHit.x);
+        const float stepSizeFine = min(STEPSIZE_FINE, distTotal/SMALL_DST_SAMPLE_NUM);
+        const float stepSizeCoarse = stepSizeFine * COARSE_STEPSIZE_MULTIPLIER;
+
+        int fineStepsLeft = MAX_MISSED_STEPS;
+        float distTravelled = 0;
+        float dt = stepSizeFine;
+        bool stepIsFine = true;
+
+//        // Mode B. fixed number of steps
 //        const float dt = (tHit.y - tHit.x) / numSteps;
-        float dt = curFineStepSize;
-        const vec3 ds = rayDirWorld * dt;
+//        const vec3 ds = rayDirWorld * dt;
 
         vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
+        while (distTravelled < distTotal) {
 
-        while (dstTravelled < totalDst){
-            float density = sampleDensity(pointWorld);
+            distTravelled += dt;
+            pointWorld += rayDirWorld * dt;
 
-            dstTravelled += dt;
+            const float density = sampleDensity(pointWorld);
 
             if (density > 0.f) {
-                float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
-                lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
-                transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
-                if (transmittance < EARLY_STOP_THRESHOLD)
-                    break;
 
-                // adjust next step
-                curThreshold = density < SMALL_DENSITY ? curThreshold - 1: ADAP_THRESHOLD;
-                // change to big step
-                if (curThreshold <= 0) {
-                    dt = curCoarseStepSize;
-                // check change to small step
-                } else {
-                    // if prev is big step, traceback and change to small step
-                    if (dt == curCoarseStepSize) {
-                        dt = curFineStepSize;
-                    }
+                // hit cloud, backtrack half a coarse step if previous step was coarse
+                if (!stepIsFine) {
+                    distTravelled -= (stepSizeCoarse * .5f);
+                    pointWorld -= (rayDirWorld * stepSizeCoarse * .5f);
+                    // switch to fine mode
+                    dt = stepSizeFine;
+                    stepIsFine = true;
+                }
+
+                else {
+                    // accumulate transmittance and energy
+                    const float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
+                    lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
+                    transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
+
+                    // cast secondary ray to sun
+                    if (transmittance < EARLY_STOP_THRESHOLD) break;
+
+                    // hit cloud, reset fine steps countdown
+                    fineStepsLeft = MAX_MISSED_STEPS;
+                }
+
+                // hit cloud, reset fine steps count down
+                fineStepsLeft = MAX_MISSED_STEPS;
+
+            } else {
+                // missed cloud, decrement fine steps countdown
+                fineStepsLeft = fineStepsLeft - 1;
+
+                // if we've missed the clouds for too many steps, switch to coarse mode
+                if (fineStepsLeft <= 0) {
+                    dt = stepSizeCoarse;
+                    stepIsFine = false;
                 }
             }
-            pointWorld += dt*rayDirWorld;
+
         }
 
         cloudColor = lightEnergy * testLight.color;
