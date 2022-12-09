@@ -6,7 +6,7 @@ in vec3 lightDir;
 
 uniform bool wireshade;
 
-out  vec4 fragColor;
+out vec4 fragColor;
 
 void main(void)
 {

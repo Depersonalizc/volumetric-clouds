@@ -141,11 +141,10 @@ void Realtime::initializeGL() {
     }
     std::cout << "Initialized GL: Version " << glewGetString(GLEW_VERSION) << std::endl;
 
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);  // cull back face
     glClearColor(.5f, .5f, .5f, 1.f);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  // composite with bg color
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
 //    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
@@ -154,7 +153,6 @@ void Realtime::initializeGL() {
     m_worleyShader = ShaderLoader::createComputeShaderProgram(":/resources/shaders/worley.comp");
     m_terrainShader = ShaderLoader::createShaderProgram(":/resources/shaders/terrain_generator.vert", ":/resources/shaders/terrain_generator.frag");
     m_terrainTextureShader = ShaderLoader::createShaderProgram(":/resources/shaders/terrain_texture.vert", ":/resources/shaders/terrain_texture.frag");
-
 
     /* Set up VBO, VAO, and SSBO */
     setUpScreenQuad();

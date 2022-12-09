@@ -17,7 +17,7 @@ out vec4 fragColor;
 //float near_plane = 0.01f;
 //float far_plane = 100.f;
 
-float LinearizeDepth(float depth)
+float linearizeDepth(float depth)
 {
     float z = depth * 2.0 - 1.0; // Back to NDC
     return (2.0 * near * far) / (far + near - z * (far - near));
@@ -26,9 +26,9 @@ float LinearizeDepth(float depth)
 void main()
 {
     float depth = texture(depth_sampler, uv).r;
-    float linear_depth = LinearizeDepth(depth);
-    fragColor = vec4(linear_depth, linear_depth, linear_depth, 1);
+    float linearDepth = linearizeDepth(depth);
+    fragColor = vec4(vec3(linearDepth), 1);
 
-    fragColor = texture(color_sampler, uv);
+//    fragColor = texture(color_sampler, uv);
 
 }
