@@ -18,13 +18,16 @@ public:
     void setTranslation(glm::vec3 trans);
     std::vector<float> generateTerrain();
 
+    std::vector<float> height_data;
+    std::vector<float> normal_data;
+
 private:
 
     // Member variables for terrain generation. You will not need to use these directly.
     std::vector<glm::vec2> m_randVecLookup;
     int m_resolution;
     int m_lookupSize;
-    float m_xScale = 1.0;
+    float m_xScale = 2.0;
     float m_yScale = 1.0;
     glm::vec3 translation = glm::vec3(0.0, 0.0, 0.0);
 

@@ -94,6 +94,7 @@ private:
     void setUpTerrain();
     void drawTerrain();
     void paintTerrainTexture(/*GLuint texture*/);
+    void setUpHeightTexture();
     void rebuildMatrices();
     void setUpScreenQuad();
 
@@ -141,6 +142,12 @@ private:
     float m_zoom;
 
     std::unique_ptr<FBO> m_FBO;
+
+    GLuint m_terrain_height_texture;
+    GLuint m_terrain_normal_texture;
+    GLuint m_fullscreen_vbo;
+    GLuint m_fullscreen_vao;
+
     void paintTexture(GLuint texture);
     int m_screen_width;
     int m_screen_height;

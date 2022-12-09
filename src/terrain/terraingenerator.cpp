@@ -107,8 +107,9 @@ std::vector<float> TerrainGenerator::generateTerrain() {
             addPointToVector(n1, verts);
             addPointToVector(getColor(n1, p1), verts);
 
-
-
+            // for height map and normal map
+            height_data.push_back((p1+translation)[2]);
+            addPointToVector(n1, normal_data);
         }
     }
     return verts;
