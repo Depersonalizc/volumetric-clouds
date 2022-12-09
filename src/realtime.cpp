@@ -251,6 +251,12 @@ void Realtime::initializeGL() {
         // Lighting
 //        glUniform1i(glGetUniformLocation(m_volumeShader, "numLights"), 0);
         glUniform4fv(glGetUniformLocation(m_volumeShader, "phaseParams"), 1, glm::value_ptr(glm::vec4(0.83f, 0.3f, 0.8f, 0.15f))); // TODO: make it adjustable hyperparameters
+        glUniform1f(glGetUniformLocation(m_volumeShader , "testLight.longitude"), settings.lightData.longitude);
+        glUniform1f(glGetUniformLocation(m_volumeShader , "testLight.latitude"), settings.lightData.latitude);
+        glUniform1i(glGetUniformLocation(m_volumeShader , "testLight.type"), settings.lightData.type);
+        glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.dir"), 1, glm::value_ptr(settings.lightData.dir));
+        glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.color"), 1, glm::value_ptr(settings.lightData.color));
+        glUniform4fv(glGetUniformLocation(m_volumeShader , "testLight.pos"), 1, glm::value_ptr(settings.lightData.pos));
     }
     glUseProgram(0);
 
@@ -313,22 +319,22 @@ void Realtime::setUpTerrain() {
 
 void Realtime::paintGL() {
     // Bind our FBO
-    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
+//    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
 
-//    glUseProgram(m_volumeShader);
+    glUseProgram(m_volumeShader);
 
 //    glViewport(0,0,m_fbo_width, m_fbo_height);
 
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glUseProgram(m_terrainShader);
+//    glUseProgram(m_terrainShader);
 
 //    Debug::checkOpenGLErrors();
 
-//    drawVolume();
-    drawTerrain();
+    drawVolume();
+//    drawTerrain();
 
-    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getDefaultFbo());
-    paintTerrainTexture(m_FBO.get()->getFboColorTexture());
+//    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getDefaultFbo());
+//    paintTerrainTexture(m_FBO.get()->getFboColorTexture());
 
 
     glUseProgram(0);

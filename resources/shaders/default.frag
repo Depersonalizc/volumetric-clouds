@@ -205,6 +205,53 @@ float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
 //    return 1.f;
 }
 
+//------------Skycolor-------------------
+// Simulates an atmosphere
+// return the distance traveled inside the atmosphere
+float raySphere(vec3 sphereCenter, float sphereRadius, vec3 rayOrigin, vec3 rayDir) {
+    vec3 offset = rayOrigin - sphereCenter;
+    float a = 1;
+    float b = 2 * dot(offset, rayDir);
+    float c = dot(offset, offset) - sphereRadius * sphereRadius;
+    float d = b*b - 4*a*c;
+
+    if (d > 0) {
+        float s = sqrt(d);
+        float dstNear = max(0, (-b-s)/(2*a));
+        float dstFar = (-b+s)/(2*a);
+        if (dstFar >= 0) {
+            return dstFar - dstNear;
+        }
+    }
+    return 0.0;
+}
+
+// Used for sky scattering
+float densityAtPoint(vec3 pointPosWorld) {
+    float densityFalloff = 8.0;
+    float height01 = pointPosWorld[1] / 2.0;
+    float density = exp(- height01 * densityFalloff) * (1 - height01);
+    return density;
+}
+
+// optical depth: average density along the ray, determined by the raylength (from point to the sun, within the box)
+float opticalDepth(vec3 rayOrig, vec3 rayDir, float rayLength) {
+//    const vec2 tHit = intersectBox(rayOrig, rayDir);
+//    const float tFar = max(0.f, tHit.y);
+//    return tFar / 10.0;
+    int numOpticalPoints = 6;
+    vec3 densitySamplePoint = rayOrig;
+    float stepSize = rayLength / (numOpticalPoints - 1);
+    float opticalDepth = 0;
+    for (int i = 0; i < numOpticalPoints; i++) {
+        float localDensity = densityAtPoint(densitySamplePoint);
+        opticalDepth += localDensity * stepSize;
+        densitySamplePoint += rayDir * stepSize;
+    }
+    return opticalDepth;
+}
+
+
 void main() {
 
 //    const vec3 rayDirWorld = normalize(positionWorld - rayOrigWorld);
@@ -220,6 +267,36 @@ void main() {
     vec3 cloudColor = vec3(0.f);
     float transmittance = 1.f;
     float lightEnergy = 0.f;
+
+    //----------------------skycolor related-------------------
+    vec3 inScatteredLight = vec3(0.0, 0.0, 0.0);
+    float scatteringStrength = 1;
+    vec3 wavelengths = vec3(700, 530, 440);
+    float scatterR = pow(400 / wavelengths[0], 4) * scatteringStrength;
+    float scatterG = pow(400 / wavelengths[1], 4) * scatteringStrength;
+    float scatterB = pow(400 / wavelengths[2], 4) * scatteringStrength;
+    vec3 scatteringCoeff = vec3(scatterR, scatterG, scatterB);
+
+    float viewRayOpticalDepth = 0.0;
+    int numInScatteringPoints = 8;
+
+    // Create atmosphere
+//    vec3 planetCenter = vec3(0.0, - 11.0 * volumeScaling.y, 0.0);
+//    float atmosRadius = 13.0 * volumeScaling.y;
+    vec3 planetCenter = vec3(0.0, - 11.0, 0.0);
+    float atmosRadius = 13.0 ;
+    float planetRadius = 11.0;
+
+//    vec3 planetCenter = vec3(0.0, - 111.0, 0.0);
+//    float atmosRadius = 113.0 ;
+
+//    float planetRadius = 1000.f;
+//    float atmosRadius = 1003.0;
+//    vec3 planetCenter = vec3(0.0, -planetRadius-5, 0.0);
+
+    vec3 color = testLight.color;
+
+
     if (tHit.x < tHit.y) {  // hit box
         // starting from the near intersection, march the ray forward and sample
         float dstTravelled = 0;
@@ -237,6 +314,19 @@ void main() {
             float density = sampleDensity(pointWorld);
 
             dstTravelled += dt;
+
+//            //----------------------------skycolor related-------------------------------
+//            float localDensity = densityAtPoint(pointWorld);
+//            float sunRayLength = raySphere(planetCenter, atmosRadius, pointWorld, dirLight);
+
+//            float sunRayOpticalDepth = opticalDepth(pointWorld, dirLight, sunRayLength);
+////            sunRayOpticalDepth = sunRayLength / 10.0;
+////            viewRayOpticalDepth = dstTravelled / 10.0;
+//            viewRayOpticalDepth = opticalDepth(pointWorld, -rayDirWorld, dstTravelled);
+////            vec3 transSky = exp(- (sunRayOpticalDepth + viewRayOpticalDepth )* scatteringCoeff);
+//            vec3 transSky = exp(- (sunRayOpticalDepth + viewRayOpticalDepth)* scatteringCoeff);
+//            inScatteredLight += localDensity * transSky * scatteringCoeff * dt;
+
 
             if (density > 0.f) {
                 float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
@@ -261,12 +351,44 @@ void main() {
             pointWorld += dt*rayDirWorld;
         }
 
-        cloudColor = lightEnergy * testLight.color;
+//        color  += inScatteredLight;
+        cloudColor = lightEnergy * color;
     }
 
+    //----------------------------skycolor related-------------------------------
+    vec3 pointWorld = rayOrigWorld;
+    float rayLength = raySphere(planetCenter, atmosRadius, pointWorld, normalize(rayDirWorld));
+    float stepSize = rayLength / (numInScatteringPoints - 1);
+
+    for (int i = 0; i < numInScatteringPoints; i++) {
+
+        float localDensity = densityAtPoint(pointWorld);
+        float sunRayLength = raySphere(planetCenter, atmosRadius, pointWorld, dirLight);
+
+        float sunRayOpticalDepth = opticalDepth(pointWorld, dirLight, sunRayLength);
+//            sunRayOpticalDepth = sunRayLength / 10.0;
+//            viewRayOpticalDepth = dstTravelled / 10.0;
+        viewRayOpticalDepth = opticalDepth(pointWorld, -rayDirWorld, stepSize * i);
+        vec3 transSky = exp(- (sunRayOpticalDepth + viewRayOpticalDepth)* scatteringCoeff);
+        inScatteredLight += localDensity * transSky * scatteringCoeff * stepSize;
+        pointWorld += rayDirWorld * stepSize;
+    }
+
+
+    vec3 backgroundColor = vec3(.0f, .0f, .0f);
+
+    if (raySphere(planetCenter, planetRadius, rayOrigWorld, rayDirWorld) <= 0.0) {
+        vec3 originalColor = vec3(0.0, 0.0, 0.0);
+        float originalColTrans = exp(- viewRayOpticalDepth);
+        backgroundColor = originalColor * originalColTrans + inScatteredLight;
+    }
     // composite sky background into the scene
     // TODO: use texture to get sky color
-    vec3 backgroundColor = vec3(.0f, .5f, .64f);
+//    vec3 backgroundColor = vec3(.0f, .5f, .64f);
+
+//    backgroundColor += inScatteredLight;
+
+
 
     // composite sun into the scene
     const float MAX_SUN_INTENSITY = 10.f;
@@ -279,7 +401,7 @@ void main() {
     if (gammaCorrect)
         cloudSky = gammaCorrection(cloudSky);
     glFragColor = vec4(cloudSky, 1.f);
-
+//    glFragColor = vec4(testLight.color, 1.f);
 
     // DEBUG
 //    float sigma = sampleDensity(positionWorld);
