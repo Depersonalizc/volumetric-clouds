@@ -196,9 +196,9 @@ void Realtime::initializeGL() {
         glUseProgram(m_terrainShader);
 
         GLint height_texture_loc2 = glGetUniformLocation(m_terrainShader, "height_sampler");
-        glUniform1i(height_texture_loc, 4);
+        glUniform1i(height_texture_loc2, 4);
         GLint normal_texture_loc2 = glGetUniformLocation(m_terrainShader, "normal_sampler");
-        glUniform1i(normal_texture_loc, 5);
+        glUniform1i(normal_texture_loc2, 5);
 
         glUniform1f(glGetUniformLocation(m_terrainTextureShader, "near"), settings.nearPlane);
         glUniform1f(glGetUniformLocation(m_terrainTextureShader, "far"), settings.farPlane);
