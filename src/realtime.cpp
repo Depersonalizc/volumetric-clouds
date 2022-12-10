@@ -72,31 +72,38 @@ void Realtime::setUpVolume() {
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, dimLoRes, dimLoRes, dimLoRes, 0, GL_RGBA, GL_FLOAT, nullptr);
-
-
-
 }
 
 void Realtime::drawVolume() {
-    glUseProgram(m_volumeShader);
     glDisable(GL_DEPTH_TEST);  // disable depth test for volume rendering
+    glUseProgram(m_volumeShader);
+
+    // Bind depth texture to slot #2 and color to #3
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboDepthTexture());
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboColorTexture());
+
+    // Draw screen quad
     glBindVertexArray(vaoScreenQuad);
     glDrawArrays(GL_TRIANGLES, 0, screenQuadData.size() / 5);
+
+    // Clear things up
+    glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
-    glEnable(GL_DEPTH_TEST);
     glUseProgram(0);
+    glEnable(GL_DEPTH_TEST);
 }
 
 
 void Realtime::drawTerrain() {
     glUseProgram(m_terrainShader);
-    int res = m_terrain.getResolution();
     glBindVertexArray(m_terrain_vao);
+    int res = m_terrain.getResolution();
     glDrawArrays(GL_TRIANGLES, 0, res*res*6 * m_terrainScaleX * m_terrainScaleY);
     glBindVertexArray(0);
     glUseProgram(0);
 }
-
 
 
 Realtime::Realtime(QWidget *parent) : QOpenGLWidget(parent) {
@@ -252,6 +259,13 @@ void Realtime::initializeGL() {
         // Lighting
 //        glUniform1i(glGetUniformLocation(m_volumeShader, "numLights"), 0);
         glUniform4fv(glGetUniformLocation(m_volumeShader, "phaseParams"), 1, glm::value_ptr(glm::vec4(0.83f, 0.3f, 0.8f, 0.15f))); // TODO: make it adjustable hyperparameters
+
+
+        glUniform1i(glGetUniformLocation(m_volumeShader, "solidDepth"), 2);
+        glUniform1i(glGetUniformLocation(m_volumeShader, "solidColor"), 3);
+        glUniform1f(glGetUniformLocation(m_volumeShader, "near"), settings.nearPlane);
+        glUniform1f(glGetUniformLocation(m_volumeShader, "far"), settings.farPlane);
+
     }
     glUseProgram(0);
 
@@ -314,38 +328,31 @@ void Realtime::setUpTerrain() {
 
 void Realtime::paintGL() {
 
-    /* render terrain along with depth map */
-    // Bind terrain FBO, clear depth + color
+    // Render terrain color and depth to FBO textures
     glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 //    glViewport(0,0,m_fbo_width, m_fbo_height);
-
-    glUseProgram(m_terrainShader);
     drawTerrain();
 
-
-    /* drawing to main screen */
-    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getDefaultFbo());
+    // Draw on main screen
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
 //    paintTerrainTexture();
     drawVolume();
 
-
+    // Clear things up
     glUseProgram(0);
 //    Debug::checkOpenGLErrors();
-
 }
 
 void Realtime::paintTerrainTexture() {
-    glUseProgram(m_terrainTextureShader);
-
-    glBindVertexArray(m_FBO.get()->getFullscreenVao());
-
     // binding depth to slot #2 and color to #3
     glActiveTexture(GL_TEXTURE2);
     glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboDepthTexture());
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboColorTexture());
 
+    glUseProgram(m_terrainTextureShader);
+    glBindVertexArray(m_FBO.get()->getFullscreenVao());
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
@@ -510,10 +517,10 @@ void Realtime::mouseReleaseEvent(QMouseEvent *event) {
         m_mouseDown = false;
     }
 }
-void Realtime::wheelEvent(QWheelEvent *event) {
-    m_zoom -= event->angleDelta().y() / 1000.f;
-    rebuildMatrices();
-}
+//void Realtime::wheelEvent(QWheelEvent *event) {
+//    m_zoom -= event->angleDelta().y() / 1000.f;
+//    rebuildMatrices();
+//}
 
 void Realtime::mouseMoveEvent(QMouseEvent *event) {
 
@@ -553,9 +560,6 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         m_angleX += 10 * (event->position().x() - m_prevMousePos.x()) / (float) width();
         m_angleY += 10 * (event->position().y() - m_prevMousePos.y()) / (float) height();
         m_prevMousePos = event->pos();
-        //rebuildMatrices();
-
-
 
         update(); // asks for a PaintGL() call to occur
     }
