@@ -110,6 +110,7 @@ std::vector<float> TerrainGenerator::generateTerrain() {
             // for height map and normal map
             height_data.push_back((p1+translation)[2]);
             addPointToVector(n1, normal_data);
+//            std::cout << "normal" << n1[0] << " " << n1[2] << " " << n1[1] << std::endl;
         }
     }
     return verts;
@@ -119,7 +120,8 @@ std::vector<float> TerrainGenerator::generateTerrain() {
 glm::vec2 TerrainGenerator::sampleRandomVector(int row, int col)
 {
     std::hash<int> intHash;
-    int index = intHash(row * 41 + col * 43) % m_lookupSize;
+    int index = intHash(row * 41 + col * 43) % m_lookupSize; // comment for test
+//    int index = 42;
     return m_randVecLookup.at(index);
 }
 
