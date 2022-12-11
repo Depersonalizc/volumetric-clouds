@@ -7,17 +7,11 @@
 #define XZ_FALLOFF_DIST 1.f
 #define Y_FALLOFF_DIST 1.f
 
-//// Params for adaptive ray marching - ver Jamie
-//#define MIN_NUM_FINE_STEPS 32
-//#define MAX_NUM_MISSED_STEPS 5
-//#define STEPSIZE_FINE 0.01f
-//#define COARSE_STEPSIZE_MULTIPLIER 10.f
-
-// Params for adaptive ray marching - ver Zhou
-#define SMALL_DST_SAMPLE_NUM 32
-#define COARSE_MULTIPLE 10.f
+// Params for adaptive ray marching
+#define MIN_NUM_FINE_STEPS 32
+#define COARSE_STEPSIZE_MULTIPLIER 10.f
 #define SMALL_DENSITY 0.005f
-#define ADAP_THRESHOLD 5
+#define MAX_NUM_MISSED_STEPS 5
 #define STEPSIZE_FINE 0.01f
 
 // density volumes computed by the compute shader
@@ -405,10 +399,9 @@ void main() {
         // starting from the near intersection, march the ray forward and sample
         float dstTravelled = 0;
         float totalDst = (tHit.y - tHit.x);
-        float curFineStepSize = min(STEPSIZE_FINE, totalDst/SMALL_DST_SAMPLE_NUM);
-        float curCoarseStepSize = curFineStepSize*COARSE_MULTIPLE;
-        int curThreshold = ADAP_THRESHOLD;
-//        const float dt = (tHit.y - tHit.x) / numSteps;
+        float curFineStepSize = min(STEPSIZE_FINE, totalDst/MIN_NUM_FINE_STEPS);
+        float curCoarseStepSize = curFineStepSize*COARSE_STEPSIZE_MULTIPLIER;
+        int curThreshold = MAX_NUM_MISSED_STEPS;
         float dt = curFineStepSize;
 //        const vec3 ds = rayDirWorld * dt;
 
@@ -424,7 +417,7 @@ void main() {
                     break;
 
                 // adjust next step
-                curThreshold = density < SMALL_DENSITY ? curThreshold - 1: ADAP_THRESHOLD;
+                curThreshold = density < SMALL_DENSITY ? curThreshold - 1: MAX_NUM_MISSED_STEPS;
                 // change to big step
                 if (curThreshold <= 0) {
                     dt = curCoarseStepSize;
