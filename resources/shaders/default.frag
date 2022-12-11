@@ -20,6 +20,7 @@ layout(binding = 1) uniform sampler3D volumeLowRes;
 layout(binding = 2) uniform sampler2D solidDepth;
 layout(binding = 3) uniform sampler2D solidColor;
 layout(binding = 4) uniform sampler1D sunGradient;
+layout(binding = 5) uniform sampler2D nightColor;
 
 //in vec3 positionWorld;
 in vec2 uv;
@@ -279,6 +280,19 @@ vec3 getSunColor(float longitudeRadians) {
     return texture(sunGradient, timeOfDay).rgb;
 }
 
+vec4 getNightColor(float longitudeRadians) {
+    float timeOfDay = abs(longitudeRadians) / HALF_PI;  // 0: noon, 1: dusk/dawn
+    vec2 newUv = vec2(uv[0], 1.0 - uv[1]);
+    vec4 origColor = texture(nightColor, uv);
+    float gray = 0.2989*origColor[0] + 0.5870*origColor[1] + 0.1140*origColor[2];
+    float newR = -gray*timeOfDay + origColor[0]*(1+timeOfDay);
+    float newG = -gray*timeOfDay + origColor[1]*(1+timeOfDay);
+    float newB = -gray*timeOfDay + origColor[2]*(1+timeOfDay);
+
+    return vec4(newR, newG, newB, origColor[2]);
+//    return texture(nightColor, uv);
+}
+
 
 void main() {
     // Solid geometry
@@ -458,15 +472,29 @@ void main() {
 
     vec3 backgroundColor;
     float sunIntensity;
+    float timeOfDay = abs(sunLongitudeRadians) / HALF_PI;  // 0: noon, 1: dusk/dawn
 
-    if (raySphere(planetCenter, planetRadius, rayOrigWorld, rayDirWorld) > 0.0) {
+    if (raySphere(planetCenter, planetRadius, rayOrigWorld, rayDirWorld) > 0.0) { // if below the horizon
         backgroundColor = vec3(0.f);
         sunIntensity = 0;
     } else {
 
         vec3 originalColor = vec3(0.0, 0.0, 0.0);
+        originalColor = vec3(getNightColor(sunLongitudeRadians));
         float originalColTrans = exp(- viewRayOpticalDepth);
         backgroundColor = originalColor * originalColTrans + inScatteredLight;
+
+        float coeff;
+        float lower_threshold = 1.0;
+        float hi = 1.5;
+        if (timeOfDay < lower_threshold) {
+            coeff = originalColTrans;
+            backgroundColor = vec3(0.0) * coeff + inScatteredLight;
+        }else {
+            coeff = 1.0/(hi-lower_threshold)*(1 - originalColTrans)*(timeOfDay - hi) + 1.0;
+            backgroundColor = originalColor * coeff + inScatteredLight;
+        }
+
 
         const float MAX_SUN_INTENSITY = 4.f;
         sunIntensity = henyeyGreenstein(cosRayLightAngle, .9995) * transmittance;
@@ -476,6 +504,11 @@ void main() {
     if (texture(solidDepth, uv).r < 1) {  // solid
         backgroundColor = colorSolid.rgb;
         sunIntensity = 0;
+    }
+
+    if (timeOfDay > 0.95) {
+        float alpha = 1.0/0.2*(timeOfDay-0.95);
+        cloudColor = alpha * vec3(0.0, 0.0, 0.0) + (1-alpha) * cloudColor;
     }
 
     vec3 cloudOnBackground = min(cloudColor + transmittance*backgroundColor, 1.f);

@@ -104,6 +104,7 @@ private:
     GLuint m_volumeShader, m_worleyShader, m_terrainShader, m_terrainTextureShader;       // Stores id for shader programs
 
     GLuint sunTexture;
+    GLuint nightTexture;
 
     Camera m_camera;
     bool glInitialized = false;

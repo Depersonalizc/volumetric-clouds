@@ -67,6 +67,22 @@ void Realtime::setUpTextures() {
     glTexImage1D	(GL_TEXTURE_1D, 0, GL_RGB32F, texWidth, 0, GL_RGB, GL_UNSIGNED_BYTE, sunTextureImage.bits());
 //    glTexImage1D	(GL_TEXTURE_1D, 0, GL_RGB32F, 1280, 0, GL_RGB, GL_UNSIGNED_BYTE, dummy.data());
     glBindTexture(GL_TEXTURE_1D, 0);
+
+
+    // Night sky texture set up
+    QImage nightTextureImage("./resources/textures/stars2.png");
+    nightTextureImage.convertTo(QImage::Format_RGBA8888);
+
+    // Generate night sky color 2D texture
+    glGenTextures(1, &nightTexture);
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, nightTexture);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri (GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage2D	(GL_TEXTURE_2D, 0, GL_RGBA, nightTextureImage.width(), nightTextureImage.height(), 0, GL_RGBA, GL_UNSIGNED_BYTE, nightTextureImage.bits());
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 void Realtime::setUpVolume() {
@@ -112,6 +128,9 @@ void Realtime::drawVolume() {
     glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboColorTexture());
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_1D, sunTexture);
+
+    glActiveTexture(GL_TEXTURE5);
+    glBindTexture(GL_TEXTURE_2D, nightTexture);
 
     // Draw screen quad
     glBindVertexArray(vaoScreenQuad);
@@ -297,6 +316,7 @@ void Realtime::initializeGL() {
         glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.dir"), 1, glm::value_ptr(settings.lightData.dir));
         glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.color"), 1, glm::value_ptr(settings.lightData.color));
         glUniform4fv(glGetUniformLocation(m_volumeShader , "testLight.pos"), 1, glm::value_ptr(settings.lightData.pos));
+        glUniform1i(glGetUniformLocation(m_volumeShader, "nightColor"), 5);
         glUniform1i(glGetUniformLocation(m_volumeShader, "sunGradient"), 4);
         glUniform1i(glGetUniformLocation(m_volumeShader, "solidDepth"), 2);
         glUniform1i(glGetUniformLocation(m_volumeShader, "solidColor"), 3);
