@@ -20,6 +20,7 @@ public:
 
     std::vector<float> height_data;
     std::vector<float> normal_data;
+    std::vector<float> color_data;
 
 private:
 

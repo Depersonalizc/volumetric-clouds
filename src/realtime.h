@@ -145,6 +145,7 @@ private:
 
     GLuint m_terrain_height_texture;
     GLuint m_terrain_normal_texture;
+    GLuint m_terrain_color_texture;
     GLuint m_fullscreen_vbo;
     GLuint m_fullscreen_vao;
 

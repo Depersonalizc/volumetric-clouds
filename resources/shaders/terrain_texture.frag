@@ -35,7 +35,7 @@ void main()
 //    fragColor = vec4(vec3(linearDepth), 1);
 
 //    fragColor = texture(color_sampler, uv); // test for color texture
-    fragColor = vec4(vec3(texture(height_sampler, uv).r), 1); // test for height map, scale and offset for testing
+    fragColor = vec4(vec3(texture(height_sampler, uv).r+0.5f), 1); // test for height map, scale and offset for testing
 //       fragColor = vec4(texture(normal_sampler, uv).rgb, 1); // test for normal map
 //    fragColor = vec4(1,0,0,1);
 }
