@@ -81,7 +81,7 @@ private:
     void mouseReleaseEvent(QMouseEvent *event) override;
     void mouseMoveEvent(QMouseEvent *event) override;
     void timerEvent(QTimerEvent *event) override;
-    void wheelEvent(QWheelEvent *event) override;
+//    void wheelEvent(QWheelEvent *event) override;
     
     static void glUnbindVBO() { __glewBindBuffer(GL_ARRAY_BUFFER, 0); }
     static void glUnbindVAO() { __glewBindVertexArray(0); }
@@ -94,7 +94,7 @@ private:
     void drawVolume();
     void setUpTerrain();
     void drawTerrain();
-    void paintTerrainTexture(GLuint texture);
+    void paintTerrainTexture();
     void rebuildMatrices();
     void setUpScreenQuad();
 

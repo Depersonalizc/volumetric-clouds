@@ -23,7 +23,7 @@ public:
     GLuint getFullscreenVbo();
     GLuint getFullscreenVao();
     GLuint getFbo();
-    GLuint getDefaultFbo();
+//    GLuint getDefaultFbo();
     GLuint getFboDepthTexture();
     GLuint getFboColorTexture();
 

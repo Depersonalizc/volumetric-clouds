@@ -99,30 +99,40 @@ void Realtime::setUpVolume() {
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, dimLoRes, dimLoRes, dimLoRes, 0, GL_RGBA, GL_FLOAT, nullptr);
-
 }
 
 void Realtime::drawVolume() {
-    glDisable(GL_DEPTH_TEST);  // disable depth test to draw full screen quad
+    glDisable(GL_DEPTH_TEST);  // disable depth test for volume rendering
     glUseProgram(m_volumeShader);
 
+    // Bind depth texture to slot #2 and color to #3
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboDepthTexture());
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboColorTexture());
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_1D, sunTexture);
 
+    // Draw screen quad
     glBindVertexArray(vaoScreenQuad);
     glDrawArrays(GL_TRIANGLES, 0, screenQuadData.size() / 5);
-    glUnbindVAO();
+
+    // Clear things up
+    glBindTexture(GL_TEXTURE_2D, 0);
+    glBindVertexArray(0);
     glUseProgram(0);
+    glEnable(GL_DEPTH_TEST);
 }
 
 
 void Realtime::drawTerrain() {
-    int res = m_terrain.getResolution();
+    glUseProgram(m_terrainShader);
     glBindVertexArray(m_terrain_vao);
+    int res = m_terrain.getResolution();
     glDrawArrays(GL_TRIANGLES, 0, res*res*6 * m_terrainScaleX * m_terrainScaleY);
     glBindVertexArray(0);
+    glUseProgram(0);
 }
-
 
 
 Realtime::Realtime(QWidget *parent) : QOpenGLWidget(parent) {
@@ -170,11 +180,10 @@ void Realtime::initializeGL() {
     }
     std::cout << "Initialized GL: Version " << glewGetString(GLEW_VERSION) << std::endl;
 
-    glEnable(GL_CULL_FACE);
-    glCullFace(GL_BACK);  // cull back face
     glClearColor(.5f, .5f, .5f, 1.f);
-    glEnable(GL_BLEND);
-    glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);  // composite with bg color
+    glEnable(GL_CULL_FACE);
+    glCullFace(GL_BACK);
+    glEnable(GL_DEPTH_TEST);
     glViewport(0, 0, size().width() * m_devicePixelRatio, size().height() * m_devicePixelRatio);
 //    glPolygonMode( GL_FRONT_AND_BACK, GL_LINE );
 
@@ -183,7 +192,6 @@ void Realtime::initializeGL() {
     m_worleyShader = ShaderLoader::createComputeShaderProgram(":/resources/shaders/worley.comp");
     m_terrainShader = ShaderLoader::createShaderProgram(":/resources/shaders/terrain_generator.vert", ":/resources/shaders/terrain_generator.frag");
     m_terrainTextureShader = ShaderLoader::createShaderProgram(":/resources/shaders/terrain_texture.vert", ":/resources/shaders/terrain_texture.frag");
-
 
     /* Set up VBO, VAO, and SSBO */
     setUpScreenQuad();
@@ -214,9 +222,9 @@ void Realtime::initializeGL() {
         setUpTerrain();
         glUseProgram(m_terrainTextureShader);
         GLint depth_texture_loc = glGetUniformLocation(m_terrainTextureShader, "depth_sampler");
-        glUniform1i(depth_texture_loc, 0);
+        glUniform1i(depth_texture_loc, 2);
         GLint color_texture_loc = glGetUniformLocation(m_terrainTextureShader, "color_sampler");
-        glUniform1i(color_texture_loc, 1);
+        glUniform1i(color_texture_loc, 3);
 
         glUniform1f(glGetUniformLocation(m_terrainTextureShader, "near"), settings.nearPlane);
         glUniform1f(glGetUniformLocation(m_terrainTextureShader, "far"), settings.farPlane);
@@ -289,8 +297,11 @@ void Realtime::initializeGL() {
         glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.dir"), 1, glm::value_ptr(settings.lightData.dir));
         glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.color"), 1, glm::value_ptr(settings.lightData.color));
         glUniform4fv(glGetUniformLocation(m_volumeShader , "testLight.pos"), 1, glm::value_ptr(settings.lightData.pos));
-
         glUniform1i(glGetUniformLocation(m_volumeShader, "sunGradient"), 4);
+        glUniform1i(glGetUniformLocation(m_volumeShader, "solidDepth"), 2);
+        glUniform1i(glGetUniformLocation(m_volumeShader, "solidColor"), 3);
+        glUniform1f(glGetUniformLocation(m_volumeShader, "near"), settings.nearPlane);
+        glUniform1f(glGetUniformLocation(m_volumeShader, "far"), settings.farPlane);
     }
     glUseProgram(0);
 
@@ -352,36 +363,29 @@ void Realtime::setUpTerrain() {
 }
 
 void Realtime::paintGL() {
-    // Bind our FBO
-//    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
-
-    glUseProgram(m_volumeShader);
-
-//    glViewport(0,0,m_fbo_width, m_fbo_height);
-
+    // Render terrain color and depth to FBO textures
+    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    glUseProgram(m_terrainShader);
+    drawTerrain();
 
-//    Debug::checkOpenGLErrors();
-
+    // Draw on main screen
+    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
     drawVolume();
-//    drawTerrain();
 
-//    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getDefaultFbo());
-//    paintTerrainTexture(m_FBO.get()->getFboColorTexture());
-
-
+    // Clear things up
     glUseProgram(0);
+//    Debug::checkOpenGLErrors();
 }
 
-void Realtime::paintTerrainTexture(GLuint texture) {
+void Realtime::paintTerrainTexture() {
+    // binding depth to slot #2 and color to #3
+    glActiveTexture(GL_TEXTURE2);
+    glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboDepthTexture());
+    glActiveTexture(GL_TEXTURE3);
+    glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboColorTexture());
+
     glUseProgram(m_terrainTextureShader);
-
     glBindVertexArray(m_FBO.get()->getFullscreenVao());
-
-    glActiveTexture(GL_TEXTURE1);
-    glBindTexture(GL_TEXTURE_2D, texture);
-
     glDrawArrays(GL_TRIANGLES, 0, 6);
     glBindTexture(GL_TEXTURE_2D, 0);
     glBindVertexArray(0);
@@ -422,7 +426,6 @@ void Realtime::resizeGL(int w, int h) {
 
     glUseProgram(m_volumeShader);  // Pass camera mat (proj * view)
     glUniform1f(glGetUniformLocation(m_volumeShader , "xMax"), m_camera.xMax());
-//    glUniform1f(glGetUniformLocation(m_volumeShader , "yMax"), m_camera.yMax());
     glUseProgram(0);
 }
 
@@ -547,10 +550,10 @@ void Realtime::mouseReleaseEvent(QMouseEvent *event) {
         m_mouseDown = false;
     }
 }
-void Realtime::wheelEvent(QWheelEvent *event) {
-    m_zoom -= event->angleDelta().y() / 1000.f;
-    rebuildMatrices();
-}
+//void Realtime::wheelEvent(QWheelEvent *event) {
+//    m_zoom -= event->angleDelta().y() / 1000.f;
+//    rebuildMatrices();
+//}
 
 void Realtime::mouseMoveEvent(QMouseEvent *event) {
 
@@ -590,9 +593,6 @@ void Realtime::mouseMoveEvent(QMouseEvent *event) {
         m_angleX += 10 * (event->position().x() - m_prevMousePos.x()) / (float) width();
         m_angleY += 10 * (event->position().y() - m_prevMousePos.y()) / (float) height();
         m_prevMousePos = event->pos();
-        //rebuildMatrices();
-
-
 
         update(); // asks for a PaintGL() call to occur
     }

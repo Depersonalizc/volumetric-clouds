@@ -2,27 +2,27 @@
 
 #define EARLY_STOP_THRESHOLD 1e-2f
 #define EARLY_STOP_LOG_THRESHOLD -4.6f
-#define EPSILON_INTERSECT 1e-3f
-#define FOUR_PI 4*3.1415926535898
 #define HALF_PI 1.57079632679
+#define FOUR_PI 12.5663706144
 #define XZ_FALLOFF_DIST 1.f
 #define Y_FALLOFF_DIST 1.f
-#define MAX_RANDOM_OFFSET 1e-2f
 
 // Params for adaptive ray marching
-#define SMALL_DST_SAMPLE_NUM 32
-#define COARSE_MULTIPLE 5.f
-#define SMALL_DENSITY 0.005f
-#define ADAP_THRESHOLD 5
+#define MIN_NUM_FINE_STEPS 16
+#define MAX_NUM_MISSED_STEPS 5
 #define STEPSIZE_FINE 0.01f
+#define COARSE_STEPSIZE_MULTIPLIER 10.f
 
 // density volumes computed by the compute shader
 layout(binding = 0) uniform sampler3D volumeHighRes;
 layout(binding = 1) uniform sampler3D volumeLowRes;
+layout(binding = 2) uniform sampler2D solidDepth;
+layout(binding = 3) uniform sampler2D solidColor;
 
 layout(binding = 4) uniform sampler1D sunGradient;
 
 //in vec3 positionWorld;
+in vec2 uv;
 in vec3 rayDirWorldspace;
 out vec4 glFragColor;
 
@@ -38,7 +38,7 @@ uniform int numSteps;
 uniform bool invertDensity, gammaCorrect;
 uniform float densityMult;
 uniform float cloudLightAbsorptionMult;
-uniform float minLightTransmittance;
+uniform float minLightTransmittance = 0.2f;
 
 // Params for high resolution noise
 uniform float hiResNoiseScaling;
@@ -52,6 +52,9 @@ uniform vec3 loResNoiseTranslate;  // noise transforms
 uniform vec4 loResChannelWeights;  // how to aggregate RGBA channels
 uniform float loResDensityWeight;  // relative weight of lo-res noise about hi-res
 
+// Camera
+uniform float xMax, yMax;  // rayDirWorldspace lies within [-xMax, xMax] x [-yMax, yMax] x {1.0}
+uniform float near, far;   // terrain camera
 
 // light uniforms, not used rn
 struct LightData {
@@ -63,18 +66,17 @@ struct LightData {
     float latitude;
 } light;
 
-uniform LightData lightSource;
 uniform vec4 phaseParams;  // HG
-//const LightData testLight = LightData(0, vec4(0), vec3(0, -1, -0.3), vec3(1,0.1,0.5));
-//const LightData testLight = LightData(0, vec4(0), vec3(0, 1, 0), vec3(1,1,1), 0, 0);
 uniform LightData testLight;
 
-vec3 shpere2Cartesian(vec3 curPnt) {
+
+
+vec3 dirSph2Cart(float latitudeRadians, float longitudeRadians) {
     float x, y, z;
-    x = curPnt[0]*sin(curPnt[2])*sin(curPnt[1]);
-    y = curPnt[0]*cos(curPnt[2]);
-    z = curPnt[0]*sin(curPnt[2])*cos(curPnt[1]);
-    return vec3(x,y,z);
+    x = sin(longitudeRadians) * sin(latitudeRadians);
+    y = cos(longitudeRadians);
+    z = sin(longitudeRadians) * cos(latitudeRadians);
+    return vec3(x, y, z);
 }
 
 // normalized v so that dot(v, 1) = 1
@@ -91,6 +93,18 @@ float linear2srgb(float x) {
 
 vec3 gammaCorrection(vec3 linearRGB) {
     return vec3(linear2srgb(linearRGB.r), linear2srgb(linearRGB.g), linear2srgb(linearRGB.b));
+}
+
+float linearizeDepth(float depth) {
+    float z = depth * 2.0 - 1.0; // Back to NDC, [0, 1] -> [-1, 1]
+    return (2.0 * near * far) / (far + near - z * (far - near));  // Linearize z, [-1, 1] -> [near, far]
+}
+
+float depth2RayLength(float z) {
+    vec2 _uv = 2.f * uv - 1.f;
+    float x = _uv[0] * xMax;
+    float y = _uv[1] * yMax;
+    return sqrt(x*x + y*y + z*z);
 }
 
 // fast AABB intersection
@@ -118,6 +132,10 @@ float wangHash(int seed) {
     return float(seed % 2147483647) / 2147483647.f;
 }
 
+float getErosionWeightQuntic(float density) {
+    return pow( (1.f - density), 6 ) ;
+}
+
 float getErosionWeightCubic(float density) {
     return (1.f - density) * (1.f - density) * (1.f - density);
 }
@@ -139,7 +157,8 @@ float phase(float cosTheta) {
 
 float yFalloff(vec3 position) {
     float ymin = -.5f * volumeScaling.y + volumeTranslate.y;
-    float distY = min(Y_FALLOFF_DIST, position.y - ymin);
+    float ymax = ymin + volumeScaling.y;
+    float distY = min(Y_FALLOFF_DIST, min(position.y - ymin, ymax - position.y));
     return distY / Y_FALLOFF_DIST;
 }
 
@@ -154,32 +173,35 @@ float xzFalloff(vec3 position) {
 }
 
 float sampleDensity(vec3 position) {
-    // sample high-res details
+    // Sample high-res shape textures
     const vec3 hiResPosition = position * hiResNoiseScaling * .1f + hiResNoiseTranslate;
     const vec4 hiResNoise = texture(volumeHighRes, hiResPosition);
     float hiResDensity = dot( hiResNoise, normalizeL1(hiResChannelWeights) );
     if (invertDensity)
         hiResDensity = 1.f - hiResDensity;
 
-    // reduce density at the bottom of the cloud to create crisp shape
-    float falloff = yFalloff(position);
+    // Reduce density at the bottom of the cloud to create crisp shape
+    float falloff = yFalloff(position) * xzFalloff(position);
     hiResDensity *= falloff;
 
+    // Control the cover of clouds by offsetting density
     float hiResDensityWithOffset = hiResDensity + hiResDensityOffset;
 
-    // return early if there is no cloud
+    // Skip adding details if there is no cloud to begin with
     if (hiResDensityWithOffset <= 0.f)
         return 0.f;
 
-    // add in low-res details
-    const vec3 loResPosition = position * hiResNoiseScaling * .1f + loResNoiseTranslate;
+    // Sample low-res detail textures
+    const vec3 loResPosition = position * loResNoiseScaling * .1f + loResNoiseTranslate;
     const vec4 loResNoise = texture(volumeLowRes, loResPosition);
     float loResDensity = dot( loResNoise, normalizeL1(loResChannelWeights) );
     loResDensity = 1.f - loResDensity;  // invert the low-res density by default
 
-    // detail erosion: subtract low-res detail from hi-res noise, weighted such that
+    // Detail erosion: subtract low-res detail from hi-res noise, weighted as such that
     // the erosion is more pronounced near the boudary of the cloud (low hiResDensity)
-    const float erosionWeight = getErosionWeightCubic(hiResDensity);
+//    const float erosionWeight = getErosionWeightCubic(hiResDensity);
+    const float erosionWeight = getErosionWeightQuntic(hiResDensity);
+
     const float density = hiResDensityWithOffset - erosionWeight*loResDensityWeight * loResDensity;
     return max(density * densityMult*10.f, 0.f);
 }
@@ -202,8 +224,8 @@ float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
     tau *= (cloudLightAbsorptionMult * dt);  // delay multiplication to save compute and avoid precision issues
     float lightTransmittance = exp(tau);
 
-    return lightTransmittance;
-//    return minLightTransmittance + lightTransmittance * (1.f - minLightTransmittance);
+//    return lightTransmittance;
+    return minLightTransmittance + lightTransmittance * (1.f - minLightTransmittance);
 //    return 1.f;
 }
 
@@ -259,14 +281,19 @@ vec3 getSunColor(float longitudeRadians) {
 
 
 void main() {
+    // Solid geometry
+    const float zSolid = linearizeDepth( texture(solidDepth, uv).r );
+    const float tHitSolid = depth2RayLength(zSolid);
+    const vec4 colorSolid = texture(solidColor, uv);
+
     const vec3 rayDirWorld = normalize(rayDirWorldspace);
     vec2 tHit = intersectBox(rayOrigWorld, rayDirWorld);
-//    tHit.x = max(0.f, tHit.x);
-    tHit.x = max(0.f, tHit.x) + EPSILON_INTERSECT;  // keep the near intersection in front of the camera
+    tHit.x = max(tHit.x, 0.f);  // keep the near intersection in front of the camera
+    tHit.y = min(tHit.y, tHitSolid);  // keep far intersection in front of solid geometry
 
     const float sunLatitudeRadians = radians(testLight.latitude);
     const float sunLongitudeRadians = radians(testLight.longitude);
-    const vec3 dirLight = normalize(shpere2Cartesian(vec3(1, sunLatitudeRadians, sunLongitudeRadians)));  // towards the light
+    const vec3 dirLight = dirSph2Cart(sunLatitudeRadians, sunLongitudeRadians);  // towards the light
 //    const vec3 dirLight = normalize(testLight.dir);  // towards the light
     const float cosRayLightAngle = dot(rayDirWorld, dirLight);
     const float phaseVal = phase(cosRayLightAngle);  // directional light only for now
@@ -294,51 +321,77 @@ void main() {
     vec3 planetCenter = vec3(0.0, -planetRadius, 0.0);
 
 
-    if (tHit.x < tHit.y) {  // hit box
-        // starting from the near intersection, march the ray forward and sample
-        float dstTravelled = 0;
-        float totalDst = (tHit.y - tHit.x);
-        float curFineStepSize = min(STEPSIZE_FINE, totalDst/SMALL_DST_SAMPLE_NUM);
-        float curCoarseStepSize = curFineStepSize*COARSE_MULTIPLE;
-        int curThreshold = ADAP_THRESHOLD;
+    // Ray hit the box, let's do volume rendering!
+    if (tHit.x < tHit.y) {
+//        // Mode A. fixed number of steps
 //        const float dt = (tHit.y - tHit.x) / numSteps;
-        float dt = curFineStepSize;
-        const vec3 ds = rayDirWorld * dt;
+//        const vec3 ds = rayDirWorld * dt;
 
+        // Mode B. adaptive step size
+        const float distTotal = (tHit.y - tHit.x);
+        const float stepSizeFine = min(STEPSIZE_FINE, distTotal / MIN_NUM_FINE_STEPS);
+        const float stepSizeCoarse = min(stepSizeFine * COARSE_STEPSIZE_MULTIPLIER, distTotal);
+        const float distBackTrack = .5f * stepSizeCoarse;
+
+        // Initialize all the variables
+        int fineStepsLeft = MAX_NUM_MISSED_STEPS;
+        float distTravelled = 0;
+        float dt = stepSizeCoarse;  // start with coarse steps
+        bool stepIsFine = false;
         vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
 
-        while (dstTravelled < totalDst){
-            float density = sampleDensity(pointWorld);
+        // Optionally apply random offset on ray start to minimize color banding
+        const int seed = int(gl_FragCoord.y + 3000 * gl_FragCoord.x);
+        const float eps = wangHash(seed);
+        const float offset = eps * stepSizeCoarse;  // max offset is one coarse step
+        pointWorld += offset * rayDirWorld;
+        distTravelled += offset;
 
-            dstTravelled += dt;
+        // Raymarching starts
+        while (distTravelled < distTotal) {
 
+            distTravelled += dt;
+            pointWorld += rayDirWorld * dt;
+
+            const float density = sampleDensity(pointWorld);
+
+            // Hit the cloud
             if (density > 0.f) {
-                float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
-                lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
-                transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
-                if (transmittance < EARLY_STOP_THRESHOLD)
-                    break;
-
-                // adjust next step
-                curThreshold = density < SMALL_DENSITY ? curThreshold - 1: ADAP_THRESHOLD;
-                // change to big step
-                if (curThreshold <= 0) {
-                    dt = curCoarseStepSize;
-                // check change to small step
+                if (!stepIsFine) {
+                    // Backtrack half a coarse step and switch to
+                    // fine mode if the previous step was coarse
+                    distTravelled -= distBackTrack;
+                    pointWorld -= rayDirWorld * distBackTrack;
+                    dt = stepSizeFine;
+                    stepIsFine = true;
                 } else {
-                    // if prev is big step, traceback and change to small step
-                    if (dt == curCoarseStepSize) {
-                        dt = curFineStepSize;
-                    }
+                    // Regular volume rendering pass
+                    // Cast secondary ray to sun, accumulate energy and transmittance
+                    const float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
+                    lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
+                    transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
+
+                    // Early stopping
+                    if (transmittance < EARLY_STOP_THRESHOLD) break;
                 }
+
+                // Reset fine steps countdown since we hit the clodu
+                fineStepsLeft = MAX_NUM_MISSED_STEPS;
+
+            } else if (--fineStepsLeft <= 0) {
+                // Missed cloud, decrement fine steps countdown by one
+                // If we've missed the clouds for too many steps, switch to coarse mode
+                dt = stepSizeCoarse;
+                stepIsFine = false;
             }
-            pointWorld += dt*rayDirWorld;
-        }
+
+        }  // Raymarching ends
 
         cloudColor = lightEnergy * sunColor;
 //        cloudColor = lightEnergy * testLight.color;
 //        cloudColor = lightEnergy * vec3(1,1,1);
     }
+
 
     //----------------------------skycolor related-------------------------------
     // Compute color of the sky (background)
@@ -373,18 +426,21 @@ void main() {
         const float MAX_SUN_INTENSITY = 4.f;
         sunIntensity = henyeyGreenstein(cosRayLightAngle, .9995) * transmittance;
         sunIntensity = min(sunIntensity, MAX_SUN_INTENSITY);
-//        sunIntensity = min(sunIntensity, MAX_SUN_INTENSITY) * transmittance;
     }
 
-    vec3 cloudSky = min(cloudColor + transmittance*backgroundColor, 1.f);
+    if (texture(solidDepth, uv).r < 1) {  // solid
+        backgroundColor = colorSolid.rgb;
+        sunIntensity = 0;
+    }
 
-    // blend in sun color
-    cloudSky = cloudSky*max(1 - sunIntensity, 0.f) + sunColor*sunIntensity;
+    vec3 cloudOnBackground = min(cloudColor + transmittance*backgroundColor, 1.f);
+    
+    // blend sun color in cloud+bg
+    vec3 compositeColor = cloudOnBackground * max(1-sunIntensity, 0.f) + sunColor * sunIntensity;
 
     if (gammaCorrect)
-        cloudSky = gammaCorrection(cloudSky);
-    glFragColor = vec4(cloudSky, 1.f);
-
+        compositeColor = gammaCorrection(compositeColor);
+    glFragColor = vec4(compositeColor, 1.f);
 
     // DEBUG
     //    glFragColor = vec4(testLight.color, 1.f);
@@ -415,4 +471,5 @@ void main() {
 //    glFragColor.a = 1.f;
 
 }
+
 

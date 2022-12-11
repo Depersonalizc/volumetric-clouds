@@ -46,7 +46,7 @@ struct Settings {
     // Volume
     glm::vec3 volumeScaling = glm::vec3(1.f);
     glm::vec3 volumeTranslate = glm::vec3(0.f);
-    int numSteps = 100; // SMALL_DST_SAMPLE_NUM
+    int numSteps = 64; // SMALL_DST_SAMPLE_NUM
     float stepSize = 0.1f;    // world-space step size of rays, not used now
     bool gammaCorrect = false;
 
@@ -57,7 +57,7 @@ struct Settings {
     bool invertDensity = true;
 
     NoiseParams hiResNoise = {
-        .resolution = 128,
+        .resolution = 200,
         .worleyPointsParams = {
             WorleyPointsParams{6, 4, 2},    // R
             WorleyPointsParams{12, 8, 6},   // G
@@ -68,22 +68,22 @@ struct Settings {
         .translate = glm::vec3(0.3f),
         .channelWeights = glm::vec4(1.f, 1.f, 1.f, 1.f),
         .persistence = 0.6f,
-        .densityOffset = -0.4f,
+        .densityOffset = -0.5f,
     };
 
     NoiseParams loResNoise = {
-        .resolution = 32,
+        .resolution = 64,
         .worleyPointsParams = {
             WorleyPointsParams{6, 4, 2},    // R
             WorleyPointsParams{12, 8, 6},   // G
             WorleyPointsParams{24, 12, 8},  // B
             WorleyPointsParams{32, 24, 12}, // A
         },
-        .scaling = 10.f,
+        .scaling = 20.f,
         .translate = glm::vec3(.3f),
         .channelWeights = glm::vec4(1.f, 1.f, 1.f, 1.f),
         .persistence = 0.8f,
-        .densityWeight = 2.f,
+        .densityWeight = 8.0f,
     };
 
     bool newFineArray = false;    // flag to tell if fine Worley array needs update

@@ -4,10 +4,10 @@ layout (location = 0) in vec3 position;  // screen quad
 layout (location = 1) in vec2 attribUV;
 
 out vec3 rayDirWorldspace;  // direction of vertex on focal plane f=1 in world space
+out vec2 uv;
 
-uniform mat4 projView;
+//uniform mat4 projView;
 
-// added
 uniform float xMax, yMax;  // rayDirWorldspace lies within [-xMax, xMax] x [-yMax, yMax] x {1.0}
 uniform mat4 viewInverse;
 
@@ -23,6 +23,7 @@ void main() {
     // DEBUG
 //    rayDirWorldspace = vec3(position);
 
+    uv = attribUV;
     gl_Position = vec4(position, 1.f);  // quad position
 
 

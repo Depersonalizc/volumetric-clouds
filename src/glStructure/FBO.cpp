@@ -31,9 +31,9 @@ GLuint FBO::getFbo() {
     return m_fbo;
 }
 
-GLuint FBO::getDefaultFbo() {
-    return m_defaultFBO;
-}
+//GLuint FBO::getDefaultFbo() {
+//    return m_defaultFBO;
+//}
 
 GLuint FBO::getFboDepthTexture() {
     return m_fbo_depth_texture;
