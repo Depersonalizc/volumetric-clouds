@@ -6,6 +6,7 @@
 #include <QCoreApplication>
 #include <QMouseEvent>
 #include <QKeyEvent>
+#include <QImage>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -42,6 +43,32 @@ void Realtime::setUpScreenQuad() {
                           reinterpret_cast<void*>(3 * sizeof(GLfloat)));
 }
 
+void Realtime::setUpTextures() {
+
+    // Sun color
+    // Read sun color texture
+    QImage sunTextureImage("./resources/textures/sun_v1.png");
+    sunTextureImage.convertTo(QImage::Format_RGB888);
+    auto texWidth = sunTextureImage.width();
+    std::cout << "texwidth:" << texWidth << "\n";
+
+//    std::vector<GLubyte> dummy(3*1280, 128);
+//    std::cout << "dummysize: " << dummy.size() << "\n";
+//    std::cout << "firstelem: " << dummy[0] << "\n";
+
+    // Generate sun color 1D texture
+    glGenTextures(1, &sunTexture);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_1D, sunTexture);
+    glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage1D	(GL_TEXTURE_1D, 0, GL_RGB32F, texWidth, 0, GL_RGB, GL_UNSIGNED_BYTE, sunTextureImage.bits());
+//    glTexImage1D	(GL_TEXTURE_1D, 0, GL_RGB32F, 1280, 0, GL_RGB, GL_UNSIGNED_BYTE, dummy.data());
+    glBindTexture(GL_TEXTURE_1D, 0);
+}
+
 void Realtime::setUpVolume() {
     // SSBO for Worley points of three frequencies, with enough memory prealloced
     glGenBuffers(1, &ssboWorley);
@@ -73,13 +100,15 @@ void Realtime::setUpVolume() {
     glTexParameteri(GL_TEXTURE_3D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexImage3D(GL_TEXTURE_3D, 0, GL_RGBA32F, dimLoRes, dimLoRes, dimLoRes, 0, GL_RGBA, GL_FLOAT, nullptr);
 
-
-
 }
 
 void Realtime::drawVolume() {
     glDisable(GL_DEPTH_TEST);  // disable depth test to draw full screen quad
     glUseProgram(m_volumeShader);
+
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_1D, sunTexture);
+
     glBindVertexArray(vaoScreenQuad);
     glDrawArrays(GL_TRIANGLES, 0, screenQuadData.size() / 5);
     glUnbindVAO();
@@ -159,6 +188,9 @@ void Realtime::initializeGL() {
     /* Set up VBO, VAO, and SSBO */
     setUpScreenQuad();
     setUpVolume();
+
+    /* Read and set up textures */
+    setUpTextures();
 
     /* Set up default camera */
     m_camera = Camera(SceneCameraData(), size().width(), size().height(), settings.nearPlane, settings.farPlane);
@@ -257,6 +289,8 @@ void Realtime::initializeGL() {
         glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.dir"), 1, glm::value_ptr(settings.lightData.dir));
         glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.color"), 1, glm::value_ptr(settings.lightData.color));
         glUniform4fv(glGetUniformLocation(m_volumeShader , "testLight.pos"), 1, glm::value_ptr(settings.lightData.pos));
+
+        glUniform1i(glGetUniformLocation(m_volumeShader, "sunGradient"), 4);
     }
     glUseProgram(0);
 

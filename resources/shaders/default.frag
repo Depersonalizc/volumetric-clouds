@@ -4,6 +4,7 @@
 #define EARLY_STOP_LOG_THRESHOLD -4.6f
 #define EPSILON_INTERSECT 1e-3f
 #define FOUR_PI 4*3.1415926535898
+#define HALF_PI 1.57079632679
 #define XZ_FALLOFF_DIST 1.f
 #define Y_FALLOFF_DIST 1.f
 #define MAX_RANDOM_OFFSET 1e-2f
@@ -13,11 +14,13 @@
 #define COARSE_MULTIPLE 5.f
 #define SMALL_DENSITY 0.005f
 #define ADAP_THRESHOLD 5
-#define STEPSIZE_FINE 0.05f
+#define STEPSIZE_FINE 0.01f
 
 // density volumes computed by the compute shader
 layout(binding = 0) uniform sampler3D volumeHighRes;
 layout(binding = 1) uniform sampler3D volumeLowRes;
+
+layout(binding = 4) uniform sampler1D sunGradient;
 
 //in vec3 positionWorld;
 in vec3 rayDirWorldspace;
@@ -48,7 +51,6 @@ uniform float loResNoiseScaling;
 uniform vec3 loResNoiseTranslate;  // noise transforms
 uniform vec4 loResChannelWeights;  // how to aggregate RGBA channels
 uniform float loResDensityWeight;  // relative weight of lo-res noise about hi-res
-
 
 
 // light uniforms, not used rn
@@ -249,18 +251,26 @@ float opticalDepth(vec3 rayOrig, vec3 rayDir, float rayLength, vec3 planetCenter
     return opticalDepth;
 }
 
+// query sun color texture based on height of the sun
+vec3 getSunColor(float longitudeRadians) {
+    float timeOfDay = abs(longitudeRadians) / HALF_PI;  // 0: noon, 1: dusk/dawn
+    return texture(sunGradient, timeOfDay).rgb;
+}
+
 
 void main() {
-
-//    const vec3 rayDirWorld = normalize(positionWorld - rayOrigWorld);
     const vec3 rayDirWorld = normalize(rayDirWorldspace);
     vec2 tHit = intersectBox(rayOrigWorld, rayDirWorld);
 //    tHit.x = max(0.f, tHit.x);
     tHit.x = max(0.f, tHit.x) + EPSILON_INTERSECT;  // keep the near intersection in front of the camera
-    const vec3 dirLight = normalize(shpere2Cartesian(vec3(1, radians(testLight.latitude), radians(testLight.longitude))));  // towards the light
+
+    const float sunLatitudeRadians = radians(testLight.latitude);
+    const float sunLongitudeRadians = radians(testLight.longitude);
+    const vec3 dirLight = normalize(shpere2Cartesian(vec3(1, sunLatitudeRadians, sunLongitudeRadians)));  // towards the light
 //    const vec3 dirLight = normalize(testLight.dir);  // towards the light
     const float cosRayLightAngle = dot(rayDirWorld, dirLight);
     const float phaseVal = phase(cosRayLightAngle);  // directional light only for now
+    const vec3 sunColor = getSunColor(sunLongitudeRadians);
 
     vec3 cloudColor = vec3(0.f);
     float transmittance = 1.f;
@@ -325,11 +335,13 @@ void main() {
             pointWorld += dt*rayDirWorld;
         }
 
+        cloudColor = lightEnergy * sunColor;
 //        cloudColor = lightEnergy * testLight.color;
-        cloudColor = lightEnergy * vec3(1,1,1);
+//        cloudColor = lightEnergy * vec3(1,1,1);
     }
 
     //----------------------------skycolor related-------------------------------
+    // Compute color of the sky (background)
     vec3 pointWorld = rayOrigWorld;
     float rayLength = raySphere(planetCenter, atmosRadius, pointWorld, normalize(rayDirWorld)) -0.0002;
     float stepSize = rayLength / (numInScatteringPoints - 1);
@@ -346,67 +358,36 @@ void main() {
         pointWorld += rayDirWorld * stepSize;
     }
 
+    vec3 backgroundColor;
+    float sunIntensity;
 
-    vec3 backgroundColor = vec3(.0f, .0f, .0f);
+    if (raySphere(planetCenter, planetRadius, rayOrigWorld, rayDirWorld) > 0.0) {
+        backgroundColor = vec3(0.f);
+        sunIntensity = 0;
+    } else {
 
-    if (raySphere(planetCenter, planetRadius, rayOrigWorld, rayDirWorld) <= 0.0) {
         vec3 originalColor = vec3(0.0, 0.0, 0.0);
         float originalColTrans = exp(- viewRayOpticalDepth);
         backgroundColor = originalColor * originalColTrans + inScatteredLight;
-//        backgroundColor += inScatteredLight;
+
+        const float MAX_SUN_INTENSITY = 4.f;
+        sunIntensity = henyeyGreenstein(cosRayLightAngle, .9995) * transmittance;
+        sunIntensity = min(sunIntensity, MAX_SUN_INTENSITY);
+//        sunIntensity = min(sunIntensity, MAX_SUN_INTENSITY) * transmittance;
     }
 
-    // composite sky background into the scene
-    // TODO: use texture to get sky color
-//    vec3 backgroundColor = vec3(.0f, .5f, .64f);
-
-
-
-    // composite sun into the scene
-    const float MAX_SUN_INTENSITY = 10.f;
-    float sunIntensity = henyeyGreenstein(cosRayLightAngle, .9999);
-    sunIntensity = min(sunIntensity, MAX_SUN_INTENSITY) * transmittance;
-
-    vec3 newSunColor = inScatteredLight*7;
-    float tanTheta = dirLight.y / sqrt(dirLight.x*dirLight.x + dirLight.z*dirLight.z);
-    float lowAngle = 0.05;
-    float highAngle = 0.2; // When interpolation starts: adds colored halo to the sun
-    float x = (tanTheta - lowAngle) / (highAngle - lowAngle);
-    float alpha = 3*x*x - 2*pow(x, 3.0);
-    vec3 blendColor = (1 - alpha) * newSunColor + alpha * testLight.color;
-
-    if (tHit.x < tHit.y) {  // hit box
-        float energy = cloudColor[0];
-
-        if (tanTheta > highAngle) {
-            cloudColor = energy * testLight.color;
-        }else if (tanTheta < lowAngle) {
-            cloudColor = energy * newSunColor;
-        }else {
-            cloudColor = energy * blendColor;
-        }
-
-    }
     vec3 cloudSky = min(cloudColor + transmittance*backgroundColor, 1.f);
 
-    if (tanTheta > highAngle) {
-        cloudSky = cloudSky*(1 - sunIntensity) + testLight.color*sunIntensity;
-    }else if (tanTheta < lowAngle) {
-        cloudSky = cloudSky*(1 - sunIntensity) + newSunColor*sunIntensity;
-    }else {
-        cloudSky = cloudSky*(1 - sunIntensity) + blendColor*sunIntensity;
-    }
-
-
+    // blend in sun color
+    cloudSky = cloudSky*max(1 - sunIntensity, 0.f) + sunColor*sunIntensity;
 
     if (gammaCorrect)
         cloudSky = gammaCorrection(cloudSky);
     glFragColor = vec4(cloudSky, 1.f);
-//    glFragColor = vec4(testLight.color, 1.f);
-
 
 
     // DEBUG
+    //    glFragColor = vec4(testLight.color, 1.f);
 //    float sigma = sampleDensity(positionWorld);
 //    vec3 position = positionWorld * hiResNoiseScaling * .1f + hiResNoiseTranslate * .1f;
     // show noise channels as BW images
