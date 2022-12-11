@@ -6,6 +6,7 @@
 #include <QCoreApplication>
 #include <QMouseEvent>
 #include <QKeyEvent>
+#include <QImage>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -40,6 +41,32 @@ void Realtime::setUpScreenQuad() {
     glEnableVertexAttribArray(1);  // uv
     glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
                           reinterpret_cast<void*>(3 * sizeof(GLfloat)));
+}
+
+void Realtime::setUpTextures() {
+
+    // Sun color
+    // Read sun color texture
+    QImage sunTextureImage("./resources/textures/sun_v1.png");
+    sunTextureImage.convertTo(QImage::Format_RGB888);
+    auto texWidth = sunTextureImage.width();
+    std::cout << "texwidth:" << texWidth << "\n";
+
+//    std::vector<GLubyte> dummy(3*1280, 128);
+//    std::cout << "dummysize: " << dummy.size() << "\n";
+//    std::cout << "firstelem: " << dummy[0] << "\n";
+
+    // Generate sun color 1D texture
+    glGenTextures(1, &sunTexture);
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_1D, sunTexture);
+    glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexImage1D	(GL_TEXTURE_1D, 0, GL_RGB32F, texWidth, 0, GL_RGB, GL_UNSIGNED_BYTE, sunTextureImage.bits());
+//    glTexImage1D	(GL_TEXTURE_1D, 0, GL_RGB32F, 1280, 0, GL_RGB, GL_UNSIGNED_BYTE, dummy.data());
+    glBindTexture(GL_TEXTURE_1D, 0);
 }
 
 void Realtime::setUpVolume() {
@@ -83,6 +110,8 @@ void Realtime::drawVolume() {
     glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboDepthTexture());
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, m_FBO.get()->getFboColorTexture());
+    glActiveTexture(GL_TEXTURE4);
+    glBindTexture(GL_TEXTURE_1D, sunTexture);
 
     // Draw screen quad
     glBindVertexArray(vaoScreenQuad);
@@ -167,6 +196,9 @@ void Realtime::initializeGL() {
     /* Set up VBO, VAO, and SSBO */
     setUpScreenQuad();
     setUpVolume();
+
+    /* Read and set up textures */
+    setUpTextures();
 
     /* Set up default camera */
     m_camera = Camera(SceneCameraData(), size().width(), size().height(), settings.nearPlane, settings.farPlane);
@@ -259,13 +291,17 @@ void Realtime::initializeGL() {
         // Lighting
 //        glUniform1i(glGetUniformLocation(m_volumeShader, "numLights"), 0);
         glUniform4fv(glGetUniformLocation(m_volumeShader, "phaseParams"), 1, glm::value_ptr(glm::vec4(0.83f, 0.3f, 0.8f, 0.15f))); // TODO: make it adjustable hyperparameters
-
-
+        glUniform1f(glGetUniformLocation(m_volumeShader , "testLight.longitude"), settings.lightData.longitude);
+        glUniform1f(glGetUniformLocation(m_volumeShader , "testLight.latitude"), settings.lightData.latitude);
+        glUniform1i(glGetUniformLocation(m_volumeShader , "testLight.type"), settings.lightData.type);
+        glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.dir"), 1, glm::value_ptr(settings.lightData.dir));
+        glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.color"), 1, glm::value_ptr(settings.lightData.color));
+        glUniform4fv(glGetUniformLocation(m_volumeShader , "testLight.pos"), 1, glm::value_ptr(settings.lightData.pos));
+        glUniform1i(glGetUniformLocation(m_volumeShader, "sunGradient"), 4);
         glUniform1i(glGetUniformLocation(m_volumeShader, "solidDepth"), 2);
         glUniform1i(glGetUniformLocation(m_volumeShader, "solidColor"), 3);
         glUniform1f(glGetUniformLocation(m_volumeShader, "near"), settings.nearPlane);
         glUniform1f(glGetUniformLocation(m_volumeShader, "far"), settings.farPlane);
-
     }
     glUseProgram(0);
 
@@ -327,16 +363,13 @@ void Realtime::setUpTerrain() {
 }
 
 void Realtime::paintGL() {
-
     // Render terrain color and depth to FBO textures
     glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-//    glViewport(0,0,m_fbo_width, m_fbo_height);
     drawTerrain();
 
     // Draw on main screen
     glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
-//    paintTerrainTexture();
     drawVolume();
 
     // Clear things up

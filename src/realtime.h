@@ -89,6 +89,7 @@ private:
     static void glUnbind() { glUnbindVBO(); glUnbindVAO(); glUnbindSSBO(); }
 
     void updateWorleyPoints(const WorleyPointsParams &worleyPointsParams);
+    void setUpTextures();
     void setUpVolume();
     void drawVolume();
     void setUpTerrain();
@@ -101,6 +102,8 @@ private:
     GLuint ssboWorley;
     GLuint volumeTexHighRes, volumeTexLowRes;
     GLuint m_volumeShader, m_worleyShader, m_terrainShader, m_terrainTextureShader;       // Stores id for shader programs
+
+    GLuint sunTexture;
 
     Camera m_camera;
     bool glInitialized = false;

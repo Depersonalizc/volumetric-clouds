@@ -2,6 +2,7 @@
 
 #define EARLY_STOP_THRESHOLD 1e-2f
 #define EARLY_STOP_LOG_THRESHOLD -4.6f
+#define HALF_PI 1.57079632679
 #define FOUR_PI 12.5663706144
 #define XZ_FALLOFF_DIST 1.f
 #define Y_FALLOFF_DIST 1.f
@@ -17,6 +18,8 @@ layout(binding = 0) uniform sampler3D volumeHighRes;
 layout(binding = 1) uniform sampler3D volumeLowRes;
 layout(binding = 2) uniform sampler2D solidDepth;
 layout(binding = 3) uniform sampler2D solidColor;
+
+layout(binding = 4) uniform sampler1D sunGradient;
 
 //in vec3 positionWorld;
 in vec2 uv;
@@ -52,7 +55,6 @@ uniform float loResDensityWeight;  // relative weight of lo-res noise about hi-r
 // Camera
 uniform float xMax, yMax;  // rayDirWorldspace lies within [-xMax, xMax] x [-yMax, yMax] x {1.0}
 uniform float near, far;   // terrain camera
-
 
 // light uniforms, not used rn
 struct LightData {
@@ -227,8 +229,58 @@ float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
 //    return 1.f;
 }
 
-void main() {
+//------------Skycolor-------------------------------------------------------------------
+// Simulates an atmosphere
+// return the distance traveled inside the atmosphere
+float raySphere(vec3 sphereCenter, float sphereRadius, vec3 rayOrigin, vec3 rayDir) {
+    vec3 offset = rayOrigin - sphereCenter;
+    float a = 1;
+    float b = 2 * dot(offset, rayDir);
+    float c = dot(offset, offset) - sphereRadius * sphereRadius;
+    float d = b*b - 4*a*c;
 
+    if (d >= 0) {
+        float s = sqrt(d);
+        float dstNear = max(0, (-b-s)/(2*a));
+        float dstFar = (-b+s)/(2*a);
+        if (dstFar >= 0) {
+            return dstFar - dstNear;
+        }
+    }
+    return 0.0;
+}
+
+// Used for sky scattering, simulates the particle density in the atmosphere
+float densityAtPoint(vec3 pointPosWorld, vec3 planetCenter, float planetRadius, float atmosRadius) {
+    float densityFalloff = 4.0;
+    float height = length(pointPosWorld - planetCenter) - planetRadius;
+    float height01 = height / (atmosRadius - planetRadius);
+    float density = exp(- height01 * densityFalloff) * (1 - height01);
+    return density;
+}
+
+// optical depth: average density along the ray, determined by the raylength (from point to the sun, within the atmosphere)
+float opticalDepth(vec3 rayOrig, vec3 rayDir, float rayLength, vec3 planetCenter, float planetRadius, float atmosRadius) {
+    int numOpticalPoints = 10;
+    vec3 densitySamplePoint = rayOrig;
+    float stepSize = rayLength / (numOpticalPoints - 1);
+    float opticalDepth = 0;
+    for (int i = 0; i < numOpticalPoints; i++) {
+        float localDensity = densityAtPoint(densitySamplePoint, planetCenter, planetRadius, atmosRadius);
+        opticalDepth += localDensity * stepSize;
+        densitySamplePoint += rayDir * stepSize;
+    }
+    return opticalDepth;
+}
+
+// query sun color texture based on height of the sun
+vec3 getSunColor(float longitudeRadians) {
+    float timeOfDay = abs(longitudeRadians) / HALF_PI;  // 0: noon, 1: dusk/dawn
+    return texture(sunGradient, timeOfDay).rgb;
+}
+
+
+void main() {
     // Solid geometry
     const float zSolid = linearizeDepth( texture(solidDepth, uv).r );
     const float tHitSolid = depth2RayLength(zSolid);
@@ -239,13 +291,35 @@ void main() {
     tHit.x = max(tHit.x, 0.f);  // keep the near intersection in front of the camera
     tHit.y = min(tHit.y, tHitSolid);  // keep far intersection in front of solid geometry
 
-    const vec3 dirLight = dirSph2Cart(radians(testLight.latitude), radians(testLight.longitude));  // towards the light
+    const float sunLatitudeRadians = radians(testLight.latitude);
+    const float sunLongitudeRadians = radians(testLight.longitude);
+    const vec3 dirLight = dirSph2Cart(sunLatitudeRadians, sunLongitudeRadians);  // towards the light
+//    const vec3 dirLight = normalize(testLight.dir);  // towards the light
     const float cosRayLightAngle = dot(rayDirWorld, dirLight);
     const float phaseVal = phase(cosRayLightAngle);  // directional light only for now
+    const vec3 sunColor = getSunColor(sunLongitudeRadians);
 
     vec3 cloudColor = vec3(0.f);
     float transmittance = 1.f;
     float lightEnergy = 0.f;
+
+    //----------------------skycolor related-------------------
+    vec3 inScatteredLight = vec3(0.0, 0.0, 0.0);
+    float scatteringStrength = 1;
+    vec3 wavelengths = vec3(700, 530, 460);
+    float scatterR = pow(400 / wavelengths[0], 4) * scatteringStrength;
+    float scatterG = pow(400 / wavelengths[1], 4) * scatteringStrength;
+    float scatterB = pow(400 / wavelengths[2], 4) * scatteringStrength;
+    vec3 scatteringCoeff = vec3(scatterR, scatterG, scatterB);
+
+    float viewRayOpticalDepth = 0.0;
+    int numInScatteringPoints = 10;
+
+    // Create atmosphere
+    float atmosRadius = 103.0 ;
+    float planetRadius = 100.0;
+    vec3 planetCenter = vec3(0.0, -planetRadius, 0.0);
+
 
     // Ray hit the box, let's do volume rendering!
     if (tHit.x < tHit.y) {
@@ -313,34 +387,63 @@ void main() {
 
         }  // Raymarching ends
 
-        cloudColor = lightEnergy * testLight.color;
+        cloudColor = lightEnergy * sunColor;
+//        cloudColor = lightEnergy * testLight.color;
+//        cloudColor = lightEnergy * vec3(1,1,1);
     }
 
-    vec3 colorComposite;
+
+    //----------------------------skycolor related-------------------------------
+    // Compute color of the sky (background)
+    vec3 pointWorld = rayOrigWorld;
+    float rayLength = raySphere(planetCenter, atmosRadius, pointWorld, normalize(rayDirWorld)) -0.0002;
+    float stepSize = rayLength / (numInScatteringPoints - 1);
+
+    for (int i = 0; i < numInScatteringPoints; i++) {
+        float localDensity = densityAtPoint(pointWorld, planetCenter, planetRadius, atmosRadius);
+        float sunRayLength = raySphere(planetCenter, atmosRadius, pointWorld, dirLight);
+
+        float sunRayOpticalDepth = opticalDepth(pointWorld, dirLight, sunRayLength, planetCenter, planetRadius, atmosRadius);
+
+        viewRayOpticalDepth = opticalDepth(pointWorld, -rayDirWorld, stepSize * i, planetCenter, planetRadius, atmosRadius);
+        vec3 transSky = exp(- (sunRayOpticalDepth + viewRayOpticalDepth)* scatteringCoeff);
+        inScatteredLight += localDensity * transSky * scatteringCoeff * stepSize;
+        pointWorld += rayDirWorld * stepSize;
+    }
+
     vec3 backgroundColor;
-    if (texture(solidDepth, uv).r == 1) {
-        // composite sky background into the scene
-        // TODO: use texture to get sky color
-        backgroundColor = vec3(.0f, .5f, .64f);
+    float sunIntensity;
 
-        // composite sun into the scene
-        const float MAX_SUN_INTENSITY = 10.f;
-        float sunIntensity = henyeyGreenstein(cosRayLightAngle, .9999);
-        sunIntensity = min(sunIntensity, MAX_SUN_INTENSITY) * transmittance;
-
-        colorComposite = min(cloudColor + transmittance*backgroundColor, 1.f);
-        colorComposite = colorComposite*(1 - sunIntensity) + testLight.color*sunIntensity;
-
+    if (raySphere(planetCenter, planetRadius, rayOrigWorld, rayDirWorld) > 0.0) {
+        backgroundColor = vec3(0.f);
+        sunIntensity = 0;
     } else {
-        backgroundColor = colorSolid.rgb;
-        colorComposite = min(cloudColor + transmittance*backgroundColor, 1.f);
+
+        vec3 originalColor = vec3(0.0, 0.0, 0.0);
+        float originalColTrans = exp(- viewRayOpticalDepth);
+        backgroundColor = originalColor * originalColTrans + inScatteredLight;
+
+        const float MAX_SUN_INTENSITY = 4.f;
+        sunIntensity = henyeyGreenstein(cosRayLightAngle, .9995) * transmittance;
+        sunIntensity = min(sunIntensity, MAX_SUN_INTENSITY);
     }
+
+    if (texture(solidDepth, uv).r < 1) {  // solid
+        backgroundColor = colorSolid.rgb;
+        sunIntensity = 0;
+    }
+
+    vec3 cloudOnBackground = min(cloudColor + transmittance*backgroundColor, 1.f);
+    
+    // blend sun color in cloud+bg
+    vec3 compositeColor = cloudOnBackground * max(1-sunIntensity, 0.f) + sunColor * sunIntensity;
 
     if (gammaCorrect)
-        colorComposite = gammaCorrection(colorComposite);
-    glFragColor = vec4(colorComposite, 1.f);
+        compositeColor = gammaCorrection(compositeColor);
+    glFragColor = vec4(compositeColor, 1.f);
 
     // DEBUG
+    //    glFragColor = vec4(testLight.color, 1.f);
 //    float sigma = sampleDensity(positionWorld);
 //    vec3 position = positionWorld * hiResNoiseScaling * .1f + hiResNoiseTranslate * .1f;
     // show noise channels as BW images
