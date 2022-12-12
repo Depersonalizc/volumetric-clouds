@@ -39,7 +39,7 @@ uniform int numSteps;
 uniform bool invertDensity, gammaCorrect;
 uniform float densityMult;
 uniform float cloudLightAbsorptionMult;
-uniform float minLightTransmittance = 0.2f;
+uniform float minLightTransmittance;
 
 // Params for high resolution noise
 uniform vec4 hiResNoiseScaling;
@@ -225,9 +225,7 @@ float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
     tau *= (cloudLightAbsorptionMult * dt);  // delay multiplication to save compute and avoid precision issues
     float lightTransmittance = exp(tau);
 
-    return lightTransmittance;
-//    return minLightTransmittance + lightTransmittance * (1.f - minLightTransmittance);
-//    return 1.f;
+    return minLightTransmittance + lightTransmittance * (1.f - minLightTransmittance);
 }
 
 //------------Skycolor-------------------------------------------------------------------

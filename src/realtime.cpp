@@ -51,11 +51,6 @@ void Realtime::setUpTextures() {
     QImage sunTextureImage("./resources/textures/sun_v1.png");
     sunTextureImage.convertTo(QImage::Format_RGB888);
     auto texWidth = sunTextureImage.width();
-    std::cout << "texwidth:" << texWidth << "\n";
-
-//    std::vector<GLubyte> dummy(3*1280, 128);
-//    std::cout << "dummysize: " << dummy.size() << "\n";
-//    std::cout << "firstelem: " << dummy[0] << "\n";
 
     // Generate sun color 1D texture
     glGenTextures(1, &sunTexture);
@@ -66,9 +61,7 @@ void Realtime::setUpTextures() {
     glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage1D	(GL_TEXTURE_1D, 0, GL_RGB32F, texWidth, 0, GL_RGB, GL_UNSIGNED_BYTE, sunTextureImage.bits());
-//    glTexImage1D	(GL_TEXTURE_1D, 0, GL_RGB32F, 1280, 0, GL_RGB, GL_UNSIGNED_BYTE, dummy.data());
     glBindTexture(GL_TEXTURE_1D, 0);
-
 
     // Night sky texture set up
     QImage nightTextureImage("./resources/textures/stars2.png");
@@ -187,22 +180,6 @@ void Realtime::finish() {
 }
 
 void Realtime::initializeGL() {
-//    int noiseRes = 512;
-//    auto perlinGen = Perlin(noiseRes, 6);
-//    auto noiseMap = perlinGen.generatePerlinNoise2D();
-//    for (auto &v : noiseMap) {
-//        v = (v + 1.414) / 2.828;
-////        std::cout << v << "\n";
-//    }
-//    std::vector<uchar> noiseMapU8(noiseRes*noiseRes);
-//    for (int i = 0; i < noiseMapU8.size(); i++) {
-//        noiseMapU8[i] = std::min(std::max(noiseMap[i], 0.f), 1.f) * 255.f;
-////        std::cout << int(noiseMapU8[i]);
-//    }
-//    QImage img(noiseMapU8.data(), noiseRes, noiseRes, QImage::Format_Grayscale8);
-//    img.save("out.jpg");
-
-
     m_devicePixelRatio = this->devicePixelRatio();
     m_timer = startTimer(1000/60);
     m_elapsedTimer.start();
