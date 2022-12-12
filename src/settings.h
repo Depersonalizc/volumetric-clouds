@@ -13,7 +13,7 @@ struct WorleyPointsParams {
 struct NoiseParams {
     int resolution;                            // texture resolution
     WorleyPointsParams worleyPointsParams[4];  // overlaied frequencies for each of RGBA channel of noise texture
-    float scaling;
+    glm::vec4 scaling;
     glm::vec3 translate;
     glm::vec4 channelWeights;                  // weights to combine RGBA channels
     float persistence;                         // weight to combine fine/medium/coarse Worley noises
@@ -64,7 +64,7 @@ struct Settings {
             WorleyPointsParams{24, 12, 8},  // B
             WorleyPointsParams{32, 24, 12}, // A
         },
-        .scaling = 1.f,
+        .scaling = glm::vec4(1.f),
         .translate = glm::vec3(0.3f),
         .channelWeights = glm::vec4(1.f, 1.f, 1.f, 1.f),
         .persistence = 0.6f,
@@ -79,7 +79,7 @@ struct Settings {
             WorleyPointsParams{24, 12, 8},  // B
             WorleyPointsParams{32, 24, 12}, // A
         },
-        .scaling = 20.f,
+        .scaling = glm::vec4(20.f, 0, 0, 0),
         .translate = glm::vec3(.3f),
         .channelWeights = glm::vec4(1.f, 1.f, 1.f, 1.f),
         .persistence = 0.8f,

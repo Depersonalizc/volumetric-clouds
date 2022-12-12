@@ -79,25 +79,6 @@ void MainWindow::on_valScaling3_doubleSpinBox_valueChanged(double arg1)
 }
 
 
-void MainWindow::on_noiseScaling_horizontalSlider_sliderMoved(int position)
-{
-    ui->noiseScaling_horizontalSlider->setValue(position);
-    ui->noiseScaling_doubleSpinBox->setValue(position);
-    settings.hiResNoise.scaling = ui->noiseScaling_horizontalSlider->value();
-    realtime->settingsChanged();
-
-}
-
-
-void MainWindow::on_noiseScaling_doubleSpinBox_valueChanged(double arg1)
-{
-    ui->noiseScaling_doubleSpinBox->setValue(arg1);
-    ui->noiseScaling_horizontalSlider->setValue(arg1);
-    settings.hiResNoise.scaling = ui->noiseScaling_doubleSpinBox->value();
-    realtime->settingsChanged();
-}
-
-
 void MainWindow::on_invert_checkBox_stateChanged(int arg1)
 {
     settings.invertDensity = !settings.invertDensity;
@@ -547,6 +528,62 @@ void MainWindow::on_lightColor_B_doubleSpinBox_valueChanged(double arg1)
 {
     ui->lightColor_R_doubleSpinBox->setValue(arg1);
     settings.lightData.color[2] = arg1;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_densityWeight_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->densityWeight_doubleSpinBox->setValue(arg1);
+    settings.loResNoise.densityWeight = arg1;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_densityOffset_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->densityOffset_doubleSpinBox->setValue(arg1);
+    settings.hiResNoise.densityOffset = arg1;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_highResScaling_R_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->highResScaling_R_doubleSpinBox->setValue(arg1);
+    settings.hiResNoise.scaling[0] = arg1;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_highResScaling_G_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->highResScaling_G_doubleSpinBox->setValue(arg1);
+    settings.hiResNoise.scaling[1] = arg1;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_highResScaling_B_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->highResScaling_B_doubleSpinBox->setValue(arg1);
+    settings.hiResNoise.scaling[2] = arg1;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_highResScaling_A_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->highResScaling_A_doubleSpinBox->setValue(arg1);
+    settings.hiResNoise.scaling[3] = arg1;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_lowResScaling_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->lowResScaling_doubleSpinBox->setValue(arg1);
+    settings.loResNoise.scaling[0] = arg1;
     realtime->settingsChanged();
 }
 

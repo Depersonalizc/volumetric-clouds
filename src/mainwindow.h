@@ -144,10 +144,6 @@ private slots:
 
     void on_valScaling3_doubleSpinBox_valueChanged(double arg1);
 
-    void on_noiseScaling_horizontalSlider_sliderMoved(int position);
-
-    void on_noiseScaling_doubleSpinBox_valueChanged(double arg1);
-
     void on_invert_checkBox_stateChanged(int arg1);
 
     void on_gamma_checkBox_stateChanged(int arg1);
@@ -241,6 +237,20 @@ private slots:
     void on_lightColor_G_doubleSpinBox_valueChanged(double arg1);
 
     void on_lightColor_B_doubleSpinBox_valueChanged(double arg1);
+
+    void on_densityWeight_doubleSpinBox_valueChanged(double arg1);
+
+    void on_densityOffset_doubleSpinBox_valueChanged(double arg1);
+
+    void on_highResScaling_R_doubleSpinBox_valueChanged(double arg1);
+
+    void on_highResScaling_G_doubleSpinBox_valueChanged(double arg1);
+
+    void on_highResScaling_B_doubleSpinBox_valueChanged(double arg1);
+
+    void on_highResScaling_A_doubleSpinBox_valueChanged(double arg1);
+
+    void on_lowResScaling_doubleSpinBox_valueChanged(double arg1);
 
 private:
     Ui::MainWindow *ui;

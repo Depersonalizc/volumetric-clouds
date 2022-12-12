@@ -42,7 +42,7 @@ uniform float cloudLightAbsorptionMult;
 uniform float minLightTransmittance = 0.2f;
 
 // Params for high resolution noise
-uniform float hiResNoiseScaling;
+uniform vec4 hiResNoiseScaling;
 uniform vec3 hiResNoiseTranslate;  // noise transforms
 uniform vec4 hiResChannelWeights;  // how to aggregate RGBA channels
 uniform float hiResDensityOffset;  // controls overall cloud coverage
@@ -175,7 +175,7 @@ float xzFalloff(vec3 position) {
 
 float sampleDensity(vec3 position) {
     // Sample high-res shape textures
-    const vec3 hiResPosition = position * hiResNoiseScaling * .1f + hiResNoiseTranslate;
+    const vec3 hiResPosition = position * hiResNoiseScaling[0] * .1f + hiResNoiseTranslate; // TODO: hiResNoiseScaling change to 4 channel scaling
     const vec4 hiResNoise = texture(volumeHighRes, hiResPosition);
     float hiResDensity = dot( hiResNoise, normalizeL1(hiResChannelWeights) );
     if (invertDensity)
