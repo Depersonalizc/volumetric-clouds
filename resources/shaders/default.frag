@@ -317,8 +317,8 @@ void main() {
 
     //----------------------skycolor related-------------------
     vec3 inScatteredLight = vec3(0.0, 0.0, 0.0);
-    float scatteringStrength = 1;
-    vec3 wavelengths = vec3(700, 530, 460);
+    float scatteringStrength = 0.09;
+    vec3 wavelengths = vec3(700, 530, 440);
     float scatterR = pow(400 / wavelengths[0], 4) * scatteringStrength;
     float scatterG = pow(400 / wavelengths[1], 4) * scatteringStrength;
     float scatterB = pow(400 / wavelengths[2], 4) * scatteringStrength;
@@ -328,8 +328,8 @@ void main() {
     int numInScatteringPoints = 10;
 
     // Create atmosphere
-    float atmosRadius = 103.0 ;
-    float planetRadius = 100.0;
+    float atmosRadius = 1050.0 ;
+    float planetRadius = 1000.0;
     vec3 planetCenter = vec3(0.0, -planetRadius, 0.0);
 
 
@@ -452,15 +452,16 @@ void main() {
 
     //----------------------------skycolor related-------------------------------
     // Compute color of the sky (background)
+    float scaler = 70.0;
     vec3 pointWorld = rayOrigWorld;
-    float rayLength = raySphere(planetCenter, atmosRadius, pointWorld, normalize(rayDirWorld)) -0.0002;
+    float rayLength = raySphere(planetCenter, atmosRadius, pointWorld, normalize(rayDirWorld));
     float stepSize = rayLength / (numInScatteringPoints - 1);
 
     for (int i = 0; i < numInScatteringPoints; i++) {
         float localDensity = densityAtPoint(pointWorld, planetCenter, planetRadius, atmosRadius);
-        float sunRayLength = raySphere(planetCenter, atmosRadius, pointWorld, dirLight);
+        float sunRayLength = raySphere(planetCenter, atmosRadius, pointWorld, dirLight) ;
 
-        float sunRayOpticalDepth = opticalDepth(pointWorld, dirLight, sunRayLength, planetCenter, planetRadius, atmosRadius);
+        float sunRayOpticalDepth = opticalDepth(pointWorld, dirLight, sunRayLength, planetCenter, planetRadius, atmosRadius) ;
 
         viewRayOpticalDepth = opticalDepth(pointWorld, -rayDirWorld, stepSize * i, planetCenter, planetRadius, atmosRadius);
         vec3 transSky = exp(- (sunRayOpticalDepth + viewRayOpticalDepth)* scatteringCoeff);
