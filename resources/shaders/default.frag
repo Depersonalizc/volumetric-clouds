@@ -57,15 +57,15 @@ uniform float loResDensityWeight;  // relative weight of lo-res noise about hi-r
 uniform float xMax, yMax;  // rayDirWorldspace lies within [-xMax, xMax] x [-yMax, yMax] x {1.0}
 uniform float near, far;   // terrain camera
 
-// light uniforms, not used rn
+// light uniforms
 struct LightData {
     int type;
     vec4 pos;
-    vec3 dir;  // towards light source
+//    vec3 dir;  // towards light source
     vec3 color;
     float longitude;
     float latitude;
-} light;
+};
 
 uniform vec4 phaseParams;  // HG
 uniform LightData testLight;

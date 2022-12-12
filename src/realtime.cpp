@@ -140,6 +140,10 @@ void Realtime::drawVolume() {
 
 void Realtime::drawTerrain() {
     glUseProgram(m_terrainShader);
+
+    glActiveTexture(GL_TEXTURE0);
+    glBindTexture(GL_TEXTURE_1D, sunTexture);
+
     glBindVertexArray(m_terrain_vao);
     int res = m_terrain.getResolution();
     glDrawArrays(GL_TRIANGLES, 0, res*res*6 * m_terrainScaleX * m_terrainScaleY);
@@ -220,6 +224,10 @@ void Realtime::initializeGL() {
     /* Set up terrain shader and terrain data */
     glUseProgram(m_terrainShader);
     {
+        // VAO, VBO
+        setUpTerrain();
+
+        // Uniforms
 //        m_terrain_camera = glm::lookAt(glm::vec3(1,1,1),glm::vec3(0,0,0),glm::vec3(0,0,1));
 
         m_world = glm::mat4(1.f);
@@ -232,16 +240,23 @@ void Realtime::initializeGL() {
         glm::mat4 transInv = glm::transpose(glm::inverse(m_camera.getViewMatrix() * m_world));
         glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "transInvViewMatrix"), 1, GL_FALSE, glm::value_ptr(transInv));
 
-        setUpTerrain();
-        glUseProgram(m_terrainTextureShader);
-        GLint depth_texture_loc = glGetUniformLocation(m_terrainTextureShader, "depth_sampler");
-        glUniform1i(depth_texture_loc, 2);
-        GLint color_texture_loc = glGetUniformLocation(m_terrainTextureShader, "color_sampler");
-        glUniform1i(color_texture_loc, 3);
-
-        glUniform1f(glGetUniformLocation(m_terrainTextureShader, "near"), settings.nearPlane);
-        glUniform1f(glGetUniformLocation(m_terrainTextureShader, "far"), settings.farPlane);
+        glUniform1f(glGetUniformLocation(m_terrainShader , "testLight.longitude"), settings.lightData.longitude);
+        glUniform1f(glGetUniformLocation(m_terrainShader , "testLight.latitude"), settings.lightData.latitude);
+        glUniform1i(glGetUniformLocation(m_terrainShader , "testLight.type"), settings.lightData.type);
+        glUniform3fv(glGetUniformLocation(m_terrainShader , "testLight.dir"), 1, glm::value_ptr(settings.lightData.dir));
+        glUniform3fv(glGetUniformLocation(m_terrainShader , "testLight.color"), 1, glm::value_ptr(settings.lightData.color));
+        glUniform4fv(glGetUniformLocation(m_terrainShader , "testLight.pos"), 1, glm::value_ptr(settings.lightData.pos));
     }
+
+//    glUseProgram(m_terrainTextureShader);
+//    GLint depth_texture_loc = glGetUniformLocation(m_terrainTextureShader, "depth_sampler");
+//    glUniform1i(depth_texture_loc, 2);
+//    GLint color_texture_loc = glGetUniformLocation(m_terrainTextureShader, "color_sampler");
+//    glUniform1i(color_texture_loc, 3);
+
+//    glUniform1f(glGetUniformLocation(m_terrainTextureShader, "near"), settings.nearPlane);
+//    glUniform1f(glGetUniformLocation(m_terrainTextureShader, "far"), settings.farPlane);
+
     glUseProgram(0);
 
 
@@ -452,6 +467,16 @@ void Realtime::settingsChanged() {
 
     makeCurrent();
 
+    glUseProgram(m_terrainShader);
+    // Light
+    glUniform1f(glGetUniformLocation(m_terrainShader , "testLight.longitude"), settings.lightData.longitude);
+    glUniform1f(glGetUniformLocation(m_terrainShader , "testLight.latitude"), settings.lightData.latitude);
+    glUniform1i(glGetUniformLocation(m_terrainShader , "testLight.type"), settings.lightData.type);
+    glUniform3fv(glGetUniformLocation(m_terrainShader , "testLight.dir"), 1, glm::value_ptr(settings.lightData.dir));
+    glUniform3fv(glGetUniformLocation(m_terrainShader , "testLight.color"), 1, glm::value_ptr(settings.lightData.color));
+    glUniform4fv(glGetUniformLocation(m_terrainShader , "testLight.pos"), 1, glm::value_ptr(settings.lightData.pos));
+
+
     glUseProgram(m_volumeShader);
 
     // Volume
@@ -489,21 +514,8 @@ void Realtime::settingsChanged() {
     std::cout << glm::to_string(settings.lightData.dir) << glm::to_string(settings.lightData.color) << '\n';
 
     glUseProgram(m_worleyShader);
-    // TODO: recompute both hi and lo res textures if persistence changes
-    //       recompute either hi or lo if
-    //       - resolution, or
-    //       - cellsPerAxis____ of any channel changes
     auto newArray = settings.newFineArray || settings.newMediumArray || settings.newCoarseArray;
     if (newArray) {
-        if (settings.newFineArray) {
-            settings.newFineArray = false;
-        }
-        if (settings.newMediumArray) {
-            settings.newMediumArray = false;
-        }
-        if (settings.newCoarseArray) {
-            settings.newCoarseArray = false;
-        }
 
         int texSlot = settings.curSlot;
         int channelIdx = settings.curChannel;

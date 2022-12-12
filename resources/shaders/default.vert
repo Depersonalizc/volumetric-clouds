@@ -13,21 +13,14 @@ uniform mat4 viewInverse;
 
 
 void main() {
-
-//    positionWorld = position * volumeScaling + volumeTranslate;
-//    gl_Position = projView * vec4(positionWorld, 1.f);
-
     vec4 rayDirCameraspace = vec4(position.x * xMax, position.y * yMax, -1.f, 0.f);
     rayDirWorldspace = vec3(viewInverse * rayDirCameraspace);
-
-    // DEBUG
-//    rayDirWorldspace = vec3(position);
 
     uv = attribUV;
     gl_Position = vec4(position, 1.f);  // quad position
 
-
     // DEBUG
+//    rayDirWorldspace = vec3(position);
 //    gl_Position = vec4(0.f, 0.f, 0.f, 1.f);
 //    gl_Position = vec4(positionObj, 1.f);
 }

@@ -40,7 +40,7 @@
 
 #include <QApplication>
 
-#include "noise/perlin.h"
+//#include "noise/perlin.h"
 
 int main(int argc, char *argv[])
 {
