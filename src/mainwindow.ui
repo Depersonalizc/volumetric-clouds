@@ -59,10 +59,10 @@
           <string>Render Params</string>
          </property>
          <layout class="QGridLayout" name="gridLayout">
-          <item row="6" column="1" colspan="2">
-           <widget class="QDoubleSpinBox" name="valScaling2_doubleSpinBox">
-            <property name="value">
-             <double>1.000000000000000</double>
+          <item row="1" column="0" colspan="3">
+           <widget class="QCheckBox" name="stepNumber_checkBox">
+            <property name="text">
+             <string>step number</string>
             </property>
            </widget>
           </item>
@@ -73,10 +73,93 @@
             </property>
            </widget>
           </item>
-          <item row="7" column="0">
-           <widget class="QLabel" name="label_133">
+          <item row="8" column="0">
+           <widget class="QDoubleSpinBox" name="valScaling1_doubleSpinBox">
+            <property name="minimumSize">
+             <size>
+              <width>62</width>
+              <height>22</height>
+             </size>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1">
+           <widget class="QDoubleSpinBox" name="valScaling2_doubleSpinBox">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="3">
+           <widget class="QDoubleSpinBox" name="lightTrans_doubleSpinBox">
+            <property name="value">
+             <double>0.010000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="3">
+           <widget class="QDoubleSpinBox" name="densityMultiplier">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0" colspan="3">
+           <widget class="QLabel" name="label_130">
             <property name="text">
-             <string>noise scaling</string>
+             <string>light absorption multiplier</string>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="3">
+           <widget class="QDoubleSpinBox" name="lightAborspMulti_doubleSpinBox">
+            <property name="value">
+             <double>0.750000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_5">
+            <property name="text">
+             <string>volume trans</string>
+            </property>
+           </widget>
+          </item>
+          <item row="9" column="0">
+           <widget class="QCheckBox" name="invert_checkBox">
+            <property name="text">
+             <string>Invert</string>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0" colspan="3">
+           <widget class="QCheckBox" name="stepSize_checkBox">
+            <property name="text">
+             <string>step size</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="2">
+           <widget class="QDoubleSpinBox" name="valScaling3_doubleSpinBox">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_132">
+            <property name="text">
+             <string>volume scaling</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="2">
+           <widget class="QLabel" name="label_129">
+            <property name="text">
+             <string>density multiplier</string>
             </property>
            </widget>
           </item>
@@ -100,74 +183,6 @@
             </property>
            </widget>
           </item>
-          <item row="8" column="3">
-           <widget class="QDoubleSpinBox" name="noiseScaling_doubleSpinBox">
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="0" colspan="3">
-           <widget class="QCheckBox" name="stepNumber_checkBox">
-            <property name="text">
-             <string>step number</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="3">
-           <widget class="QDoubleSpinBox" name="lightAborspMulti_doubleSpinBox"/>
-          </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="label_132">
-            <property name="text">
-             <string>volume scaling</string>
-            </property>
-           </widget>
-          </item>
-          <item row="9" column="0">
-           <widget class="QCheckBox" name="invert_checkBox">
-            <property name="text">
-             <string>Invert</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="0">
-           <widget class="QDoubleSpinBox" name="valScaling1_doubleSpinBox">
-            <property name="minimumSize">
-             <size>
-              <width>62</width>
-              <height>22</height>
-             </size>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0" colspan="2">
-           <widget class="QLabel" name="label_129">
-            <property name="text">
-             <string>density multiplier</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="3">
-           <widget class="QDoubleSpinBox" name="lightTrans_doubleSpinBox"/>
-          </item>
-          <item row="6" column="3">
-           <widget class="QDoubleSpinBox" name="valScaling3_doubleSpinBox">
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <widget class="QDoubleSpinBox" name="densityMultiplier">
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
           <item row="2" column="3">
            <widget class="QSpinBox" name="stepSize_spinBox">
             <property name="minimum">
@@ -181,29 +196,14 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="0" colspan="3">
-           <widget class="QLabel" name="label_130">
-            <property name="text">
-             <string>light absorption multiplier</string>
-            </property>
-           </widget>
+          <item row="6" column="0">
+           <widget class="QDoubleSpinBox" name="volTrans_x_doubleSpinBox"/>
           </item>
-          <item row="2" column="0" colspan="3">
-           <widget class="QCheckBox" name="stepSize_checkBox">
-            <property name="text">
-             <string>step size</string>
-            </property>
-           </widget>
+          <item row="6" column="1">
+           <widget class="QDoubleSpinBox" name="volTrans_y_doubleSpinBox"/>
           </item>
-          <item row="8" column="0" colspan="3">
-           <widget class="QSlider" name="noiseScaling_horizontalSlider">
-            <property name="value">
-             <number>1</number>
-            </property>
-            <property name="orientation">
-             <enum>Qt::Horizontal</enum>
-            </property>
-           </widget>
+          <item row="6" column="2">
+           <widget class="QDoubleSpinBox" name="volTrans_z_doubleSpinBox"/>
           </item>
          </layout>
         </widget>
@@ -424,9 +424,9 @@
          <property name="geometry">
           <rect>
            <x>10</x>
-           <y>281</y>
+           <y>300</y>
            <width>441</width>
-           <height>231</height>
+           <height>271</height>
           </rect>
          </property>
          <property name="minimumSize">
@@ -445,95 +445,10 @@
           <string>Shape Texture Params</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_3">
-          <item row="6" column="1" colspan="2">
-           <widget class="QSpinBox" name="shapeTexture_coarseR_spinBox">
-            <property name="value">
-             <number>2</number>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="7" colspan="2">
-           <widget class="QDoubleSpinBox" name="shapeTextureTrans3_doubleSpinBox">
-            <property name="maximum">
-             <double>1.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.100000000000000</double>
-            </property>
-            <property name="value">
-             <double>0.300000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="0">
-           <widget class="QLabel" name="label_153">
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_151">
             <property name="text">
-             <string>weights</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="0">
-           <widget class="QLabel" name="label_152">
-            <property name="text">
-             <string>coarse#</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="3" colspan="2">
-           <widget class="QSpinBox" name="shapeTexture_coarseG_spinBox">
-            <property name="value">
-             <number>6</number>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="7" colspan="2">
-           <widget class="QSpinBox" name="shapeTexture_fineA_spinBox">
-            <property name="value">
-             <number>32</number>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="7" colspan="2">
-           <widget class="QSpinBox" name="shapeTexture_mediumA_spinBox">
-            <property name="value">
-             <number>24</number>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="5" colspan="2">
-           <widget class="QSpinBox" name="shapeTexture_fineB_spinBox">
-            <property name="value">
-             <number>24</number>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="7" colspan="2">
-           <widget class="QDoubleSpinBox" name="shapeTexture_weightA_doubleSpinBox">
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="1" colspan="2">
-           <widget class="QDoubleSpinBox" name="shapeTexture_weightR_doubleSpinBox">
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="3" colspan="2">
-           <widget class="QDoubleSpinBox" name="shapeTexture_weightG_doubleSpinBox">
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
+             <string>medium#</string>
             </property>
            </widget>
           </item>
@@ -544,13 +459,10 @@
             </property>
            </widget>
           </item>
-          <item row="7" column="5" colspan="2">
-           <widget class="QDoubleSpinBox" name="shapeTexture_weightB_doubleSpinBox">
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
+          <item row="3" column="1" colspan="2">
+           <widget class="QLabel" name="label_148">
+            <property name="text">
+             <string>R</string>
             </property>
            </widget>
           </item>
@@ -561,72 +473,24 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="label_151">
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_153">
             <property name="text">
-             <string>medium#</string>
+             <string>weights</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="0" colspan="5">
-           <widget class="QLabel" name="label_144">
-            <property name="text">
-             <string>texture translation</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="1" colspan="2">
-           <widget class="QSpinBox" name="shapeTexture_fineR_spinBox">
+          <item row="6" column="3" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_coarseG_spinBox">
             <property name="value">
              <number>6</number>
             </property>
            </widget>
           </item>
-          <item row="5" column="5" colspan="2">
-           <widget class="QSpinBox" name="shapeTexture_mediumB_spinBox">
-            <property name="value">
-             <number>12</number>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="label_146">
+          <item row="3" column="7" colspan="2">
+           <widget class="QLabel" name="label_147">
             <property name="text">
-             <string> fine#</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="3" colspan="2">
-           <widget class="QSpinBox" name="shapeTexture_fineG_spinBox">
-            <property name="value">
-             <number>12</number>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="0" colspan="5">
-           <widget class="QLabel" name="label_145">
-            <property name="text">
-             <string>channels</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1" colspan="2">
-           <widget class="QDoubleSpinBox" name="shapeTextureTrans1_doubleSpinBox">
-            <property name="maximum">
-             <double>1.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.100000000000000</double>
-            </property>
-            <property name="value">
-             <double>0.300000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="7" colspan="2">
-           <widget class="QSpinBox" name="shapeTexture_coarseA_spinBox">
-            <property name="value">
-             <number>12</number>
+             <string>A</string>
             </property>
            </widget>
           </item>
@@ -643,17 +507,41 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="3" colspan="2">
-           <widget class="QSpinBox" name="shapeTexture_mediumG_spinBox">
+          <item row="4" column="5" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_fineB_spinBox">
             <property name="value">
-             <number>8</number>
+             <number>24</number>
             </property>
            </widget>
           </item>
-          <item row="3" column="1" colspan="2">
-           <widget class="QLabel" name="label_148">
+          <item row="4" column="3" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_fineG_spinBox">
+            <property name="value">
+             <number>12</number>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_146">
             <property name="text">
-             <string>R</string>
+             <string> fine#</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTexture_weightR_doubleSpinBox">
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_152">
+            <property name="text">
+             <string>coarse#</string>
             </property>
            </widget>
           </item>
@@ -664,6 +552,40 @@
             </property>
            </widget>
           </item>
+          <item row="6" column="1" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_coarseR_spinBox">
+            <property name="value">
+             <number>2</number>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="5" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_mediumB_spinBox">
+            <property name="value">
+             <number>12</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTextureTrans1_doubleSpinBox">
+            <property name="maximum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.300000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label_2">
+            <property name="text">
+             <string>denOffset</string>
+            </property>
+           </widget>
+          </item>
           <item row="3" column="5" colspan="2">
            <widget class="QLabel" name="label_150">
             <property name="text">
@@ -671,10 +593,146 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="7" colspan="2">
-           <widget class="QLabel" name="label_147">
+          <item row="7" column="7" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTexture_weightA_doubleSpinBox">
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="5" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTexture_weightB_doubleSpinBox">
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="7" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_mediumA_spinBox">
+            <property name="value">
+             <number>24</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="7" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTextureTrans3_doubleSpinBox">
+            <property name="maximum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.300000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="7" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_fineA_spinBox">
+            <property name="value">
+             <number>32</number>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="3" colspan="2">
+           <widget class="QDoubleSpinBox" name="shapeTexture_weightG_doubleSpinBox">
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="densityOffset_doubleSpinBox">
+            <property name="minimum">
+             <double>-5.000000000000000</double>
+            </property>
+            <property name="maximum">
+             <double>0.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>-0.400000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="7" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_coarseA_spinBox">
+            <property name="value">
+             <number>12</number>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_145">
             <property name="text">
-             <string>A</string>
+             <string>channels</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="3" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_mediumG_spinBox">
+            <property name="value">
+             <number>8</number>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1" colspan="2">
+           <widget class="QSpinBox" name="shapeTexture_fineR_spinBox">
+            <property name="value">
+             <number>6</number>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="5">
+           <widget class="QLabel" name="label_144">
+            <property name="text">
+             <string>texture translation</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="0">
+           <widget class="QLabel" name="label_4">
+            <property name="text">
+             <string>scaling</string>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="highResScaling_R_doubleSpinBox">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="3" colspan="2">
+           <widget class="QDoubleSpinBox" name="highResScaling_G_doubleSpinBox">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="5" colspan="2">
+           <widget class="QDoubleSpinBox" name="highResScaling_B_doubleSpinBox">
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="8" column="7" colspan="2">
+           <widget class="QDoubleSpinBox" name="highResScaling_A_doubleSpinBox">
+            <property name="value">
+             <double>1.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -686,7 +744,7 @@
            <x>10</x>
            <y>10</y>
            <width>441</width>
-           <height>251</height>
+           <height>281</height>
           </rect>
          </property>
          <property name="minimumSize">
@@ -705,105 +763,6 @@
           <string>Detail Texture Params</string>
          </property>
          <layout class="QGridLayout" name="gridLayout_2">
-          <item row="2" column="0" colspan="5">
-           <widget class="QLabel" name="label_135">
-            <property name="text">
-             <string>channels</string>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0" colspan="5">
-           <widget class="QLabel" name="label_134">
-            <property name="text">
-             <string>texture translation</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="0">
-           <widget class="QLabel" name="label_141">
-            <property name="text">
-             <string>medium#</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="1" colspan="2">
-           <widget class="QSpinBox" name="detailTexture_fineR_spinBox">
-            <property name="value">
-             <number>6</number>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="0">
-           <widget class="QLabel" name="label_143">
-            <property name="text">
-             <string>weights</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="1" colspan="2">
-           <widget class="QSpinBox" name="detailTexture_coarseR_spinBox">
-            <property name="value">
-             <number>2</number>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="label_136">
-            <property name="text">
-             <string> fine#</string>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="0">
-           <widget class="QLabel" name="label_142">
-            <property name="text">
-             <string>coarse#</string>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="1" colspan="2">
-           <widget class="QSpinBox" name="detailTexture_mediumR_spinBox">
-            <property name="value">
-             <number>4</number>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="7" colspan="2">
-           <widget class="QDoubleSpinBox" name="detailTextureTrans3_doubleSpinBox">
-            <property name="maximum">
-             <double>1.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.100000000000000</double>
-            </property>
-            <property name="value">
-             <double>0.300000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="4" colspan="2">
-           <widget class="QDoubleSpinBox" name="detailTextureTrans2_doubleSpinBox">
-            <property name="maximum">
-             <double>1.000000000000000</double>
-            </property>
-            <property name="singleStep">
-             <double>0.100000000000000</double>
-            </property>
-            <property name="value">
-             <double>0.300000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="1" colspan="2">
-           <widget class="QDoubleSpinBox" name="detailTexture_weightR_spinBox">
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
           <item row="4" column="3" colspan="2">
            <widget class="QSpinBox" name="detailTexture_fineG_spinBox">
             <property name="value">
@@ -811,48 +770,10 @@
             </property>
            </widget>
           </item>
-          <item row="5" column="3" colspan="2">
-           <widget class="QSpinBox" name="detailTexture_mediumG_spinBox">
-            <property name="value">
-             <number>8</number>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="3" colspan="2">
-           <widget class="QSpinBox" name="detailTexture_coarseG_spinBox">
-            <property name="value">
-             <number>6</number>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="3" colspan="2">
-           <widget class="QDoubleSpinBox" name="detailTexture_weightG_spinBox">
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="5" colspan="2">
-           <widget class="QSpinBox" name="detailTexture_fineB_spinBox">
-            <property name="value">
-             <number>24</number>
-            </property>
-           </widget>
-          </item>
-          <item row="5" column="5" colspan="2">
-           <widget class="QSpinBox" name="detailTexture_mediumB_spinBox">
-            <property name="value">
-             <number>12</number>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="5" colspan="2">
-           <widget class="QSpinBox" name="detailTexture_coarseB_spinBox">
-            <property name="value">
-             <number>8</number>
+          <item row="7" column="0">
+           <widget class="QLabel" name="label_143">
+            <property name="text">
+             <string>weights</string>
             </property>
            </widget>
           </item>
@@ -866,34 +787,17 @@
             </property>
            </widget>
           </item>
-          <item row="4" column="7" colspan="2">
-           <widget class="QSpinBox" name="detailTexture_fineA_spinBox">
-            <property name="value">
-             <number>32</number>
+          <item row="4" column="0">
+           <widget class="QLabel" name="label_136">
+            <property name="text">
+             <string> fine#</string>
             </property>
            </widget>
           </item>
-          <item row="5" column="7" colspan="2">
-           <widget class="QSpinBox" name="detailTexture_mediumA_spinBox">
+          <item row="6" column="3" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_coarseG_spinBox">
             <property name="value">
-             <number>24</number>
-            </property>
-           </widget>
-          </item>
-          <item row="6" column="7" colspan="2">
-           <widget class="QSpinBox" name="detailTexture_coarseA_spinBox">
-            <property name="value">
-             <number>12</number>
-            </property>
-           </widget>
-          </item>
-          <item row="7" column="7" colspan="2">
-           <widget class="QDoubleSpinBox" name="detailTexture_weightA_spinBox">
-            <property name="maximum">
-             <double>10.000000000000000</double>
-            </property>
-            <property name="value">
-             <double>1.000000000000000</double>
+             <number>6</number>
             </property>
            </widget>
           </item>
@@ -910,10 +814,44 @@
             </property>
            </widget>
           </item>
-          <item row="3" column="1" colspan="2">
-           <widget class="QLabel" name="label_138">
+          <item row="6" column="0">
+           <widget class="QLabel" name="label_142">
             <property name="text">
-             <string>R</string>
+             <string>coarse#</string>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="7" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTexture_weightA_spinBox">
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="1" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_coarseR_spinBox">
+            <property name="value">
+             <number>2</number>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="5" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_fineB_spinBox">
+            <property name="value">
+             <number>24</number>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="3" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTexture_weightG_spinBox">
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
             </property>
            </widget>
           </item>
@@ -931,10 +869,158 @@
             </property>
            </widget>
           </item>
+          <item row="3" column="1" colspan="2">
+           <widget class="QLabel" name="label_138">
+            <property name="text">
+             <string>R</string>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="4" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTextureTrans2_doubleSpinBox">
+            <property name="maximum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.300000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="0">
+           <widget class="QLabel" name="label">
+            <property name="text">
+             <string>denWeight</string>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="5" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_coarseB_spinBox">
+            <property name="value">
+             <number>8</number>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="3" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_mediumG_spinBox">
+            <property name="value">
+             <number>8</number>
+            </property>
+           </widget>
+          </item>
+          <item row="3" column="0">
+           <widget class="QLabel" name="label_135">
+            <property name="text">
+             <string>channels</string>
+            </property>
+           </widget>
+          </item>
+          <item row="0" column="0" colspan="5">
+           <widget class="QLabel" name="label_134">
+            <property name="text">
+             <string>texture translation</string>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="7" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_fineA_spinBox">
+            <property name="value">
+             <number>32</number>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="7" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_mediumA_spinBox">
+            <property name="value">
+             <number>24</number>
+            </property>
+           </widget>
+          </item>
+          <item row="4" column="1" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_fineR_spinBox">
+            <property name="value">
+             <number>6</number>
+            </property>
+           </widget>
+          </item>
+          <item row="6" column="7" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_coarseA_spinBox">
+            <property name="value">
+             <number>12</number>
+            </property>
+           </widget>
+          </item>
+          <item row="1" column="7" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTextureTrans3_doubleSpinBox">
+            <property name="maximum">
+             <double>1.000000000000000</double>
+            </property>
+            <property name="singleStep">
+             <double>0.100000000000000</double>
+            </property>
+            <property name="value">
+             <double>0.300000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="1" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_mediumR_spinBox">
+            <property name="value">
+             <number>4</number>
+            </property>
+           </widget>
+          </item>
           <item row="3" column="7" colspan="2">
            <widget class="QLabel" name="label_137">
             <property name="text">
              <string>A</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="0">
+           <widget class="QLabel" name="label_141">
+            <property name="text">
+             <string>medium#</string>
+            </property>
+           </widget>
+          </item>
+          <item row="5" column="5" colspan="2">
+           <widget class="QSpinBox" name="detailTexture_mediumB_spinBox">
+            <property name="value">
+             <number>12</number>
+            </property>
+           </widget>
+          </item>
+          <item row="7" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="detailTexture_weightR_spinBox">
+            <property name="maximum">
+             <double>10.000000000000000</double>
+            </property>
+            <property name="value">
+             <double>1.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="1" colspan="2">
+           <widget class="QDoubleSpinBox" name="densityWeight_doubleSpinBox">
+            <property name="value">
+             <double>8.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="7" colspan="2">
+           <widget class="QDoubleSpinBox" name="lowResScaling_doubleSpinBox">
+            <property name="value">
+             <double>20.000000000000000</double>
+            </property>
+           </widget>
+          </item>
+          <item row="2" column="4" colspan="2">
+           <widget class="QLabel" name="label_3">
+            <property name="text">
+             <string>loResScaling</string>
             </property>
            </widget>
           </item>
@@ -952,7 +1038,7 @@
      <x>0</x>
      <y>0</y>
      <width>1397</width>
-     <height>23</height>
+     <height>21</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuCloud">

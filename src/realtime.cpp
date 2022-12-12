@@ -1,6 +1,7 @@
 #include "realtime.h"
 #include "settings.h"
 #include "noise/worley.h"
+#include "noise/perlin.h"
 #include "utils/shaderloader.h"
 
 #include <QCoreApplication>
@@ -50,11 +51,6 @@ void Realtime::setUpTextures() {
     QImage sunTextureImage("./resources/textures/sun_v1.png");
     sunTextureImage.convertTo(QImage::Format_RGB888);
     auto texWidth = sunTextureImage.width();
-    std::cout << "texwidth:" << texWidth << "\n";
-
-//    std::vector<GLubyte> dummy(3*1280, 128);
-//    std::cout << "dummysize: " << dummy.size() << "\n";
-//    std::cout << "firstelem: " << dummy[0] << "\n";
 
     // Generate sun color 1D texture
     glGenTextures(1, &sunTexture);
@@ -65,9 +61,7 @@ void Realtime::setUpTextures() {
     glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
     glTexParameteri (GL_TEXTURE_1D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
     glTexImage1D	(GL_TEXTURE_1D, 0, GL_RGB32F, texWidth, 0, GL_RGB, GL_UNSIGNED_BYTE, sunTextureImage.bits());
-//    glTexImage1D	(GL_TEXTURE_1D, 0, GL_RGB32F, 1280, 0, GL_RGB, GL_UNSIGNED_BYTE, dummy.data());
     glBindTexture(GL_TEXTURE_1D, 0);
-
 
     // Night sky texture set up
     QImage nightTextureImage("./resources/textures/stars2.png");
@@ -291,12 +285,12 @@ void Realtime::initializeGL() {
         glUniform1i(glGetUniformLocation(m_volumeShader, "invertDensity"), settings.invertDensity);
         glUniform1i(glGetUniformLocation(m_volumeShader, "gammaCorrect"), settings.gammaCorrect);
         // hi-res
-        glUniform1f(glGetUniformLocation(m_volumeShader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
+        glUniform4fv(glGetUniformLocation(m_volumeShader , "hiResNoiseScaling"), 1, glm::value_ptr(settings.hiResNoise.scaling));
         glUniform3fv(glGetUniformLocation(m_volumeShader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
         glUniform4fv(glGetUniformLocation(m_volumeShader, "hiResChannelWeights"), 1, glm::value_ptr(settings.hiResNoise.channelWeights));
         glUniform1f(glGetUniformLocation(m_volumeShader , "hiResDensityOffset"), settings.hiResNoise.densityOffset);
         // lo-res
-        glUniform1f(glGetUniformLocation(m_volumeShader , "loResNoiseScaling"), settings.loResNoise.scaling);
+        glUniform1f(glGetUniformLocation(m_volumeShader , "loResNoiseScaling"), settings.loResNoise.scaling[0]);
         glUniform3fv(glGetUniformLocation(m_volumeShader, "loResNoiseTranslate"), 1, glm::value_ptr(settings.loResNoise.translate));
         glUniform4fv(glGetUniformLocation(m_volumeShader, "loResChannelWeights"), 1, glm::value_ptr(settings.loResNoise.channelWeights));
         glUniform1f(glGetUniformLocation(m_volumeShader , "loResDensityWeight"), settings.loResNoise.densityWeight);
@@ -474,13 +468,13 @@ void Realtime::settingsChanged() {
     glUniform1f(glGetUniformLocation(m_volumeShader, "minLightTransmittance"), settings.minLightTransmittance);
 
     // Shape texture: hi-res
-    glUniform1f(glGetUniformLocation(m_volumeShader , "hiResNoiseScaling"), settings.hiResNoise.scaling);
+    glUniform4fv(glGetUniformLocation(m_volumeShader , "hiResNoiseScaling"), 1, glm::value_ptr(settings.hiResNoise.scaling));
     glUniform3fv(glGetUniformLocation(m_volumeShader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
     glUniform4fv(glGetUniformLocation(m_volumeShader, "hiResChannelWeights"), 1, glm::value_ptr(settings.hiResNoise.channelWeights));
     glUniform1f(glGetUniformLocation(m_volumeShader , "hiResDensityOffset"), settings.hiResNoise.densityOffset);
 
     // Detailed texture: low-res
-    glUniform1f(glGetUniformLocation(m_volumeShader , "loResNoiseScaling"), settings.loResNoise.scaling);
+    glUniform1f(glGetUniformLocation(m_volumeShader , "loResNoiseScaling"), settings.loResNoise.scaling[0]);
     glUniform3fv(glGetUniformLocation(m_volumeShader, "loResNoiseTranslate"), 1, glm::value_ptr(settings.loResNoise.translate));
     glUniform4fv(glGetUniformLocation(m_volumeShader, "loResChannelWeights"), 1, glm::value_ptr(settings.loResNoise.channelWeights));
     glUniform1f(glGetUniformLocation(m_volumeShader , "loResDensityWeight"), settings.loResNoise.densityWeight);
