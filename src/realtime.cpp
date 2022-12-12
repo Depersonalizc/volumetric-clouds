@@ -1,6 +1,7 @@
 #include "realtime.h"
 #include "settings.h"
 #include "noise/worley.h"
+#include "noise/perlin.h"
 #include "utils/shaderloader.h"
 
 #include <QCoreApplication>
@@ -186,6 +187,22 @@ void Realtime::finish() {
 }
 
 void Realtime::initializeGL() {
+//    int noiseRes = 512;
+//    auto perlinGen = Perlin(noiseRes, 6);
+//    auto noiseMap = perlinGen.generatePerlinNoise2D();
+//    for (auto &v : noiseMap) {
+//        v = (v + 1.414) / 2.828;
+////        std::cout << v << "\n";
+//    }
+//    std::vector<uchar> noiseMapU8(noiseRes*noiseRes);
+//    for (int i = 0; i < noiseMapU8.size(); i++) {
+//        noiseMapU8[i] = std::min(std::max(noiseMap[i], 0.f), 1.f) * 255.f;
+////        std::cout << int(noiseMapU8[i]);
+//    }
+//    QImage img(noiseMapU8.data(), noiseRes, noiseRes, QImage::Format_Grayscale8);
+//    img.save("out.jpg");
+
+
     m_devicePixelRatio = this->devicePixelRatio();
     m_timer = startTimer(1000/60);
     m_elapsedTimer.start();

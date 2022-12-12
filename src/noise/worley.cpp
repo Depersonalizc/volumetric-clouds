@@ -13,7 +13,7 @@ inline auto pos2DToIndex(auto x, auto y, auto xDim) {
 
 inline glm::vec3 indexToPos3D(auto index, auto xDim, auto yDim) {
     auto [yz, x] = std::div(index, xDim);
-    auto [z , y] = std::div(yz   , yDim);\
+    auto [z , y] = std::div(yz   , yDim);
     return {x, y, z};
 }
 
