@@ -252,6 +252,12 @@ private slots:
 
     void on_lowResScaling_doubleSpinBox_valueChanged(double arg1);
 
+    void on_volTrans_x_doubleSpinBox_valueChanged(double arg1);
+
+    void on_volTrans_y_doubleSpinBox_valueChanged(double arg1);
+
+    void on_volTrans_z_doubleSpinBox_valueChanged(double arg1);
+
 private:
     Ui::MainWindow *ui;
     Realtime *realtime;

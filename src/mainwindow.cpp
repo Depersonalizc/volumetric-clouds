@@ -587,3 +587,27 @@ void MainWindow::on_lowResScaling_doubleSpinBox_valueChanged(double arg1)
     realtime->settingsChanged();
 }
 
+
+void MainWindow::on_volTrans_x_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->volTrans_x_doubleSpinBox->setValue(arg1);
+    settings.volumeTranslate[0] = arg1;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_volTrans_y_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->volTrans_y_doubleSpinBox->setValue(arg1);
+    settings.volumeTranslate[1] = arg1;
+    realtime->settingsChanged();
+}
+
+
+void MainWindow::on_volTrans_z_doubleSpinBox_valueChanged(double arg1)
+{
+    ui->volTrans_z_doubleSpinBox->setValue(arg1);
+    settings.volumeTranslate[2] = arg1;
+    realtime->settingsChanged();
+}
+
