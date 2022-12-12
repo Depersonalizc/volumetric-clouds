@@ -121,81 +121,158 @@ void addPointToVector(glm::vec3 point, std::vector<float>& vector) {
 
 
 // scaling version zhou
-std::vector<float> TerrainGenerator::generateTerrain() {
-    std::vector<float> verts;
-    verts.reserve(m_xScale * m_resolution * m_yScale * m_resolution * 6);
+void TerrainGenerator::generateTerrain() {
 
+    int noiseRes = 1000;
+    int gridRes = 3;
+    int numOctaves = 5;
+    auto perlinGen = Perlin(noiseRes, gridRes, numOctaves);
+    auto noiseMap = perlinGen.generatePerlinNoise2D();
+    for (auto &v : noiseMap)
+        v = (v + 1) / 3;
+
+    // get height map
+    height_data = noiseMap;
+
+    // get xz map
+    xz_data.reserve(m_xScale * m_resolution * m_yScale * m_resolution * 6);
     for(int x = 0; x < m_xScale * m_resolution; x++) {
-        for(int y = 0; y < m_yScale * m_resolution; y++) {
+        for(int z = 0; z < m_yScale * m_resolution; z++) {
+//            float x1 = 1.0 * x / m_resolution;
+//            float z1 = 1.0 * z / m_resolution;
+
+//            float x2 = 1.0 * (x + 1) / m_resolution;
+//            float z2 = 1.0 * (z + 1) / m_resolution;
+
             int x1 = x;
-            int y1 = y;
-
+            int z1 = z;
             int x2 = x + 1;
-            int y2 = y + 1;
+            int z2 = z + 1;
 
-            glm::vec3 p1 = getPosition(x1,y1);
-            glm::vec3 p2 = getPosition(x2,y1);
-            glm::vec3 p3 = getPosition(x2,y2);
-            glm::vec3 p4 = getPosition(x1,y2);
+            glm::vec3 p1 = getPosition(x1, z1);
+            glm::vec3 p2 = getPosition(x2, z1);
+            glm::vec3 p3 = getPosition(x2, z2);
+            glm::vec3 p4 = getPosition(x1, z2);
 
-//            p1 += translation;
-//            p2 += translation;
-//            p3 += translation;
-//            p4 += translation;
+            glm::vec3 n1 = getNormal(x1, z1);
+            glm::vec3 n2 = getNormal(x2, z1);
+            glm::vec3 n3 = getNormal(x2, z2);
+            glm::vec3 n4 = getNormal(x1, z2);
 
+            // push p3: [x2, z2]
+            xz_data.push_back(p3.x);
+            xz_data.push_back(p3.y);
+//            addPointToVector(n3, xz_data);
+            // push p2: [x2, z1]
+            xz_data.push_back(p2.x);
+            xz_data.push_back(p2.y);
+//            addPointToVector(n2, xz_data);
+            // push p1: [x1, z1]
+            xz_data.push_back(p1.x);
+            xz_data.push_back(p1.y);
+//            addPointToVector(n1, xz_data);
 
-            glm::vec3 n1 = getNormal(x1, y1);
-            glm::vec3 n2 = getNormal(x2, y1);
-            glm::vec3 n3 = getNormal(x2, y2);
-            glm::vec3 n4 = getNormal(x1, y2);
+            // push p4: [x1, z2]
+            xz_data.push_back(p4.x);
+            xz_data.push_back(p4.y);
+//            addPointToVector(n4, xz_data);
+            // push p3: [x2, z2]
+            xz_data.push_back(p3.x);
+            xz_data.push_back(p3.y);
+//            addPointToVector(n3, xz_data);
+            // push p1: [x1, z1]
+            xz_data.push_back(p1.x);
+            xz_data.push_back(p1.y);
+//            addPointToVector(n1, xz_data);
 
-
-            addPointToVector(p3 + translation, verts);
-            addPointToVector(n3, verts);
-            addPointToVector(getColor(n3, p3), verts);
-
-            addPointToVector(p2 + translation, verts);
-            addPointToVector(n2, verts);
-            addPointToVector(getColor(n2, p2), verts);
-
-            addPointToVector(p1+ translation, verts);
-            addPointToVector(n1, verts);
-            glm::vec3 n1_color = getColor(n1, p1);
-            addPointToVector(n1_color, verts);
-
-            // tris 2
-            // x1y1z1
-            // x2y2z3
-            // x1y2z4
-            addPointToVector(p4+ translation, verts);
-            addPointToVector(n4, verts);
-            addPointToVector(getColor(n4, p4), verts);
-
-
-            addPointToVector(p3+ translation, verts);
-            addPointToVector(n3, verts);
-            addPointToVector(getColor(n3, p3), verts);
-
-            addPointToVector(p1+ translation, verts);
-            addPointToVector(n1, verts);
-            addPointToVector(getColor(n1, p1), verts);
-
-            if (x<m_resolution && y<m_resolution) {
-                height_data.push_back((p1+translation)[2]);
-                addPointToVector(n1_color, color_data);
+            if (x<m_resolution && z<m_resolution) {
+//                glm::vec3 n1 = getNormal(x1, z1);
                 addPointToVector(n1, normal_data);
             }
 
-//            // for height map and normal map
+        }
+    }
+
+//    // get normal map
+//    normal_data.reserve(m_resolution * m_resolution * 3);
+//    for ()
+
+    std::cout << "test noise" << noiseMap.size() << '\n';
+
+//    std::vector<float> verts;
+//    verts.reserve(m_xScale * m_resolution * m_yScale * m_resolution * 6);
+
+//    for(int x = 0; x < m_xScale * m_resolution; x++) {
+//        for(int y = 0; y < m_yScale * m_resolution; y++) {
+//            int x1 = x;
+//            int y1 = y;
+
+//            int x2 = x + 1;
+//            int y2 = y + 1;
+
+//            glm::vec3 p1 = getPosition(x1,y1);
+//            glm::vec3 p2 = getPosition(x2,y1);
+//            glm::vec3 p3 = getPosition(x2,y2);
+//            glm::vec3 p4 = getPosition(x1,y2);
+
+////            p1 += translation;
+////            p2 += translation;
+////            p3 += translation;
+////            p4 += translation;
+
+
+//            glm::vec3 n1 = getNormal(x1, y1);
+//            glm::vec3 n2 = getNormal(x2, y1);
+//            glm::vec3 n3 = getNormal(x2, y2);
+//            glm::vec3 n4 = getNormal(x1, y2);
+
+
+//            addPointToVector(p3 + translation, verts);
+//            addPointToVector(n3, verts);
+//            addPointToVector(getColor(n3, p3), verts);
+
+//            addPointToVector(p2 + translation, verts);
+//            addPointToVector(n2, verts);
+//            addPointToVector(getColor(n2, p2), verts);
+
+//            addPointToVector(p1+ translation, verts);
+//            addPointToVector(n1, verts);
+//            glm::vec3 n1_color = getColor(n1, p1);
+//            addPointToVector(n1_color, verts);
+
+//            // tris 2
+//            // x1y1z1
+//            // x2y2z3
+//            // x1y2z4
+//            addPointToVector(p4+ translation, verts);
+//            addPointToVector(n4, verts);
+//            addPointToVector(getColor(n4, p4), verts);
+
+
+//            addPointToVector(p3+ translation, verts);
+//            addPointToVector(n3, verts);
+//            addPointToVector(getColor(n3, p3), verts);
+
+//            addPointToVector(p1+ translation, verts);
+//            addPointToVector(n1, verts);
+//            addPointToVector(getColor(n1, p1), verts);
+
 //            if (x<m_resolution && y<m_resolution) {
-//                height_data.push_back((p1+translation)[2]);
+////                height_data.push_back((p1+translation)[2]);
 //                addPointToVector(n1_color, color_data);
 //                addPointToVector(n1, normal_data);
 //            }
-////            std::cout << "normal" << n1[0] << " " << n1[2] << " " << n1[1] << std::endl;
-        }
-    }
-    return verts;
+
+////            // for height map and normal map
+////            if (x<m_resolution && y<m_resolution) {
+////                height_data.push_back((p1+translation)[2]);
+////                addPointToVector(n1_color, color_data);
+////                addPointToVector(n1, normal_data);
+////            }
+//////            std::cout << "normal" << n1[0] << " " << n1[2] << " " << n1[1] << std::endl;
+//        }
+//    }
+////    return verts;
 }
 
 // Samples the (infinite) random vector grid at (row, col)
@@ -225,7 +302,7 @@ glm::vec3 TerrainGenerator::getPosition(int row, int col) {
     // makes scaling independent of sampling resolution.
     float x = 1.0 * row / m_resolution ;
     float y = 1.0 * col / m_resolution ;
-    float z = getHeight(x, y);
+    float z = getHeight(row, col);
     return glm::vec3(x,y,z);
 }
 
@@ -249,24 +326,32 @@ float interpolate(float A, float B, float alpha) {
     return A + (3*alpha*alpha - 2*std::pow(alpha,3))*(B - A);
 }
 
-// Takes a normalized (x, y) position, in range [0,1)
-// Returns a height value, z, by sampling a noise function
-float TerrainGenerator::getHeight(float x, float y) {
+//// Takes a normalized (x, y) position, in range [0,1)
+//// Returns a height value, z, by sampling a noise function
+//float TerrainGenerator::getHeight(float x, float y) {
 
-    // Task 6: modify this call to produce noise of a different frequency
-//    float z = computePerlin(x * 20, y * 20) / 2;
+//    // Task 6: modify this call to produce noise of a different frequency
+////    float z = computePerlin(x * 20, y * 20) / 2;
 
-    // Task 7: combine multiple different octaves of noise to produce fractal perlin noise
-    float z1 = computePerlin(x, y);
-    float z2 = computePerlin(x*2, y*2) / 2;
-    float z3 = computePerlin(x*4, y*4) / 4;
-    float z4 = computePerlin(x*8, y*8) / 8;
-    float z5 = computePerlin(x*16, y*16) / 16;
-    float z6 = computePerlin(x*32, y*32) / 32;
-    float z7 = computePerlin(x*64, y*64) / 64;
-//return z7;
+//    // Task 7: combine multiple different octaves of noise to produce fractal perlin noise
+//    float z1 = computePerlin(x, y);
+//    float z2 = computePerlin(x*2, y*2) / 2;
+//    float z3 = computePerlin(x*4, y*4) / 4;
+//    float z4 = computePerlin(x*8, y*8) / 8;
+//    float z5 = computePerlin(x*16, y*16) / 16;
+//    float z6 = computePerlin(x*32, y*32) / 32;
+//    float z7 = computePerlin(x*64, y*64) / 64;
+////return z7;
 //    return z1 + z2 + z3 + z4 + z5 + z6 + z7;
-    return z1;
+////    return z1;
+//}
+
+float TerrainGenerator::getHeight(int row, int col) {
+    int modRow = (row+m_resolution)%m_resolution;
+    int modCol = (col+m_resolution)%m_resolution;
+    int index = modRow*m_resolution + modCol;
+//    std::cout << "check" << index << '\n';
+    return height_data[index];
 }
 
 // Computes the normal of a vertex by averaging neighbors

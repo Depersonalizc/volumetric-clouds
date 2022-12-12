@@ -1,0 +1,202 @@
+{
+	"archive" : {},
+	"artifacts" : 
+	[
+		{
+			"path" : "libStaticGLEW.a"
+		}
+	],
+	"backtrace" : 1,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_library",
+			"include_directories"
+		],
+		"files" : 
+		[
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 0
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 69,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 24,
+				"parent" : 0
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 70,
+				"parent" : 0
+			}
+		]
+	},
+	"compileGroups" : 
+	[
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-O3 -DNDEBUG"
+				},
+				{
+					"fragment" : "-std=gnu++2a"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds"
+				},
+				{
+					"backtrace" : 0,
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/StaticGLEW_autogen/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/src"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/volumetric-clouds"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/PRIVATE"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/glew/include"
+				}
+			],
+			"language" : "CXX",
+			"sourceIndexes" : 
+			[
+				0
+			]
+		},
+		{
+			"compileCommandFragments" : 
+			[
+				{
+					"fragment" : "-O3 -DNDEBUG"
+				}
+			],
+			"includes" : 
+			[
+				{
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds"
+				},
+				{
+					"backtrace" : 0,
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/StaticGLEW_autogen/include"
+				},
+				{
+					"backtrace" : 2,
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/src"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/volumetric-clouds"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/PRIVATE"
+				},
+				{
+					"backtrace" : 3,
+					"path" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/glew/include"
+				}
+			],
+			"language" : "C",
+			"sourceIndexes" : 
+			[
+				1
+			]
+		}
+	],
+	"dependencies" : 
+	[
+		{
+			"id" : "StaticGLEW_autogen_timestamp_deps::@6890427a1f51a3e7e1df"
+		},
+		{
+			"backtrace" : 0,
+			"id" : "StaticGLEW_autogen::@6890427a1f51a3e7e1df"
+		}
+	],
+	"id" : "StaticGLEW::@6890427a1f51a3e7e1df",
+	"name" : "StaticGLEW",
+	"nameOnDisk" : "libStaticGLEW.a",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "Source Files",
+			"sourceIndexes" : 
+			[
+				0,
+				1
+			]
+		},
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				2
+			]
+		},
+		{
+			"name" : "CMake Rules",
+			"sourceIndexes" : 
+			[
+				3
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 0,
+			"compileGroupIndex" : 0,
+			"isGenerated" : true,
+			"path" : "StaticGLEW_autogen/mocs_compilation.cpp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 1,
+			"compileGroupIndex" : 1,
+			"path" : "glew/src/glew.c",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "StaticGLEW_autogen/timestamp",
+			"sourceGroupIndex" : 1
+		},
+		{
+			"backtrace" : 0,
+			"isGenerated" : true,
+			"path" : "StaticGLEW_autogen/timestamp.rule",
+			"sourceGroupIndex" : 2
+		}
+	],
+	"type" : "STATIC_LIBRARY"
+}

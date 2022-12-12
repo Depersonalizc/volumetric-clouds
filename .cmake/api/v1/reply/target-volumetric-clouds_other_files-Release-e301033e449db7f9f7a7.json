@@ -1,0 +1,183 @@
+{
+	"backtrace" : 4,
+	"backtraceGraph" : 
+	{
+		"commands" : 
+		[
+			"add_custom_target",
+			"_qt_internal_expose_source_file_to_ide",
+			"_qt_internal_process_resource",
+			"qt6_add_resources",
+			"set_property"
+		],
+		"files" : 
+		[
+			"/ifs/CS/courses/cs1230/Qt/6.2.4/gcc_64/lib/cmake/Qt6Core/Qt6CoreMacros.cmake",
+			"CMakeLists.txt"
+		],
+		"nodes" : 
+		[
+			{
+				"file" : 1
+			},
+			{
+				"command" : 3,
+				"file" : 1,
+				"line" : 83,
+				"parent" : 0
+			},
+			{
+				"command" : 2,
+				"file" : 0,
+				"line" : 340,
+				"parent" : 1
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 1910,
+				"parent" : 2
+			},
+			{
+				"command" : 0,
+				"file" : 0,
+				"line" : 1803,
+				"parent" : 3
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 1910,
+				"parent" : 2
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 1813,
+				"parent" : 5
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 1910,
+				"parent" : 2
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 1813,
+				"parent" : 7
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 1910,
+				"parent" : 2
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 1813,
+				"parent" : 9
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 1910,
+				"parent" : 2
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 1813,
+				"parent" : 11
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 1910,
+				"parent" : 2
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 1813,
+				"parent" : 13
+			},
+			{
+				"command" : 1,
+				"file" : 0,
+				"line" : 1910,
+				"parent" : 2
+			},
+			{
+				"command" : 4,
+				"file" : 0,
+				"line" : 1813,
+				"parent" : 15
+			}
+		]
+	},
+	"id" : "volumetric-clouds_other_files::@6890427a1f51a3e7e1df",
+	"name" : "volumetric-clouds_other_files",
+	"paths" : 
+	{
+		"build" : ".",
+		"source" : "."
+	},
+	"sourceGroups" : 
+	[
+		{
+			"name" : "",
+			"sourceIndexes" : 
+			[
+				0,
+				1,
+				2,
+				3,
+				4,
+				5,
+				6
+			]
+		}
+	],
+	"sources" : 
+	[
+		{
+			"backtrace" : 4,
+			"path" : "resources/shaders/default.frag",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 6,
+			"path" : "resources/shaders/default.vert",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 8,
+			"path" : "resources/shaders/worley.comp",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 10,
+			"path" : "resources/shaders/terrain_generator.vert",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 12,
+			"path" : "resources/shaders/terrain_generator.frag",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 14,
+			"path" : "resources/shaders/terrain_texture.vert",
+			"sourceGroupIndex" : 0
+		},
+		{
+			"backtrace" : 16,
+			"path" : "resources/shaders/terrain_texture.frag",
+			"sourceGroupIndex" : 0
+		}
+	],
+	"type" : "UTILITY"
+}

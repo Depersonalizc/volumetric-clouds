@@ -1,0 +1,37 @@
+Performing C SOURCE FILE Test CMAKE_HAVE_LIBC_PTHREAD failed with the following output:
+Change Dir: /home/zzhou118/Desktop/csci1230-final/volumetric-clouds/CMakeFiles/CMakeTmp
+
+Run Build Command(s):/course/cs1230/Qt/Tools/Ninja/ninja cmTC_564ee && [1/2] Building C object CMakeFiles/cmTC_564ee.dir/src.c.o
+[2/2] Linking C executable cmTC_564ee
+FAILED: cmTC_564ee 
+: && /usr/bin/gcc -DCMAKE_HAVE_LIBC_PTHREAD  CMakeFiles/cmTC_564ee.dir/src.c.o -o cmTC_564ee   && :
+/usr/bin/ld: CMakeFiles/cmTC_564ee.dir/src.c.o: in function `main':
+src.c:(.text+0x2f): undefined reference to `pthread_create'
+/usr/bin/ld: src.c:(.text+0x3b): undefined reference to `pthread_detach'
+/usr/bin/ld: src.c:(.text+0x47): undefined reference to `pthread_cancel'
+/usr/bin/ld: src.c:(.text+0x58): undefined reference to `pthread_join'
+collect2: error: ld returned 1 exit status
+ninja: build stopped: subcommand failed.
+
+
+Source file was:
+#include <pthread.h>
+
+void* test_func(void* data)
+{
+  return data;
+}
+
+int main(void)
+{
+  pthread_t thread;
+  pthread_create(&thread, NULL, test_func, NULL);
+  pthread_detach(thread);
+  pthread_cancel(thread);
+  pthread_join(thread, NULL);
+  pthread_atfork(NULL, NULL, NULL);
+  pthread_exit(NULL);
+
+  return 0;
+}
+

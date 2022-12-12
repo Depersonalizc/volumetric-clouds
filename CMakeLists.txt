@@ -33,6 +33,7 @@ add_executable(${PROJECT_NAME}
 
     src/camera/camera.cpp
     src/noise/worley.cpp
+    src/noise/perlin.cpp
 
     src/terrain/glwidget.cpp
     src/terrain/terraingenerator.cpp
@@ -52,6 +53,7 @@ add_executable(${PROJECT_NAME}
 
     src/camera/camera.h
     src/noise/worley.h
+    src/noise/perlin.h
 
     src/glStructure/FBO.h
 

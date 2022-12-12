@@ -1,0 +1,12 @@
+<RCC>
+  <qresource prefix="/">
+    <file alias="resources/shaders/default.frag">/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/resources/shaders/default.frag</file>
+    <file alias="resources/shaders/default.vert">/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/resources/shaders/default.vert</file>
+    <file alias="resources/shaders/worley.comp">/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/resources/shaders/worley.comp</file>
+    <file alias="resources/shaders/terrain_generator.vert">/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/resources/shaders/terrain_generator.vert</file>
+    <file alias="resources/shaders/terrain_generator.frag">/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/resources/shaders/terrain_generator.frag</file>
+    <file alias="resources/shaders/terrain_texture.vert">/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/resources/shaders/terrain_texture.vert</file>
+    <file alias="resources/shaders/terrain_texture.frag">/home/zzhou118/Desktop/csci1230-final/volumetric-clouds/resources/shaders/terrain_texture.frag</file>
+  </qresource>
+</RCC>
+

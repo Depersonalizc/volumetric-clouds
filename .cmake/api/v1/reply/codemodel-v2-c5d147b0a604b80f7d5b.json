@@ -1,0 +1,128 @@
+{
+	"configurations" : 
+	[
+		{
+			"directories" : 
+			[
+				{
+					"build" : ".",
+					"childIndexes" : 
+					[
+						1
+					],
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"projectIndex" : 0,
+					"source" : ".",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				},
+				{
+					"build" : "glm",
+					"minimumCMakeVersion" : 
+					{
+						"string" : "3.16"
+					},
+					"parentIndex" : 0,
+					"projectIndex" : 0,
+					"source" : "glm"
+				}
+			],
+			"name" : "Release",
+			"projects" : 
+			[
+				{
+					"directoryIndexes" : 
+					[
+						0,
+						1
+					],
+					"name" : "volumetric-clouds",
+					"targetIndexes" : 
+					[
+						0,
+						1,
+						2,
+						3,
+						4,
+						5,
+						6
+					]
+				}
+			],
+			"targets" : 
+			[
+				{
+					"directoryIndex" : 0,
+					"id" : "StaticGLEW::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-StaticGLEW-Release-d62ca9bf3ee33a145047.json",
+					"name" : "StaticGLEW",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "StaticGLEW_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-StaticGLEW_autogen-Release-7a7b92de64df036c0d49.json",
+					"name" : "StaticGLEW_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "StaticGLEW_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-StaticGLEW_autogen_timestamp_deps-Release-2334365aedb00f8a0b02.json",
+					"name" : "StaticGLEW_autogen_timestamp_deps",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "volumetric-clouds::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-volumetric-clouds-Release-0e921062e49e46db7339.json",
+					"name" : "volumetric-clouds",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "volumetric-clouds_autogen::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-volumetric-clouds_autogen-Release-81fa2ef1da39a1a4bf49.json",
+					"name" : "volumetric-clouds_autogen",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "volumetric-clouds_autogen_timestamp_deps::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-volumetric-clouds_autogen_timestamp_deps-Release-56b1a1f85480d3710a16.json",
+					"name" : "volumetric-clouds_autogen_timestamp_deps",
+					"projectIndex" : 0
+				},
+				{
+					"directoryIndex" : 0,
+					"id" : "volumetric-clouds_other_files::@6890427a1f51a3e7e1df",
+					"jsonFile" : "target-volumetric-clouds_other_files-Release-e301033e449db7f9f7a7.json",
+					"name" : "volumetric-clouds_other_files",
+					"projectIndex" : 0
+				}
+			]
+		}
+	],
+	"kind" : "codemodel",
+	"paths" : 
+	{
+		"build" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds",
+		"source" : "/home/zzhou118/Desktop/csci1230-final/volumetric-clouds"
+	},
+	"version" : 
+	{
+		"major" : 2,
+		"minor" : 1
+	}
+}

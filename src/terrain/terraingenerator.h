@@ -2,6 +2,7 @@
 
 #include <vector>
 #include "glm/glm.hpp"
+#include "noise/perlin.h"
 
 class TerrainGenerator
 {
@@ -16,11 +17,12 @@ public:
     }
     void setMxMy(float x, float y);
     void setTranslation(glm::vec3 trans);
-    std::vector<float> generateTerrain();
+    void generateTerrain();
 
     std::vector<float> height_data;
     std::vector<float> normal_data;
     std::vector<float> color_data;
+    std::vector<float> xz_data;
 
 private:
 
@@ -43,7 +45,7 @@ private:
 
     // Takes a normalized (x, y) position, in range [0,1)
     // Returns a height value, z, by sampling a noise function
-    float getHeight(float x, float y);
+    float getHeight(int x, int y);
 
     // Computes the normal of a vertex by averaging neighbors
     glm::vec3 getNormal(int row, int col);

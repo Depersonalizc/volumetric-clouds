@@ -183,6 +183,7 @@ void Realtime::initializeGL() {
         glUniformMatrix4fv(glGetUniformLocation(m_terrainShader, "transInvViewMatrix"), 1, GL_FALSE, glm::value_ptr(transInv));
 
         setUpTerrain();
+
         glUseProgram(m_terrainTextureShader);
         GLint depth_texture_loc = glGetUniformLocation(m_terrainTextureShader, "depth_sampler");
         glUniform1i(depth_texture_loc, 2);
@@ -212,14 +213,14 @@ void Realtime::initializeGL() {
     glGenTextures(1, &m_terrain_height_texture);
     glActiveTexture(GL_TEXTURE4);
     glBindTexture(GL_TEXTURE_2D, m_terrain_height_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, 100, 100, 0, GL_RED, GL_FLOAT, m_terrain.height_data.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, m_terrain.getResolution(), m_terrain.getResolution(), 0, GL_RED, GL_FLOAT, m_terrain.height_data.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
 
     // start normal map modification
     std::vector<float> test_data_normal;
-    for (int i = 0; i<100*100; i++) {
+    for (int i = 0; i<1000*1000; i++) {
         test_data_normal.push_back(1);
         test_data_normal.push_back(0);
         test_data_normal.push_back(0);
@@ -228,7 +229,7 @@ void Realtime::initializeGL() {
     std::cout << "normal " << m_terrain.normal_data.size() << '\n';
     glActiveTexture(GL_TEXTURE5);
     glBindTexture(GL_TEXTURE_2D, m_terrain_normal_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, 100, 100, 0, GL_RGB, GL_FLOAT, m_terrain.normal_data.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, m_terrain.getResolution(), m_terrain.getResolution(), 0, GL_RGB, GL_FLOAT, m_terrain.normal_data.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glBindTexture(GL_TEXTURE_2D, 0);
@@ -244,7 +245,7 @@ void Realtime::initializeGL() {
     std::cout << "color " << m_terrain.normal_data.size() << '\n';
     glActiveTexture(GL_TEXTURE3);
     glBindTexture(GL_TEXTURE_2D, m_terrain_color_texture);
-    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, 100, 100, 0, GL_RGB, GL_FLOAT, m_terrain.color_data.data());
+    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_terrain.getResolution(), m_terrain.getResolution(), 0, GL_RGB, GL_FLOAT, m_terrain.color_data.data());
 //    glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, 100, 100, 0, GL_RGBA, GL_UNSIGNED_BYTE, m_terrain.color_data.data());
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -269,8 +270,8 @@ void Realtime::initializeGL() {
 
     glEnableVertexAttribArray(0);
     glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void *>(0));
-    glEnableVertexAttribArray(1);
-    glVertexAttribPointer(1,2, GL_FLOAT,GL_FALSE,5 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+//    glEnableVertexAttribArray(1);
+//    glVertexAttribPointer(1,2, GL_FLOAT,GL_FALSE,5 * sizeof(GLfloat), reinterpret_cast<void *>(3 * sizeof(GLfloat)));
 
     glBindBuffer(GL_ARRAY_BUFFER, 0);
     glBindVertexArray(0);
@@ -358,7 +359,7 @@ void Realtime::setUpTerrain() {
     // Terrain parameters
     m_terrainScaleX = 1.0;
     m_terrainScaleY = 2.0;
-    m_terrainRes = 100;
+    m_terrainRes = 1000;
     m_terrainTranslation = glm::vec3(0.0, 0.0, -0.0);
 
     m_terrain.setResolution(m_terrainRes);
@@ -366,10 +367,11 @@ void Realtime::setUpTerrain() {
     m_terrain.setTranslation(m_terrainTranslation);
 
     // Put data into the VBO
-    m_terrain_data = m_terrain.generateTerrain();
+    m_terrain.generateTerrain();
+    std::cout << "check xz" << m_terrain.xz_data.size() << '\n';
     glBufferData(GL_ARRAY_BUFFER,
-                 m_terrain_data.size() * sizeof(GLfloat),
-                 m_terrain_data.data(),
+                 m_terrain.xz_data.size() * sizeof(GLfloat),
+                 m_terrain.xz_data.data(),
                  GL_STATIC_DRAW);
 
     // Generate and bind the VAO, with our VBO currently bound
@@ -378,17 +380,17 @@ void Realtime::setUpTerrain() {
 
     // Define VAO attributes
     glEnableVertexAttribArray(0);
-    glEnableVertexAttribArray(1);
-    glEnableVertexAttribArray(2);
+//    glEnableVertexAttribArray(1);
+//    glEnableVertexAttribArray(2);
 
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),
+    glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat),
                              nullptr);
 
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),
-                             reinterpret_cast<void *>(3 * sizeof(GLfloat)));
+//    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat),
+//                             reinterpret_cast<void *>(2 * sizeof(GLfloat)));
 
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),
-                             reinterpret_cast<void *>(6 * sizeof(GLfloat)));
+//    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, 9 * sizeof(GLfloat),
+//                             reinterpret_cast<void *>(6 * sizeof(GLfloat)));
 
     // Unbind
     glBindVertexArray(0);
