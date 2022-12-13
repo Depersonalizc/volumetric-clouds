@@ -1,26 +1,35 @@
 #version 430 core
-layout(location = 0) in vec3 vertex;
-layout(location = 1) in vec3 normal;
-layout(location = 2) in vec3 inColor;
-out vec4 vert;
-out vec4 norm;
-out vec3 color;
-out vec3 lightDir;
+layout(location = 0) in vec2 vertex;
 
+out vec4 vert;
+out vec4 sample_norm;
+out vec3 lightDir;
+out vec2 uv;
+
+uniform float terrainNoiseScaling = 0.1f;
 uniform mat4 projViewMatrix;
-//uniform mat4 mvMatrix;
 uniform mat4 transInvViewMatrix;
+
+uniform sampler2D height_sampler;
+uniform sampler2D normal_sampler;
 
 void main()
 {
-//    vert  = mvMatrix * vec4(vertex, 1.0);
-//    norm  = transpose(inverse(mvMatrix)) *  vec4(normal, 0.0);
-//    lightDir = normalize(vec3(mvMatrix * vec4(1, 0, 1, 0)));
-//    gl_Position = projMatrix * mvMatrix * vec4(vertex, 1.0);
+    vec2 uv = vertex.yx;
+    uv *= terrainNoiseScaling;
+    uv = fract(uv);
 
-
-    norm  = transInvViewMatrix *  vec4(normal, 0.0);
-    color = inColor;
     lightDir = normalize(vec3(1.0,0.0,1.0));
-    gl_Position = projViewMatrix * vec4(vertex, 1.0);
+
+    // sample and pass norm to fragment shader
+    sample_norm  = transInvViewMatrix * vec4(texture(normal_sampler, uv).rgb, 0.0);
+
+    // height map sampling
+    float height = texture(height_sampler, uv).r / terrainNoiseScaling;
+    vec3 pos = vec3(vertex.x, height, vertex.y);
+    gl_Position = projViewMatrix * vec4(pos, 1.0);
+
+//// DEBUG
+//    pos[1] = 0;
+//    gl_Position = projViewMatrix * vec4(pos, 1.0); // to flat for seamless checking
 }
