@@ -8,12 +8,13 @@
 #define Y_FALLOFF_DIST 1.f
 
 // Params for adaptive ray marching
-#define MIN_NUM_FINE_STEPS 32
-#define COARSE_STEPSIZE_MULTIPLIER 10.f
+#define MIN_NUM_FINE_STEPS 16
+#define COARSE_STEPSIZE_MULTIPLIER 4.f
 #define SMALL_DENSITY 0.005f
 #define MAX_NUM_MISSED_STEPS 5
-#define STEPSIZE_FINE 0.05f
+#define STEPSIZE_FINE 0.02f
 
+#define MAX_SUN_INTENSITY 4.f
 #define SUN_RADIUS 100.f
 
 // density volumes computed by the compute shader
@@ -219,7 +220,7 @@ float sampleDensity(vec3 position) {
     const float erosionWeight = getErosionWeightQuntic(hiResDensity);
 
     const float density = hiResDensityWithOffset - erosionWeight*loResDensityWeight * loResDensity;
-    return max(density * densityMult*10.f, 0.f);
+    return max(density * densityMult*5.f, 0.f);
 }
 
 // One-bounce raymarch to get light transmittance
@@ -240,6 +241,7 @@ float computeLightTransmittance(vec3 rayOrig, vec3 rayDir) {
     tau *= (cloudLightAbsorptionMult * dt);  // delay multiplication to save compute and avoid precision issues
     float lightTransmittance = exp(tau);
 
+    // ambient hack to make clouds less dark
     return minLightTransmittance + lightTransmittance * (1.f - minLightTransmittance);
 }
 
@@ -302,44 +304,37 @@ vec4 getNightColor(float longitudeRadians) {
     float newG = -gray*timeOfDay + origColor[1]*(1+timeOfDay);
     float newB = -gray*timeOfDay + origColor[2]*(1+timeOfDay);
 
-    return vec4(newR, newG, newB, origColor[2]);
+    return vec4(newR, newG, newB, origColor[2]) * 0.3;
 //    return texture(nightColor, uv);
 }
 
 
 void main() {
-    // Solid geometry
+    /* ---------------------- solid geometry ----------------------  */
     const float zSolid = linearizeDepth( texture(solidDepth, uv).r );
     const float tHitSolid = depth2RayLength(zSolid);
     const vec4 colorSolid = texture(solidColor, uv);
 
+    /* ---------------------------- ray ---------------------------- */
     const vec3 rayDirWorld = normalize(rayDirWorldspace);
     vec2 tHit = intersectBox(rayOrigWorld, rayDirWorld);
     tHit.x = max(tHit.x, 0.f);  // keep the near intersection in front of the camera
     tHit.y = min(tHit.y, tHitSolid);  // keep far intersection in front of solid geometry
-
     vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
 
+    /* -------------------------- light ---------------------------- */
     const float sunLatitudeRadians = radians(testLight.latitude);
     const float sunLongitudeRadians = radians(testLight.longitude);
-
-
     const vec3 sunDirSpherical = dirSph2Cart(sunLatitudeRadians, sunLongitudeRadians);
     const vec3 sunPos = SUN_RADIUS * sunDirSpherical;
-    const vec3 dirLight = normalize(sunPos - pointWorld);
+    const vec3 dirLight = normalize(sunPos - pointWorld);  // use actual sun location for more epic sunset
 //    const vec3 dirLight = dirSph2Cart(sunLatitudeRadians, sunLongitudeRadians);  // towards the light
-//    const vec3 dirLight = normalize(testLight.dir);  // towards the light
-
 
     const float cosRayLightAngle = dot(rayDirWorld, dirLight);
     const float phaseVal = phase(cosRayLightAngle);  // directional light only for now
     const vec3 sunColor = getSunColor(sunLongitudeRadians);
 
-    vec3 cloudColor = vec3(0.f);
-    float transmittance = 1.f;
-    float lightEnergy = 0.f;
-
-    //----------------------skycolor related-------------------
+    /* ----------------------------- sky -------------------------- */
     vec3 inScatteredLight = vec3(0.0, 0.0, 0.0);
     float scatteringStrength = 0.09;
     vec3 wavelengths = vec3(700, 530, 440);
@@ -356,120 +351,52 @@ void main() {
     float planetRadius = 1000.0;
     vec3 planetCenter = vec3(0.0, -planetRadius, 0.0);
 
+    // ================================================================== //
 
-
-//    /********************* Ver. Jamie *******************/
-//    // Ray hit the box, let's do volume rendering!
-//    if (tHit.x < tHit.y) {
-////        // Mode A. fixed number of steps
-////        const float dt = (tHit.y - tHit.x) / numSteps;
-////        const vec3 ds = rayDirWorld * dt;
-
-//        // Mode B. adaptive step size
-//        const float distTotal = (tHit.y - tHit.x);
-//        const float stepSizeFine = min(STEPSIZE_FINE, distTotal / MIN_NUM_FINE_STEPS);
-//        const float stepSizeCoarse = min(stepSizeFine * COARSE_STEPSIZE_MULTIPLIER, distTotal);
-//        const float distBackTrack = .4f * stepSizeCoarse;
-////        const float distBackTrack = .0f * stepSizeCoarse;
-
-//        // Initialize all the variables
-//        int fineStepsLeft = MAX_NUM_MISSED_STEPS;
-//        float distTravelled = 0;
-//        float dt = stepSizeCoarse;  // start with coarse steps
-//        bool stepIsFine = false;
-//        vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
-
-//        // Optionally apply random offset on ray start to minimize color banding
-//        const int seed = int(gl_FragCoord.y + 3000 * gl_FragCoord.x);
-//        const float eps = wangHash(seed);
-//        const float offset = eps * stepSizeCoarse;  // max offset is one coarse step
-//        pointWorld += offset * rayDirWorld;
-//        distTravelled += offset;
-
-//        // Raymarching starts
-//        while (distTravelled < distTotal) {
-
-//            distTravelled += dt;
-//            pointWorld += rayDirWorld * dt;
-
-//            const float density = sampleDensity(pointWorld);
-
-//            // Hit the cloud
-//            if (density > 0.f) {
-//                if (!stepIsFine) {
-//                    // Backtrack half a coarse step and switch to
-//                    // fine mode if the previous step was coarse
-//                    distTravelled -= distBackTrack;
-//                    pointWorld -= rayDirWorld * distBackTrack;
-//                    dt = stepSizeFine;
-//                    stepIsFine = true;
-//                } else {
-//                    // Regular volume rendering pass
-//                    // Cast secondary ray to sun, accumulate energy and transmittance
-//                    const float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
-//                    lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
-//                    transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
-
-//                    // Early stopping
-//                    if (transmittance < EARLY_STOP_THRESHOLD) break;
-//                }
-
-//                // Reset fine steps countdown since we hit the clodu
-//                fineStepsLeft = MAX_NUM_MISSED_STEPS;
-
-//            } else if (--fineStepsLeft <= 0) {
-//                // Missed cloud, decrement fine steps countdown by one
-//                // If we've missed the clouds for too many steps, switch to coarse mode
-//                dt = stepSizeCoarse;
-//                stepIsFine = false;
-//            }
-
-//        }  // Raymarching ends
-
-//        cloudColor = lightEnergy * sunColor;
-////        cloudColor = lightEnergy * testLight.color;
-//    }
-
-      /*********************** Ver. Zhou **************************/
+    // Volume rendering with adaptive step sizes
+    vec3 cloudColor = vec3(0.f);
+    float transmittance = 1.f;
+    float lightEnergy = 0.f;
     if (tHit.x < tHit.y) {  // hit box
-        // starting from the near intersection, march the ray forward and sample
+        // Starting from the near intersection, march the ray forward and sample
         float dstTravelled = 0;
         float totalDst = (tHit.y - tHit.x);
         float curFineStepSize = min(STEPSIZE_FINE, totalDst/MIN_NUM_FINE_STEPS);
         float curCoarseStepSize = curFineStepSize*COARSE_STEPSIZE_MULTIPLIER;
         int curThreshold = MAX_NUM_MISSED_STEPS;
-        float dt = curFineStepSize;
-//        const vec3 ds = rayDirWorld * dt;
+        float dt = curCoarseStepSize;
 
-        while (dstTravelled < totalDst){
+        // Optionally apply random offset on ray start to minimize color banding
+        const int seed = int(gl_FragCoord.y + 3000 * gl_FragCoord.x);
+        const float eps = wangHash(seed);
+        const float offset = eps * curFineStepSize;  // max offset is one coarse step
+        pointWorld += offset * rayDirWorld;
+        dstTravelled += offset;
+
+        while (dstTravelled < totalDst) {
+            // sample density and evaluate vol rendering equation
             float density = sampleDensity(pointWorld);
             if (density > 0.f) {
                 float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
-                lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
-                // TAYLOR
-                transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
-//                transmittance *= (1 - density * cloudLightAbsorptionMult * dt);
+                lightEnergy += density * transmittance * lightTransmittance * dt;
+                transmittance *= (1 - density * cloudLightAbsorptionMult * dt);  // Taylor approx for exp(-density * cloudLightAbsorptionMult * dt)
                 if (transmittance < EARLY_STOP_THRESHOLD)
                     break;
-
-                // adjust next step
-                curThreshold = density < SMALL_DENSITY ? curThreshold - 1: MAX_NUM_MISSED_STEPS;
-                // change to big step
-                if (curThreshold <= 0) {
-                    dt = curCoarseStepSize;
-                // check change to small step
-                } else if (dt == curCoarseStepSize) {
-                    // if prev is big step, traceback and change to small step
-                    dt = curFineStepSize;
-                }
+                curThreshold = MAX_NUM_MISSED_STEPS;  // hit cloud, reset countdown
             } else {
                 curThreshold -= 1;
             }
 
+            // advance ray sample point
             dstTravelled += dt;
-            pointWorld += dt*rayDirWorld;
+            pointWorld += rayDirWorld * dt;
+
+            // switch to coarse if we missed too many steps, otherwise use fine
+            dt = curThreshold <= 0? curCoarseStepSize : curFineStepSize;
         }
 
+        // TODO: adjust sunColor at night
+        lightEnergy *= phaseVal;
         cloudColor = lightEnergy * sunColor;
     }
 
@@ -488,7 +415,7 @@ void main() {
         float sunRayOpticalDepth = opticalDepth(pointWorld, sunDirSpherical, sunRayLength, planetCenter, planetRadius, atmosRadius) ;
 
         viewRayOpticalDepth = opticalDepth(pointWorld, -rayDirWorld, stepSize * i, planetCenter, planetRadius, atmosRadius);
-        vec3 transSky = exp(- (sunRayOpticalDepth + viewRayOpticalDepth)* scatteringCoeff);
+        vec3 transSky = exp( -(sunRayOpticalDepth + viewRayOpticalDepth)*scatteringCoeff );
         inScatteredLight += localDensity * transSky * scatteringCoeff * stepSize;
         pointWorld += rayDirWorld * stepSize;
     }
@@ -497,11 +424,12 @@ void main() {
     float sunIntensity;
     float timeOfDay = abs(sunLongitudeRadians) / HALF_PI;  // 0: noon, 1: dusk/dawn
 
-    if (raySphere(planetCenter, planetRadius, rayOrigWorld, rayDirWorld) > 0.0) { // if below the horizon
+    if (raySphere(planetCenter, planetRadius, rayOrigWorld, rayDirWorld) > 0.0) {
+        // if below the horizon, set bg to black and zero sun intensity
         backgroundColor = vec3(0.f);
         sunIntensity = 0;
     } else {
-
+        // otherwise, composite sky and the sun normally
         vec3 originalColor = vec3(0.0, 0.0, 0.0);
         originalColor = vec3(getNightColor(sunLongitudeRadians));
         float originalColTrans = exp(- viewRayOpticalDepth);
@@ -513,26 +441,23 @@ void main() {
         if (timeOfDay < lower_threshold) {
             coeff = originalColTrans;
             backgroundColor = vec3(0.0) * coeff + inScatteredLight;
-        }else {
+        } else {
             coeff = 1.0/(hi-lower_threshold)*(1 - originalColTrans)*(timeOfDay - hi) + 1.0;
             backgroundColor = originalColor * coeff + inScatteredLight;
         }
 
-
-        const float MAX_SUN_INTENSITY = 4.f;
         sunIntensity = henyeyGreenstein(dot(rayDirWorld, sunDirSpherical), .9995) * transmittance;
         sunIntensity = min(sunIntensity, MAX_SUN_INTENSITY);
     }
-
-    if (texture(solidDepth, uv).r < 1) {  // solid
+    if (texture(solidDepth, uv).r < 1) {  // hit solid
         backgroundColor = colorSolid.rgb;
         sunIntensity = 0;
     }
 
-//    if (timeOfDay > 0.95) {
-//        float alpha = 1.0/0.2*(timeOfDay-0.95);
-//        cloudColor = alpha * vec3(0.0, 0.0, 0.0) + (1-alpha) * cloudColor;
-//    }
+    if (timeOfDay > 0.999) {
+        float alpha = 1.0/0.2*(timeOfDay-0.999);
+        cloudColor = (1-alpha) * cloudColor;
+    }
 
     vec3 cloudOnBackground = min(cloudColor + transmittance*backgroundColor, 1.f);
     
