@@ -10,33 +10,16 @@
 // Constructor
 TerrainGenerator::TerrainGenerator()
 {
-  // Task 8: turn off wireframe shading
-  m_wireshade = false; // STENCIL CODE
-  // m_wireshade = false; // TA SOLUTION
-
-  // Define resolution of terrain generation
-  m_resolution = 100;
-
-  // Generate random vector lookup table
-  m_lookupSize = 1024;
-  m_randVecLookup.reserve(m_lookupSize);
-
-  // Initialize random number generator
-  std::srand(1230);
-
-  // Populate random vector lookup table
-  for (int i = 0; i < m_lookupSize; i++)
-  {
-    m_randVecLookup.push_back(glm::vec2(std::rand() * 2.0 / RAND_MAX - 1.0,
-                                        std::rand() * 2.0 / RAND_MAX - 1.0));
-    }
+    m_resolution = 2048;
+    m_gridRes = 16;
+    m_numOctaves = 5;
+    translation = glm::vec3(0.0, 0.0, 0.0);
+    m_xScale = 2.0;
+    m_yScale = 1.0;
 }
 
 // Destructor
-TerrainGenerator::~TerrainGenerator()
-{
-    m_randVecLookup.clear();
-}
+TerrainGenerator::~TerrainGenerator(){}
 
 // Helper for generateTerrain()
 void addPointToVector(glm::vec3 point, std::vector<float>& vector) {
@@ -46,90 +29,13 @@ void addPointToVector(glm::vec3 point, std::vector<float>& vector) {
 }
 
 
-//// Generates the geometry of the output triangle mesh
-//std::vector<float> TerrainGenerator::generateTerrain() {
-//    std::vector<float> verts;
-////    verts.reserve(m_x * m_resolution * m_y * m_resolution * 6);
-//    verts.reserve(m_resolution * m_resolution * 6);
-
-
-////    for(int x = 0; x < m_x * m_resolution; x++) {
-////        for(int y = 0; y < m_y * m_resolution; y++) {
-//    for(int x = 0; x <  m_resolution; x++) {
-//        for(int y = 0; y < m_resolution; y++) {
-//            int x1 = x;
-//            int y1 = y;
-
-//            int x2 = x + 1;
-//            int y2 = y + 1;
-
-//            glm::vec3 p1 = getPosition(x1,y1);
-//            glm::vec3 p2 = getPosition(x2,y1);
-//            glm::vec3 p3 = getPosition(x2,y2);
-//            glm::vec3 p4 = getPosition(x1,y2);
-
-////            p1 += translation;
-////            p2 += translation;
-////            p3 += translation;
-////            p4 += translation;
-
-
-//            glm::vec3 n1 = getNormal(x1,y1);
-//            glm::vec3 n2 = getNormal(x2,y1);
-//            glm::vec3 n3 = getNormal(x2,y2);
-//            glm::vec3 n4 = getNormal(x1,y2);
-
-
-//            addPointToVector(p3 + translation, verts);
-//            addPointToVector(n3, verts);
-//            addPointToVector(getColor(n3, p3), verts);
-
-//            addPointToVector(p2 + translation, verts);
-//            addPointToVector(n2, verts);
-//            addPointToVector(getColor(n2, p2), verts);
-
-//            addPointToVector(p1+ translation, verts);
-//            addPointToVector(n1, verts);
-//            addPointToVector(getColor(n1, p1), verts);
-
-//            // tris 2
-//            // x1y1z1
-//            // x2y2z3
-//            // x1y2z4
-//            addPointToVector(p4+ translation, verts);
-//            addPointToVector(n4, verts);
-//            addPointToVector(getColor(n4, p4), verts);
-
-
-//            addPointToVector(p3+ translation, verts);
-//            addPointToVector(n3, verts);
-//            addPointToVector(getColor(n3, p3), verts);
-
-//            addPointToVector(p1+ translation, verts);
-//            addPointToVector(n1, verts);
-//            addPointToVector(getColor(n1, p1), verts);
-
-//            // for height map and normal map
-//            height_data.push_back((p1+translation)[2]);
-//            addPointToVector(n1, normal_data);
-////            std::cout << "normal" << n1[0] << " " << n1[2] << " " << n1[1] << std::endl;
-//        }
-//    }
-//    return verts;
-//}
-
-
-
 // scaling version zhou
 void TerrainGenerator::generateTerrain() {
-
-    int noiseRes = 1000;
-    int gridRes = 3;
-    int numOctaves = 5;
-    auto perlinGen = Perlin(noiseRes, gridRes, numOctaves);
+    auto perlinGen = Perlin(m_resolution, m_gridRes, m_numOctaves);
     auto noiseMap = perlinGen.generatePerlinNoise2D();
+
     for (auto &v : noiseMap)
-        v = (v + 1) / 3;
+        v = v / 20;
 
     // get height map
     height_data = noiseMap;
@@ -138,12 +44,6 @@ void TerrainGenerator::generateTerrain() {
     xz_data.reserve(m_xScale * m_resolution * m_yScale * m_resolution * 6);
     for(int x = 0; x < m_xScale * m_resolution; x++) {
         for(int z = 0; z < m_yScale * m_resolution; z++) {
-//            float x1 = 1.0 * x / m_resolution;
-//            float z1 = 1.0 * z / m_resolution;
-
-//            float x2 = 1.0 * (x + 1) / m_resolution;
-//            float z2 = 1.0 * (z + 1) / m_resolution;
-
             int x1 = x;
             int z1 = z;
             int x2 = x + 1;
@@ -154,152 +54,39 @@ void TerrainGenerator::generateTerrain() {
             glm::vec3 p3 = getPosition(x2, z2);
             glm::vec3 p4 = getPosition(x1, z2);
 
-            glm::vec3 n1 = getNormal(x1, z1);
-            glm::vec3 n2 = getNormal(x2, z1);
-            glm::vec3 n3 = getNormal(x2, z2);
-            glm::vec3 n4 = getNormal(x1, z2);
-
             // push p3: [x2, z2]
             xz_data.push_back(p3.x);
             xz_data.push_back(p3.y);
-//            addPointToVector(n3, xz_data);
             // push p2: [x2, z1]
             xz_data.push_back(p2.x);
             xz_data.push_back(p2.y);
-//            addPointToVector(n2, xz_data);
             // push p1: [x1, z1]
             xz_data.push_back(p1.x);
             xz_data.push_back(p1.y);
-//            addPointToVector(n1, xz_data);
 
             // push p4: [x1, z2]
             xz_data.push_back(p4.x);
             xz_data.push_back(p4.y);
-//            addPointToVector(n4, xz_data);
             // push p3: [x2, z2]
             xz_data.push_back(p3.x);
             xz_data.push_back(p3.y);
-//            addPointToVector(n3, xz_data);
             // push p1: [x1, z1]
             xz_data.push_back(p1.x);
             xz_data.push_back(p1.y);
-//            addPointToVector(n1, xz_data);
 
             if (x<m_resolution && z<m_resolution) {
-//                glm::vec3 n1 = getNormal(x1, z1);
+                glm::vec3 n1 = getNormal(x1, z1);
+                glm::vec3 c1 = getColor(n1, p1);
                 addPointToVector(n1, normal_data);
+                addPointToVector(c1, color_data);
             }
 
         }
     }
-
-//    // get normal map
-//    normal_data.reserve(m_resolution * m_resolution * 3);
-//    for ()
-
-    std::cout << "test noise" << noiseMap.size() << '\n';
-
-//    std::vector<float> verts;
-//    verts.reserve(m_xScale * m_resolution * m_yScale * m_resolution * 6);
-
-//    for(int x = 0; x < m_xScale * m_resolution; x++) {
-//        for(int y = 0; y < m_yScale * m_resolution; y++) {
-//            int x1 = x;
-//            int y1 = y;
-
-//            int x2 = x + 1;
-//            int y2 = y + 1;
-
-//            glm::vec3 p1 = getPosition(x1,y1);
-//            glm::vec3 p2 = getPosition(x2,y1);
-//            glm::vec3 p3 = getPosition(x2,y2);
-//            glm::vec3 p4 = getPosition(x1,y2);
-
-////            p1 += translation;
-////            p2 += translation;
-////            p3 += translation;
-////            p4 += translation;
-
-
-//            glm::vec3 n1 = getNormal(x1, y1);
-//            glm::vec3 n2 = getNormal(x2, y1);
-//            glm::vec3 n3 = getNormal(x2, y2);
-//            glm::vec3 n4 = getNormal(x1, y2);
-
-
-//            addPointToVector(p3 + translation, verts);
-//            addPointToVector(n3, verts);
-//            addPointToVector(getColor(n3, p3), verts);
-
-//            addPointToVector(p2 + translation, verts);
-//            addPointToVector(n2, verts);
-//            addPointToVector(getColor(n2, p2), verts);
-
-//            addPointToVector(p1+ translation, verts);
-//            addPointToVector(n1, verts);
-//            glm::vec3 n1_color = getColor(n1, p1);
-//            addPointToVector(n1_color, verts);
-
-//            // tris 2
-//            // x1y1z1
-//            // x2y2z3
-//            // x1y2z4
-//            addPointToVector(p4+ translation, verts);
-//            addPointToVector(n4, verts);
-//            addPointToVector(getColor(n4, p4), verts);
-
-
-//            addPointToVector(p3+ translation, verts);
-//            addPointToVector(n3, verts);
-//            addPointToVector(getColor(n3, p3), verts);
-
-//            addPointToVector(p1+ translation, verts);
-//            addPointToVector(n1, verts);
-//            addPointToVector(getColor(n1, p1), verts);
-
-//            if (x<m_resolution && y<m_resolution) {
-////                height_data.push_back((p1+translation)[2]);
-//                addPointToVector(n1_color, color_data);
-//                addPointToVector(n1, normal_data);
-//            }
-
-////            // for height map and normal map
-////            if (x<m_resolution && y<m_resolution) {
-////                height_data.push_back((p1+translation)[2]);
-////                addPointToVector(n1_color, color_data);
-////                addPointToVector(n1, normal_data);
-////            }
-//////            std::cout << "normal" << n1[0] << " " << n1[2] << " " << n1[1] << std::endl;
-//        }
-//    }
-////    return verts;
 }
 
-// Samples the (infinite) random vector grid at (row, col)
-glm::vec2 TerrainGenerator::sampleRandomVector(int row, int col)
-{
-    std::hash<int> intHash;
-    int index = intHash(row * 41 + col * 43) % m_lookupSize; // comment for test
-//    int index = 42;
-    return m_randVecLookup.at(index);
-}
 
-//// Takes a grid coordinate (row, col), [0, m_resolution), which describes a vertex in a plane mesh
-//// Returns a normalized position (x, y, z); x and y in range from [0, 1), and z is obtained from getHeight()
-//glm::vec3 TerrainGenerator::getPosition(int row, int col) {
-//    // Normalizing the planar coordinates to a unit square
-//    // makes scaling independent of sampling resolution.
-//    float x = m_xScale * row / m_resolution ;
-//    float y = m_yScale * col / m_resolution ;
-//    float z = getHeight(x, y);
-//    return glm::vec3(x,y,z);
-//}
-
-// Takes a grid coordinate (row, col), [0, m_resolution), which describes a vertex in a plane mesh
-// Returns a normalized position (x, y, z); x and y in range from [0, 1), and z is obtained from getHeight()
 glm::vec3 TerrainGenerator::getPosition(int row, int col) {
-    // Normalizing the planar coordinates to a unit square
-    // makes scaling independent of sampling resolution.
     float x = 1.0 * row / m_resolution ;
     float y = 1.0 * col / m_resolution ;
     float z = getHeight(row, col);
@@ -314,49 +101,18 @@ void TerrainGenerator::setMxMy(float x, float y) {
 }
 void TerrainGenerator::setTranslation(glm::vec3 trans) {
     translation = glm::vec3(trans[0], trans[2], trans[1]);
-
 }
 
-// ================== Students, please focus on the code below this point
-
-// Helper for computePerlin() and, possibly, getColor()
-float interpolate(float A, float B, float alpha) {
-    // Task 4: implement your easing/interpolation function below
-
-    return A + (3*alpha*alpha - 2*std::pow(alpha,3))*(B - A);
-}
-
-//// Takes a normalized (x, y) position, in range [0,1)
-//// Returns a height value, z, by sampling a noise function
-//float TerrainGenerator::getHeight(float x, float y) {
-
-//    // Task 6: modify this call to produce noise of a different frequency
-////    float z = computePerlin(x * 20, y * 20) / 2;
-
-//    // Task 7: combine multiple different octaves of noise to produce fractal perlin noise
-//    float z1 = computePerlin(x, y);
-//    float z2 = computePerlin(x*2, y*2) / 2;
-//    float z3 = computePerlin(x*4, y*4) / 4;
-//    float z4 = computePerlin(x*8, y*8) / 8;
-//    float z5 = computePerlin(x*16, y*16) / 16;
-//    float z6 = computePerlin(x*32, y*32) / 32;
-//    float z7 = computePerlin(x*64, y*64) / 64;
-////return z7;
-//    return z1 + z2 + z3 + z4 + z5 + z6 + z7;
-////    return z1;
-//}
 
 float TerrainGenerator::getHeight(int row, int col) {
     int modRow = (row+m_resolution)%m_resolution;
     int modCol = (col+m_resolution)%m_resolution;
     int index = modRow*m_resolution + modCol;
-//    std::cout << "check" << index << '\n';
     return height_data[index];
 }
 
 // Computes the normal of a vertex by averaging neighbors
 glm::vec3 TerrainGenerator::getNormal(int row, int col) {
-    // Task 9: Compute the average normal for the given input indices
     glm::vec3 normal = glm::vec3(0, 0, 0);
     std::vector<std::vector<int>> neighborOffsets = { // Counter-clockwise around the vertex
      {-1, -1},
@@ -368,7 +124,6 @@ glm::vec3 TerrainGenerator::getNormal(int row, int col) {
      {-1,  1},
      {-1,  0}
     };
-//    std::cout << row << " " << col << '\n';
     glm::vec3 V = getPosition(row,col);
     for (int i = 0; i < 8; ++i) {
      int n1RowOffset = neighborOffsets[i][0];
@@ -377,69 +132,12 @@ glm::vec3 TerrainGenerator::getNormal(int row, int col) {
      int n2ColOffset = neighborOffsets[(i + 1) % 8][1];
      glm::vec3 n1 = getPosition(row + n1RowOffset, col + n1ColOffset);
      glm::vec3 n2 = getPosition(row + n2RowOffset, col + n2ColOffset);
-//     std::cout << "normal" << n1[0] << " " << n1[2] << " " << n1[1] << std::endl;
      normal = normal + glm::cross(n1 - V, n2 - V);
     }
     return glm::normalize(normal);
 }
 
-// Computes color of vertex using normal and, optionally, position
+// TODO: change to the other computing methods by using the height and normal
 glm::vec3 TerrainGenerator::getColor(glm::vec3 normal, glm::vec3 position) {
-    // Task 10: compute color as a function of the normal and position
-//    if (position[2] < 0.005) {
-//        return glm::vec3(0.0,0.0,0.4);
-//    }
-//    if (glm::dot(normal, glm::vec3(0,0,1)) >= 0.6 && position[2] > 0.06) {
-//        return glm::vec3(1,1,1);
-//    }
-    // Return white as placeholder
     return glm::vec3(0,0,0.4);
-//    return glm::vec3(position[2]);
-}
-
-// Computes the intensity of Perlin noise at some point
-float TerrainGenerator::computePerlin(float x, float y) {
-    // Task 1: get grid indices (as ints)
-    int x1 = std::floor(x);
-    int x2 = x1 + 1;
-    int y1 = std::floor(y);
-    int y2 = y1 + 1;
-
-    // Task 2: compute offset vectors
-    glm::vec2 v1 = glm::vec2(x-x1, y-y1);
-    glm::vec2 v2 = glm::vec2(x-x1, y-y2);
-    glm::vec2 v3 = glm::vec2(x-x2, y-y1);
-    glm::vec2 v4 = glm::vec2(x-x2, y-y2);
-
-
-//    int x1_ = (x1+(m_resolution-1))%(m_resolution-1);
-//    int x2_ = (x2+(m_resolution-1))%(m_resolution-1);
-//    int y1_ = (y1+(m_resolution-1))%(m_resolution-1);
-//    int y2_ = (y2+(m_resolution-1))%(m_resolution-1);
-
-    int x1_ = (x1+m_resolution)%(m_resolution);
-    int x2_ = (x2+m_resolution)%(m_resolution);
-    int y1_ = (y1+m_resolution)%(m_resolution);
-    int y2_ = (y2+m_resolution)%(m_resolution);
-
-
-    // Task 3: compute the dot product between offset and grid vectors
-    float dot1 = glm::dot(v1, sampleRandomVector(x1_,y1_));
-    float dot2 = glm::dot(v2, sampleRandomVector(x1_,y2_));
-    float dot3 = glm::dot(v3, sampleRandomVector(x2_,y1_));
-    float dot4 = glm::dot(v4, sampleRandomVector(x2_,y2_));
-
-//    // Task 3: compute the dot product between offset and grid vectors
-//    float dot1 = glm::dot(v1, sampleRandomVector(x1,y1));
-//    float dot2 = glm::dot(v2, sampleRandomVector(x1,y2));
-//    float dot3 = glm::dot(v3, sampleRandomVector(x2,y1));
-//    float dot4 = glm::dot(v4, sampleRandomVector(x2,y2));
-
-
-    // Task 5: use your interpolation function to produce the final value
-    float val1 = interpolate(dot1, dot3, x-x1);
-    float val2 = interpolate(dot2, dot4, x-x1);
-    float val3 = interpolate(val1, val2, y-y1);
-
-    return val3;
 }

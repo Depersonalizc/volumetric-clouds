@@ -131,10 +131,6 @@ private:
     glm::mat4 m_world;
 
     TerrainGenerator m_terrain;
-    int m_terrainRes;
-    float m_terrainScaleX;
-    float m_terrainScaleY;
-    glm::vec3 m_terrainTranslation;
 
     QPoint m_prevMousePos;
     float m_angleX;
@@ -146,8 +142,6 @@ private:
     GLuint m_terrain_height_texture;
     GLuint m_terrain_normal_texture;
     GLuint m_terrain_color_texture;
-    GLuint m_fullscreen_vbo;
-    GLuint m_fullscreen_vao;
 
     void paintTexture(GLuint texture);
     int m_screen_width;
