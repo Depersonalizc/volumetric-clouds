@@ -51,7 +51,8 @@ void main(void)
     vec3 lightDir = dirSph2Cart(sunLatitudeRadians, sunLongitudeRadians);  // towards the light
     vec3 lightColor = getSunColor(sunLongitudeRadians);
 
-    vec3 ambient = ambientColor * color * ka;
+//    vec3 ambient = ambientColor * color * ka;
+    vec3 ambient = lightColor * color * ka;
 
     float diffuseStrength = clamp(dot(normal, lightDir), 0, 1);
     vec3 diffuse = color * lightColor * diffuseStrength * kd;

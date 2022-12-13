@@ -12,7 +12,9 @@
 #define COARSE_STEPSIZE_MULTIPLIER 10.f
 #define SMALL_DENSITY 0.005f
 #define MAX_NUM_MISSED_STEPS 5
-#define STEPSIZE_FINE 0.01f
+#define STEPSIZE_FINE 0.05f
+
+#define SUN_RADIUS 100.f
 
 // density volumes computed by the compute shader
 layout(binding = 0) uniform sampler3D volumeHighRes;
@@ -175,8 +177,21 @@ float xzFalloff(vec3 position) {
 
 float sampleDensity(vec3 position) {
     // Sample high-res shape textures
-    const vec3 hiResPosition = position * hiResNoiseScaling[0] * .1f + hiResNoiseTranslate; // TODO: hiResNoiseScaling change to 4 channel scaling
-    const vec4 hiResNoise = texture(volumeHighRes, hiResPosition);
+
+    const vec3 hiResT = .1f * hiResNoiseTranslate;
+    const vec4 hiResS = .1f * hiResNoiseScaling;
+
+    const mat4x3 hiResPosition = outerProduct(position, hiResS) + outerProduct(hiResT, vec4(1.f));
+
+    const vec4 hiResNoise = vec4(
+                texture(volumeHighRes, hiResPosition[0]).r,
+                texture(volumeHighRes, hiResPosition[1]).g,
+                texture(volumeHighRes, hiResPosition[2]).b,
+                texture(volumeHighRes, hiResPosition[3]).a
+                );
+
+//    const vec3 hiResPosition = position * .1f * hiResNoiseScaling[0] * .1f + hiResNoiseTranslate; // TODO: hiResNoiseScaling change to 4 channel scaling
+//    const vec4 hiResNoise = texture(volumeHighRes, hiResPosition);
     float hiResDensity = dot( hiResNoise, normalizeL1(hiResChannelWeights) );
     if (invertDensity)
         hiResDensity = 1.f - hiResDensity;
@@ -303,10 +318,19 @@ void main() {
     tHit.x = max(tHit.x, 0.f);  // keep the near intersection in front of the camera
     tHit.y = min(tHit.y, tHitSolid);  // keep far intersection in front of solid geometry
 
+    vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
+
     const float sunLatitudeRadians = radians(testLight.latitude);
     const float sunLongitudeRadians = radians(testLight.longitude);
-    const vec3 dirLight = dirSph2Cart(sunLatitudeRadians, sunLongitudeRadians);  // towards the light
+
+
+    const vec3 sunDirSpherical = dirSph2Cart(sunLatitudeRadians, sunLongitudeRadians);
+    const vec3 sunPos = SUN_RADIUS * sunDirSpherical;
+    const vec3 dirLight = normalize(sunPos - pointWorld);
+//    const vec3 dirLight = dirSph2Cart(sunLatitudeRadians, sunLongitudeRadians);  // towards the light
 //    const vec3 dirLight = normalize(testLight.dir);  // towards the light
+
+
     const float cosRayLightAngle = dot(rayDirWorld, dirLight);
     const float phaseVal = phase(cosRayLightAngle);  // directional light only for now
     const vec3 sunColor = getSunColor(sunLongitudeRadians);
@@ -417,14 +441,14 @@ void main() {
         float dt = curFineStepSize;
 //        const vec3 ds = rayDirWorld * dt;
 
-        vec3 pointWorld = rayOrigWorld + tHit.x * rayDirWorld;
-
         while (dstTravelled < totalDst){
             float density = sampleDensity(pointWorld);
             if (density > 0.f) {
                 float lightTransmittance = computeLightTransmittance(pointWorld, dirLight);
                 lightEnergy += density * transmittance * lightTransmittance * phaseVal * dt;
+                // TAYLOR
                 transmittance *= exp(-density * cloudLightAbsorptionMult * dt);
+//                transmittance *= (1 - density * cloudLightAbsorptionMult * dt);
                 if (transmittance < EARLY_STOP_THRESHOLD)
                     break;
 
@@ -453,15 +477,15 @@ void main() {
     //----------------------------skycolor related-------------------------------
     // Compute color of the sky (background)
     float scaler = 70.0;
-    vec3 pointWorld = rayOrigWorld;
+    pointWorld = rayOrigWorld;
     float rayLength = raySphere(planetCenter, atmosRadius, pointWorld, normalize(rayDirWorld));
     float stepSize = rayLength / (numInScatteringPoints - 1);
 
     for (int i = 0; i < numInScatteringPoints; i++) {
         float localDensity = densityAtPoint(pointWorld, planetCenter, planetRadius, atmosRadius);
-        float sunRayLength = raySphere(planetCenter, atmosRadius, pointWorld, dirLight) ;
+        float sunRayLength = raySphere(planetCenter, atmosRadius, pointWorld, sunDirSpherical) ;
 
-        float sunRayOpticalDepth = opticalDepth(pointWorld, dirLight, sunRayLength, planetCenter, planetRadius, atmosRadius) ;
+        float sunRayOpticalDepth = opticalDepth(pointWorld, sunDirSpherical, sunRayLength, planetCenter, planetRadius, atmosRadius) ;
 
         viewRayOpticalDepth = opticalDepth(pointWorld, -rayDirWorld, stepSize * i, planetCenter, planetRadius, atmosRadius);
         vec3 transSky = exp(- (sunRayOpticalDepth + viewRayOpticalDepth)* scatteringCoeff);
@@ -496,7 +520,7 @@ void main() {
 
 
         const float MAX_SUN_INTENSITY = 4.f;
-        sunIntensity = henyeyGreenstein(cosRayLightAngle, .9995) * transmittance;
+        sunIntensity = henyeyGreenstein(dot(rayDirWorld, sunDirSpherical), .9995) * transmittance;
         sunIntensity = min(sunIntensity, MAX_SUN_INTENSITY);
     }
 
@@ -505,10 +529,10 @@ void main() {
         sunIntensity = 0;
     }
 
-    if (timeOfDay > 0.95) {
-        float alpha = 1.0/0.2*(timeOfDay-0.95);
-        cloudColor = alpha * vec3(0.0, 0.0, 0.0) + (1-alpha) * cloudColor;
-    }
+//    if (timeOfDay > 0.95) {
+//        float alpha = 1.0/0.2*(timeOfDay-0.95);
+//        cloudColor = alpha * vec3(0.0, 0.0, 0.0) + (1-alpha) * cloudColor;
+//    }
 
     vec3 cloudOnBackground = min(cloudColor + transmittance*backgroundColor, 1.f);
     
