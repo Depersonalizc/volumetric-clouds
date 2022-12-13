@@ -139,5 +139,69 @@ glm::vec3 TerrainGenerator::getNormal(int row, int col) {
 
 // TODO: change to the other computing methods by using the height and normal
 glm::vec3 TerrainGenerator::getColor(glm::vec3 normal, glm::vec3 position) {
-    return glm::vec3(0,0,0.4);
+
+   // return glm::vec3(0,0,0.4);
+
+    // Task 10: compute color as a function of the normal and position
+    float y = position[2];
+//    std::cout<<y<<std::endl;
+//    glm::vec3 baseColor = glm::vec3(0.48, 0.78, 0.70);
+//    glm::vec3 baseColor = glm::vec3(0.133, 0.133, 0.543); // green
+//    glm::vec3 baseColor = glm::vec3(0.437, 0.437, 0.437); // dark gray
+        glm::vec3 baseColor = glm::vec3(0.199, 0.328, 0.238); // dark blue
+//    glm::vec3 midColor = glm::vec3(0.36, 0.20, 0.25); // brown
+//    glm::vec3 midColor = glm::vec3(0.63, 0.632, 0.634); // gray
+    glm::vec3 midColor = glm::vec3(0.473, 0.703, 0.562); // blue
+    glm::vec3 topColor = glm::vec3(1.0, 1.0, 1.0);
+    float thres1 = -0.12;
+    float thres2 = -0.1;
+    float thres3 = 0.006;
+    if (y < thres1) {
+        return baseColor;
+    }else if (y < thres2) {
+        float a = 1.0/(thres2 - thres1)*(y - thres1);
+        return baseColor * (1-a) + midColor * a;
+    }else if (y < thres3) {
+        float a = 1.0/(thres3 - thres2)*(y - thres2);
+        return midColor * (1-a) + topColor * a;
+
+    }else {
+        return glm::vec3(1,1,1);
+    }
+//    if (glm::dot(normal, glm::vec3(0,0,1)) >= 0.6 && y > 0.06) {
+//        return glm::vec3(1,1,1);
+//    }
+    // Return white as placeholder
+    return midColor;
+}
+
+// Computes the intensity of Perlin noise at some point
+float TerrainGenerator::computePerlin(float x, float y) {
+    // Task 1: get grid indices (as ints)
+    int x1 = std::floor(x);
+    int x2 = x1 + 1;
+    int y1 = std::floor(y);
+    int y2 = y1 + 1;
+
+    // Task 2: compute offset vectors
+    glm::vec2 v1 = glm::vec2(x-x1, y-y1);
+    glm::vec2 v2 = glm::vec2(x-x1, y-y2);
+    glm::vec2 v3 = glm::vec2(x-x2, y-y1);
+    glm::vec2 v4 = glm::vec2(x-x2, y-y2);
+
+
+    // Task 3: compute the dot product between offset and grid vectors
+    float dot1 = glm::dot(v1, sampleRandomVector(x1,y1));
+    float dot2 = glm::dot(v2, sampleRandomVector(x1,y2));
+    float dot3 = glm::dot(v3, sampleRandomVector(x2,y1));
+    float dot4 = glm::dot(v4, sampleRandomVector(x2,y2));
+
+
+    // Task 5: use your interpolation function to produce the final value
+    float val1 = interpolate(dot1, dot3, x-x1);
+    float val2 = interpolate(dot2, dot4, x-x1);
+    float val3 = interpolate(val1, val2, y-y1);
+
+    return val3;
+
 }
