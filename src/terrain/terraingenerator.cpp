@@ -201,14 +201,36 @@ glm::vec3 TerrainGenerator::getNormal(int row, int col) {
 // Computes color of vertex using normal and, optionally, position
 glm::vec3 TerrainGenerator::getColor(glm::vec3 normal, glm::vec3 position) {
     // Task 10: compute color as a function of the normal and position
-    if (position[2] < 0.005) {
-        return glm::vec3(0.0,0.0,0.4);
-    }
-    if (glm::dot(normal, glm::vec3(0,0,1)) >= 0.6 && position[2] > 0.06) {
+    float y = position[2];
+//    std::cout<<y<<std::endl;
+//    glm::vec3 baseColor = glm::vec3(0.48, 0.78, 0.70);
+//    glm::vec3 baseColor = glm::vec3(0.133, 0.133, 0.543); // green
+//    glm::vec3 baseColor = glm::vec3(0.437, 0.437, 0.437); // dark gray
+        glm::vec3 baseColor = glm::vec3(0.199, 0.328, 0.238); // dark blue
+//    glm::vec3 midColor = glm::vec3(0.36, 0.20, 0.25); // brown
+//    glm::vec3 midColor = glm::vec3(0.63, 0.632, 0.634); // gray
+    glm::vec3 midColor = glm::vec3(0.473, 0.703, 0.562); // blue
+    glm::vec3 topColor = glm::vec3(1.0, 1.0, 1.0);
+    float thres1 = -0.12;
+    float thres2 = -0.1;
+    float thres3 = 0.006;
+    if (y < thres1) {
+        return baseColor;
+    }else if (y < thres2) {
+        float a = 1.0/(thres2 - thres1)*(y - thres1);
+        return baseColor * (1-a) + midColor * a;
+    }else if (y < thres3) {
+        float a = 1.0/(thres3 - thres2)*(y - thres2);
+        return midColor * (1-a) + topColor * a;
+
+    }else {
         return glm::vec3(1,1,1);
     }
+//    if (glm::dot(normal, glm::vec3(0,0,1)) >= 0.6 && y > 0.06) {
+//        return glm::vec3(1,1,1);
+//    }
     // Return white as placeholder
-    return glm::vec3(0.5,0.5,0.5);
+    return midColor;
 }
 
 // Computes the intensity of Perlin noise at some point
