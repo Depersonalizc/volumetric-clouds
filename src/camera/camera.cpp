@@ -5,7 +5,10 @@
 
 
 Camera::Camera(SceneCameraData const &c_data, int c_width, int c_height, double c_near, double c_far) :
-    pos(c_data.pos), look(glm::normalize(c_data.look)), up(glm::normalize(c_data.up)),
+//    pos(c_data.pos), look(glm::normalize(c_data.look)), up(glm::normalize(c_data.up)),
+    pos(glm::vec4(0.000000, 0.000000, 5.279000, 1.000000)),
+    look(glm::normalize(c_data.look)),
+    up(glm::normalize(c_data.up)),
     heightAngle(c_data.heightAngle), width(c_width), height(c_height),
     nearPlane(c_near), farPlane(c_far),
     aspectRatio(static_cast<double>(width) / height)

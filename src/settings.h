@@ -39,12 +39,15 @@ struct Settings {
         .dir = glm::vec3(0,1,0),
         .pos = glm::vec4(0),
         .type = 1,
-        .longitude = 0.f,
-        .latitude = 0.f,
+//        .longitude = 0.f,
+//        .latitude = 0.f,
+        .longitude = 87.f,
+        .latitude = 182.f,
     };
 
     // Volume
-    glm::vec3 volumeScaling = glm::vec3(1.f);
+//    glm::vec3 volumeScaling = glm::vec3(1.f);
+        glm::vec3 volumeScaling = glm::vec3(24, 8, 4);
     glm::vec3 volumeTranslate = glm::vec3(0.f);
     int numSteps = 64; // SMALL_DST_SAMPLE_NUM
     float stepSize = 0.1f;    // world-space step size of rays, not used now
@@ -53,20 +56,27 @@ struct Settings {
     // Noise
     float densityMult = 1.f;  // density multiplier
     float cloudLightAbsorptionMult = 0.75f;
-    float minLightTransmittance = 0.01f;
+//    float minLightTransmittance = 0.01f;
+    float minLightTransmittance = 0.1f;
+
     bool invertDensity = true;
 
     NoiseParams hiResNoise = {
         .resolution = 200,
         .worleyPointsParams = {
-            WorleyPointsParams{6, 4, 2},    // R
+//            WorleyPointsParams{6, 4, 2},    // R
+                        WorleyPointsParams{6, 4, 5},    // R
             WorleyPointsParams{12, 8, 6},   // G
             WorleyPointsParams{24, 12, 8},  // B
-            WorleyPointsParams{32, 24, 12}, // A
+            WorleyPointsParams{32, 24, 32}, // A
         },
-        .scaling = glm::vec4(1.f),
-        .translate = glm::vec3(0.3f),
-        .channelWeights = glm::vec4(1.f, 1.f, 1.f, 1.f),
+//        .scaling = glm::vec4(1.f),
+        .scaling = glm::vec4(1.f, 3.5, 1.5, 1.5),
+
+        .translate = glm::vec3(-8.f, 0,0),
+//        .channelWeights = glm::vec4(1.f, 1.f, 1.f, 1.f),
+        .channelWeights = glm::vec4(10.f, 0.f, 4.f, 3.f),
+
         .persistence = 0.6f,
         .densityOffset = -0.3f,
     };
@@ -83,7 +93,8 @@ struct Settings {
         .translate = glm::vec3(.3f),
         .channelWeights = glm::vec4(1.f, 1.f, 1.f, 1.f),
         .persistence = 0.8f,
-        .densityWeight = 8.0f,
+//        .densityWeight = 8.0f,
+        .densityWeight = 26.f,
     };
 
     bool newFineArray = false;    // flag to tell if fine Worley array needs update

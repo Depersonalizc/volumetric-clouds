@@ -36,6 +36,7 @@
 
 
 
+
 constexpr std::array<GLfloat, 42> cube = {
     .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, .5f, .5f, -.5f, .5f, .5f, -.5f, -.5f, .5f, -.5f, .5f, -.5f, -.5f, -.5f, -.5f,
     .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, .5f, .5f, -.5f, .5f, -.5f, -.5f, .5f, .5f, -.5f, -.5f, -.5f, -.5f, -.5f
@@ -65,6 +66,9 @@ public:
     void finish();                                      // Called on program exit
     void volumeChanged();
     void settingsChanged();
+    void takeScreenShot(int curFrame);
+    std::string PATH = "./screenshot/sunset/";
+    int frameNumber = 0;
 
 public slots:
     void tick(QTimerEvent* event);                      // Called once per tick of m_timer

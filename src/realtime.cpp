@@ -8,6 +8,7 @@
 #include <QMouseEvent>
 #include <QKeyEvent>
 #include <QImage>
+#include <X11/Xmd.h>
 #include <iostream>
 #include <fstream>
 #include <vector>
@@ -145,7 +146,7 @@ void Realtime::drawTerrain() {
     glBindTexture(GL_TEXTURE_1D, sunTexture);
 
     glBindVertexArray(m_terrain_vao);
-    int res = m_terrain.getResolution();
+    int res = m_terrain.getTerrainResolution();
     glDrawArrays(GL_TRIANGLES, 0, res*res*6 * m_terrain.getScaleX() * m_terrain.getScaleY());
     glBindVertexArray(0);
     glUseProgram(0);
@@ -179,6 +180,12 @@ void Realtime::finish() {
     glDeleteProgram(m_worleyShader);
     glDeleteTextures(1, &volumeTexHighRes);
     glDeleteTextures(1, &volumeTexLowRes);
+
+    glDeleteBuffers(1, &m_terrain_vbo);
+    glDeleteVertexArrays(1, &m_terrain_vao);
+    glDeleteTextures(1, &m_terrain_color_texture);
+    glDeleteTextures(1, &m_terrain_height_texture);
+    glDeleteTextures(1, &m_terrain_normal_texture);
 
     this->doneCurrent();
 }
@@ -255,7 +262,7 @@ void Realtime::initializeGL() {
         glGenTextures(1, &m_terrain_height_texture);
         glActiveTexture(GL_TEXTURE6);
         glBindTexture(GL_TEXTURE_2D, m_terrain_height_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, m_terrain.getResolution(), m_terrain.getResolution(), 0, GL_RED, GL_FLOAT, m_terrain.getHeightMap().data());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RG32F, m_terrain.getNoiseResolution(), m_terrain.getNoiseResolution(), 0, GL_RED, GL_FLOAT, m_terrain.getHeightMap().data());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -263,7 +270,7 @@ void Realtime::initializeGL() {
         // start normal map modification
         glActiveTexture(GL_TEXTURE7);
         glBindTexture(GL_TEXTURE_2D, m_terrain_normal_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, m_terrain.getResolution(), m_terrain.getResolution(), 0, GL_RGB, GL_FLOAT, m_terrain.getNormalMap().data());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB32F, m_terrain.getTerrainResolution(), m_terrain.getTerrainResolution(), 0, GL_RGB, GL_FLOAT, m_terrain.getNormalMap().data());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -271,7 +278,7 @@ void Realtime::initializeGL() {
         // start color map modification
         glActiveTexture(GL_TEXTURE3);
         glBindTexture(GL_TEXTURE_2D, m_terrain_color_texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_terrain.getResolution(), m_terrain.getResolution(), 0, GL_RGB, GL_FLOAT, m_terrain.getColorMap().data());
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, m_terrain.getTerrainResolution(), m_terrain.getTerrainResolution(), 0, GL_RGB, GL_FLOAT, m_terrain.getColorMap().data());
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
         glBindTexture(GL_TEXTURE_2D, 0);
@@ -327,6 +334,8 @@ void Realtime::initializeGL() {
 
         // Noise
         glUniform1f(glGetUniformLocation(m_volumeShader, "densityMult"), settings.densityMult);
+        glUniform1f(glGetUniformLocation(m_volumeShader, "cloudLightAbsorptionMult"), settings.cloudLightAbsorptionMult);
+        glUniform1f(glGetUniformLocation(m_volumeShader, "minLightTransmittance"), settings.minLightTransmittance);
         glUniform1i(glGetUniformLocation(m_volumeShader, "invertDensity"), settings.invertDensity);
         glUniform1i(glGetUniformLocation(m_volumeShader, "gammaCorrect"), settings.gammaCorrect);
         // hi-res
@@ -396,26 +405,78 @@ void Realtime::setUpTerrain() {
     glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat),
                              nullptr);
 
+
     // Unbind
     glBindVertexArray(0);
     glBindBuffer(GL_ARRAY_BUFFER, 0);
 }
 
+void Realtime::takeScreenShot (int curFrame) {
+    // Make the BYTE array, factor of 3 because it's RBG.
+    int m_width = size().width();
+    int m_height = size().height();
+
+    const int numberOfPixels = m_width * m_height * 3;
+    unsigned char pixels[numberOfPixels];
+
+    glPixelStorei(GL_PACK_ALIGNMENT, 1);
+    glReadBuffer(GL_FRONT);
+    glReadPixels(0, 0, m_width, m_height, GL_BGR_EXT, GL_UNSIGNED_BYTE, pixels);
+
+    std::string save_path = PATH+std::to_string(curFrame)+".tga";
+
+    FILE *outputFile = fopen(save_path.c_str(), "w");
+    short header[] = {0, 2, 0, 0, 0, 0, (short) m_width, (short) m_height, 24};
+
+    fwrite(&header, sizeof(header), 1, outputFile);
+    fwrite(pixels, numberOfPixels, 1, outputFile);
+    fclose(outputFile);
+}
+
 void Realtime::paintGL() {
-    // Render terrain color and depth to FBO textures
-    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
-    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-    glActiveTexture(GL_TEXTURE7);
-    glBindTexture(GL_TEXTURE_2D, m_terrain_normal_texture);
-    glActiveTexture(GL_TEXTURE6);
-    glBindTexture(GL_TEXTURE_2D, m_terrain_height_texture);
-    glActiveTexture(GL_TEXTURE3);
-    glBindTexture(GL_TEXTURE_2D, m_terrain_color_texture);
-    drawTerrain();
+//    constexpr size_t NUM_FRAMES = 1000;
+        constexpr float MAX_TRANS = 10.f;
+
+
+//    // Render terrain color and depth to FBO textures
+//    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
+//    glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+//    glActiveTexture(GL_TEXTURE7);
+//    glBindTexture(GL_TEXTURE_2D, m_terrain_normal_texture);
+//    glActiveTexture(GL_TEXTURE6);
+//    glBindTexture(GL_TEXTURE_2D, m_terrain_height_texture);
+//    glActiveTexture(GL_TEXTURE3);
+//    glBindTexture(GL_TEXTURE_2D, m_terrain_color_texture);
+//    drawTerrain();
 
     // Draw on main screen
     glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
+
     drawVolume();
+
+
+    takeScreenShot(frameNumber++);
+    if (frameNumber == 350 || settings.hiResNoise.translate[0] > MAX_TRANS)
+        finish();
+
+    // update parameters
+    glUseProgram(m_volumeShader);
+    {
+
+//        constexpr float hiResDelta = 0.002f;
+        settings.hiResNoise.translate[0] += 0.002f;
+        settings.loResNoise.translate[0] += 0.041f;
+
+//        std::cout << delta << "\n";
+
+        settings.hiResNoise.channelWeights[1] = (std::sin(frameNumber / 300.f * 5.f - glm::half_pi<float>()) + 1) * 2.f;
+        settings.hiResNoise.channelWeights[2] = 4 + (std::sin(frameNumber / 300.f * 5.f - glm::half_pi<float>()) + 1) * 2.f;
+
+        glUniform3fv(glGetUniformLocation(m_volumeShader, "hiResNoiseTranslate"), 1, glm::value_ptr(settings.hiResNoise.translate));
+        glUniform3fv(glGetUniformLocation(m_volumeShader, "loResNoiseTranslate"), 1, glm::value_ptr(settings.loResNoise.translate));
+        glUniform4fv(glGetUniformLocation(m_volumeShader, "hiResChannelWeights"), 1, glm::value_ptr(settings.hiResNoise.channelWeights));
+    }
+
 
     // Clear things up
     glUseProgram(0);
@@ -527,7 +588,6 @@ void Realtime::settingsChanged() {
     glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.dir"), 1, glm::value_ptr(settings.lightData.dir));
     glUniform3fv(glGetUniformLocation(m_volumeShader , "testLight.color"), 1, glm::value_ptr(settings.lightData.color));
     glUniform4fv(glGetUniformLocation(m_volumeShader , "testLight.pos"), 1, glm::value_ptr(settings.lightData.pos));
-    std::cout << glm::to_string(settings.lightData.dir) << glm::to_string(settings.lightData.color) << '\n';
 
     glUseProgram(m_worleyShader);
     auto newArray = settings.newFineArray || settings.newMediumArray || settings.newCoarseArray;
@@ -535,7 +595,6 @@ void Realtime::settingsChanged() {
 
         int texSlot = settings.curSlot;
         int channelIdx = settings.curChannel;
-        std::cout << "check" << texSlot << " " << channelIdx << '\n';
 
 //        for (GLuint texSlot : {0, 1}) {  // high and low res volumes
             // pass uniforms
@@ -553,7 +612,6 @@ void Realtime::settingsChanged() {
                 glUniform4fv(glGetUniformLocation(m_worleyShader, "channelMask"), 1, glm::value_ptr(channelMask));
 
                 const auto &worleyPointsParams = noiseParams.worleyPointsParams[channelIdx];
-                std::cout << "ss" << worleyPointsParams.cellsPerAxisFine << '\n';
                 updateWorleyPoints(worleyPointsParams);  // generate new worley points into SSBO
                 glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), worleyPointsParams.cellsPerAxisFine);
                 glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), worleyPointsParams.cellsPerAxisMedium);

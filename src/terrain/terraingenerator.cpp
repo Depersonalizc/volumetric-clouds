@@ -10,12 +10,13 @@
 // Constructor
 TerrainGenerator::TerrainGenerator()
 {
-    m_resolution = 1000 ;
+    m_terrainResolution = 64;
+    m_noiseResolution = 2048;
     m_gridRes = 16;
     m_numOctaves = 5;
     translation = glm::vec3(0.0, 0.0, 0.0);
-    m_xScale = 2.0;
-    m_yScale = 1.0;
+    m_xScale = 10.0;
+    m_yScale = 20.0;
 }
 
 // Destructor
@@ -31,7 +32,7 @@ void addPointToVector(glm::vec3 point, std::vector<float>& vector) {
 
 // scaling version zhou
 void TerrainGenerator::generateTerrain() {
-    auto perlinGen = Perlin(m_resolution, m_gridRes, m_numOctaves);
+    auto perlinGen = Perlin(m_noiseResolution, m_gridRes, m_numOctaves);
     auto noiseMap = perlinGen.generatePerlinNoise2D();
 
     for (auto &v : noiseMap)
@@ -41,9 +42,9 @@ void TerrainGenerator::generateTerrain() {
     height_data = noiseMap;
 
     // get xz map
-    xz_data.reserve(m_xScale * m_resolution * m_yScale * m_resolution * 6);
-    for(int x = 0; x < m_xScale * m_resolution; x++) {
-        for(int z = 0; z < m_yScale * m_resolution; z++) {
+    xz_data.reserve(m_xScale * m_terrainResolution * m_yScale * m_terrainResolution * 6);
+    for(int x = 0; x < m_xScale * m_terrainResolution; x++) {
+        for(int z = 0; z < m_yScale * m_terrainResolution; z++) {
             int x1 = x;
             int z1 = z;
             int x2 = x + 1;
@@ -54,27 +55,34 @@ void TerrainGenerator::generateTerrain() {
             glm::vec3 p3 = getPosition(x2, z2);
             glm::vec3 p4 = getPosition(x1, z2);
 
+
             // push p3: [x2, z2]
             xz_data.push_back(p3.x);
             xz_data.push_back(p3.y);
+
             // push p2: [x2, z1]
             xz_data.push_back(p2.x);
             xz_data.push_back(p2.y);
+
             // push p1: [x1, z1]
             xz_data.push_back(p1.x);
             xz_data.push_back(p1.y);
+
 
             // push p4: [x1, z2]
             xz_data.push_back(p4.x);
             xz_data.push_back(p4.y);
+
             // push p3: [x2, z2]
             xz_data.push_back(p3.x);
             xz_data.push_back(p3.y);
+
             // push p1: [x1, z1]
             xz_data.push_back(p1.x);
             xz_data.push_back(p1.y);
 
-            if (x<m_resolution && z<m_resolution) {
+
+            if (x<m_terrainResolution && z<m_terrainResolution) {
                 glm::vec3 n1 = getNormal(x1, z1);
                 glm::vec3 c1 = getColor(n1, p1);
                 addPointToVector(n1, normal_data);
@@ -87,9 +95,11 @@ void TerrainGenerator::generateTerrain() {
 
 
 glm::vec3 TerrainGenerator::getPosition(int row, int col) {
-    float x = 1.0 * row / m_resolution ;
-    float y = 1.0 * col / m_resolution ;
-    float z = getHeight(row, col);
+    float x = 1.0 * row / m_terrainResolution ;
+    float y = 1.0 * col / m_terrainResolution ;
+    int noiseRow = row * (1.0f * m_noiseResolution/m_terrainResolution);
+    int noiseCol = col * (1.0f * m_noiseResolution/m_terrainResolution);
+    float z = getHeight(noiseRow, noiseCol);
     return glm::vec3(x,y,z);
 }
 
@@ -105,9 +115,9 @@ void TerrainGenerator::setTranslation(glm::vec3 trans) {
 
 
 float TerrainGenerator::getHeight(int row, int col) {
-    int modRow = (row+m_resolution)%m_resolution;
-    int modCol = (col+m_resolution)%m_resolution;
-    int index = modRow*m_resolution + modCol;
+    int modRow = (row+m_noiseResolution)%m_noiseResolution;
+    int modCol = (col+m_noiseResolution)%m_noiseResolution;
+    int index = modRow*m_noiseResolution + modCol;
     return height_data[index];
 }
 
