@@ -8,7 +8,7 @@ A real-time GPU volumetric clouds renderer via OpenGL.
 - **Qt 6**: In order to build and run this program, you will need to have Qt 6 installed on your machine. See https://www.qt.io/product/qt6 for more information.
 - **OpenGL with GLSL 4.3 or higher**: Required for GPU rendering and compute shaders/SSBO.
 ### Build & Run
-We have included `CMakeList.txt` for building the program. If you already have Qt installed, you can build and run the program by following these steps:
+We have included a `CMakeList.txt` file for building the program. If you already have Qt installed, you can build and run the program by following these steps:
 - Launch Qt Creator and click "Open Project"
 - Select and open `CMakeLists.txt` from the root directory of the project
 - Click the "Run" button to build and start the program
