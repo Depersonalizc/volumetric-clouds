@@ -19,6 +19,7 @@ We have included a `CMakeList.txt` file for building the program. If you already
 - Physically-based volume rendering with anistropic scattering to account for directional dependence of light scattering within the clouds
 - Rendering compatability with solid objects by compositing with depth and color buffers
 - Rich customization options to craft your own clouds: control density, coverage, shape, and lighting of the clouds in the GUI
+- Realistic sky that varies throughout a day by modeling atmospheric scattering
 
 ## Optimizations
 - Optimized raymarching with adaptive step sizes and backtracking
