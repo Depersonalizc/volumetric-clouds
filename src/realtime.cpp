@@ -1,7 +1,7 @@
 #include "realtime.h"
 #include "settings.h"
 #include "noise/worley.h"
-#include "noise/perlin.h"
+#include "noise/perlin-zhou.h"
 #include "utils/shaderloader.h"
 
 #include <QCoreApplication>
@@ -403,7 +403,7 @@ void Realtime::setUpTerrain() {
 
 void Realtime::paintGL() {
     // Render terrain color and depth to FBO textures
-    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
+//    glBindFramebuffer(GL_FRAMEBUFFER, m_FBO.get()->getFbo());
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
     glActiveTexture(GL_TEXTURE7);
     glBindTexture(GL_TEXTURE_2D, m_terrain_normal_texture);
@@ -413,9 +413,9 @@ void Realtime::paintGL() {
     glBindTexture(GL_TEXTURE_2D, m_terrain_color_texture);
     drawTerrain();
 
-    // Draw on main screen
-    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
-    drawVolume();
+//    // Draw on main screen
+//    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
+//    drawVolume();
 
     // Clear things up
     glUseProgram(0);
@@ -455,8 +455,6 @@ void Realtime::resizeGL(int w, int h) {
 
         glUseProgram(0);
     }
-    //m_proj = glm::perspective(45.0f, (float)width() / height(), 0.01f, 100.f);
-//    m_proj = m_camera.getProjMatrix();
 
 
     m_FBO.get()->deleteRenderBuffer();

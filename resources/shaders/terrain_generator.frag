@@ -45,29 +45,34 @@ vec3 getSunColor(float longitudeRadians) {
 
 void main(void)
 {
-    // sample color
+//    // sample color
     vec3 sampleColor = texture(color_sampler, uv).rgb;
     vec3 normal = normalize(sample_norm.xyz);
 
-    // Phong shading
+//    // Phong shading
     float sunLatitudeRadians = radians(testLight.latitude);
     float sunLongitudeRadians = radians(testLight.longitude);
     vec3 lightDir = dirSph2Cart(sunLatitudeRadians, sunLongitudeRadians);  // towards the light
     vec3 lightColor = getSunColor(sunLongitudeRadians);
 
 //    vec3 ambient = ambientColor * color * ka;
-    vec3 ambient = lightColor * color * ka;
+//    vec3 ambient = lightColor * sampleColor * ka;
 
-    float diffuseStrength = clamp(dot(normal, lightDir), 0, 1);
-    vec3 diffuse = sampleColor * lightColor * diffuseStrength * kd;
+//    float diffuseStrength = clamp(dot(normal, lightDir), 0, 1);
+//    vec3 diffuse = sampleColor * lightColor * diffuseStrength * kd;
 
-    vec3 total = ambient + diffuse;
-    fragColor = vec4(total, 1.0);
+//    vec3 total = ambient + diffuse;
+//    fragColor = vec4(total, 1.0);
+
+//    ---------------------------------------------
+
+    fragColor = vec4((clamp(dot(normal, lightDir), 0, 1)*0.7 + 0.3)* sampleColor, 1.0);
+
+
 
 
 
 //// DEBUG
-
 //    fragColor = vec4(sampleColor, 1); // test sample color
 //    fragColor = vec4(sample_norm.xyz, 1); // test sample norm
 //    fragColor = vec4(lightDir, 1.f);
