@@ -2,7 +2,7 @@
 
 #include <vector>
 #include "glm/glm.hpp"
-#include "noise/perlin.h"
+#include "noise/perlin-zhou.h"
 
 class TerrainGenerator
 {
@@ -12,7 +12,7 @@ public:
     ~TerrainGenerator();
 
 // get functions
-    int getResolution() { return m_resolution; };
+    int getResolution() { return m_noiseMapSize; };
     float getScaleX() { return m_xScale; };
     float getScaleY() { return m_yScale; };
     std::vector<float> getHeightMap() { return height_data; };
@@ -21,7 +21,7 @@ public:
     std::vector<float> getCoordMap() { return xz_data; };
 
 // update functions
-    void setResolution(int res) {  m_resolution = res; };
+    void setResolution(int res) {  m_noiseMapSize = res; };
     void setMxMy(float x, float y);
     void setTranslation(glm::vec3 trans);
 
@@ -30,7 +30,7 @@ public:
 
 private:
 
-    int m_resolution, m_gridRes, m_numOctaves; // perlin noise related
+    int m_cellSize, m_noiseMapSize; // perlin noise related
     float m_xScale;
     float m_yScale;
     glm::vec3 translation;

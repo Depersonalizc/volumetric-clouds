@@ -6,7 +6,7 @@ out vec4 sample_norm;
 out vec3 lightDir;
 out vec2 uv;
 
-uniform float terrainNoiseScaling = 0.1f;
+uniform float terrainNoiseScaling = 1.f;
 uniform mat4 projViewMatrix;
 uniform mat4 transInvViewMatrix;
 
@@ -25,9 +25,10 @@ void main()
     sample_norm  = transInvViewMatrix * vec4(texture(normal_sampler, uv).rgb, 0.0);
 
     // height map sampling
-    float height = texture(height_sampler, uv).r / terrainNoiseScaling;
+    float height = texture(height_sampler, uv).r / terrainNoiseScaling / 3;
     vec3 pos = vec3(vertex.x, height, vertex.y);
     gl_Position = projViewMatrix * vec4(pos, 1.0);
+//    gl_Position = projViewMatrix * vec4(vec3(vertex.x, 0, vertex.y),1);
 
 //// DEBUG
 //    pos[1] = 0;
