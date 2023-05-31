@@ -1,5 +1,5 @@
 # volumetric-clouds
-A real-time GPU volumetric clouds renderer via OpenGL.
+A real-time GPU volumetric clouds renderer via OpenGL, based on the SIGGRAPH 2015 talk <a href="http://killzone.dl.playstation.net/killzone/horizonzerodawn/presentations/Siggraph15_Schneider_Real-Time_Volumetric_Cloudscapes_of_Horizon_Zero_Dawn.pdf">The Real-time Volumetric Cloudscapes of Horizon: Zero Dawn</a> by Andrew Schneider.
 
 <a href="https://depersonalizc.github.io/portfolio/clouds.html"><img src="./resources/images/showcase.png" alt="Collage of realtime render results from the volumetric clouds renderer" width="100%"></img></a>
 
