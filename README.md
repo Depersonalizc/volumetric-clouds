@@ -11,6 +11,7 @@ A real-time GPU volumetric clouds renderer via OpenGL, based on the SIGGRAPH 201
 We have included a `CMakeList.txt` file for building the program. If you already have Qt installed, you can build and run the program by following these steps:
 - Launch Qt Creator and click "Open Project"
 - Select and open `CMakeLists.txt` from the root directory of the project
+- Go to Projects - Run Settings - Run, and change "Working directory" to the root directory of the project
 - Click the "Run" button to build and start the program
 
 ## Key Features
