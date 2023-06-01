@@ -413,9 +413,9 @@ void Realtime::paintGL() {
     glBindTexture(GL_TEXTURE_2D, m_terrain_color_texture);
     drawTerrain();
 
-//    // Draw on main screen
-//    glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
-//    drawVolume();
+   // Draw on main screen
+   glBindFramebuffer(GL_FRAMEBUFFER, defaultFramebufferObject());
+   drawVolume();
 
     // Clear things up
     glUseProgram(0);
@@ -530,36 +530,31 @@ void Realtime::settingsChanged() {
     glUseProgram(m_worleyShader);
     auto newArray = settings.newFineArray || settings.newMediumArray || settings.newCoarseArray;
     if (newArray) {
-
         int texSlot = settings.curSlot;
         int channelIdx = settings.curChannel;
         std::cout << "check" << texSlot << " " << channelIdx << '\n';
 
-//        for (GLuint texSlot : {0, 1}) {  // high and low res volumes
-            // pass uniforms
-            const auto &noiseParams = texSlot == 0 ? settings.hiResNoise : settings.loResNoise;
-            glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), noiseParams.persistence);
-            glUniform1i(glGetUniformLocation(m_worleyShader, "volumeResolution"), noiseParams.resolution);
+        // pass uniforms
+        const auto &noiseParams = texSlot == 0 ? settings.hiResNoise : settings.loResNoise;
+        glUniform1f(glGetUniformLocation(m_worleyShader, "persistence"), noiseParams.persistence);
+        glUniform1i(glGetUniformLocation(m_worleyShader, "volumeResolution"), noiseParams.resolution);
 
-            const auto &volumeTex = texSlot == 0 ? volumeTexHighRes : volumeTexLowRes;
-            glBindImageTexture(0, volumeTex, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA32F);
+        const auto &volumeTex = texSlot == 0 ? volumeTexHighRes : volumeTexLowRes;
+        glBindImageTexture(0, volumeTex, 0, GL_TRUE, 0, GL_READ_WRITE, GL_RGBA32F);
 
 
-//            for (int channelIdx = 0; channelIdx < 4; channelIdx++) {
-                glm::vec4 channelMask(0.f);
-                channelMask[channelIdx] = 1.f;
-                glUniform4fv(glGetUniformLocation(m_worleyShader, "channelMask"), 1, glm::value_ptr(channelMask));
+        glm::vec4 channelMask(0.f);
+        channelMask[channelIdx] = 1.f;
+        glUniform4fv(glGetUniformLocation(m_worleyShader, "channelMask"), 1, glm::value_ptr(channelMask));
 
-                const auto &worleyPointsParams = noiseParams.worleyPointsParams[channelIdx];
-                std::cout << "ss" << worleyPointsParams.cellsPerAxisFine << '\n';
-                updateWorleyPoints(worleyPointsParams);  // generate new worley points into SSBO
-                glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), worleyPointsParams.cellsPerAxisFine);
-                glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), worleyPointsParams.cellsPerAxisMedium);
-                glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), worleyPointsParams.cellsPerAxisCoarse);
-                glDispatchCompute(noiseParams.resolution, noiseParams.resolution, noiseParams.resolution);
-                glMemoryBarrier(GL_ALL_BARRIER_BITS);
-//            }
-//        }
+        const auto &worleyPointsParams = noiseParams.worleyPointsParams[channelIdx];
+        std::cout << "ss" << worleyPointsParams.cellsPerAxisFine << '\n';
+        updateWorleyPoints(worleyPointsParams);  // generate new worley points into SSBO
+        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisFine"), worleyPointsParams.cellsPerAxisFine);
+        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisMedium"), worleyPointsParams.cellsPerAxisMedium);
+        glUniform1i(glGetUniformLocation(m_worleyShader, "cellsPerAxisCoarse"), worleyPointsParams.cellsPerAxisCoarse);
+        glDispatchCompute(noiseParams.resolution, noiseParams.resolution, noiseParams.resolution);
+        glMemoryBarrier(GL_ALL_BARRIER_BITS);
     }
 
     glUseProgram(0);
