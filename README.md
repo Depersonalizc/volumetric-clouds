@@ -4,11 +4,12 @@ A real-time GPU volumetric clouds renderer via OpenGL, based on the SIGGRAPH 201
 <a href="https://depersonalizc.github.io/portfolio/clouds.html"><img src="./resources/images/showcase.png" alt="Collage of realtime render results from the volumetric clouds renderer" width="100%"></img></a>
 
 ## How can I run this?
+*Only tested on Linux.*
 ### Prerequisites
 - **Qt 6**: In order to build and run this program, you will need to have Qt 6 installed on your machine. See https://www.qt.io/product/qt6 for more information.
 - **OpenGL with GLSL 4.3 or higher**: Required for GPU rendering and compute shaders/SSBO.
 ### Build & Run
-We have included a `CMakeList.txt` file for building the program (only tested on Linux at this point). If you already have Qt installed, you can build and run the program by following these steps:
+We have included a `CMakeList.txt` file for building the program. If you already have Qt installed, you can build and run the program by following these steps:
 - Launch Qt Creator and click "Open Project"
 - Select and open `CMakeLists.txt` from the root directory of the project
 - Go to Projects - Run Settings - Run, and change "Working directory" to the root directory of the project
